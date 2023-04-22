@@ -1,12 +1,10 @@
 This is a tool I made for loading multiple Diablo 2 Resurrected instances. Cool Huh.
 
 # But what does it do? #
-
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.
 Script will import account details from CSV. 
 
 Alternatively you can call script with account, password & region parameters: -account username@emailaddress.com  -pw MyBNetAccountPassword -region na.actual.battle.net
-
 
 Instructions for setup below.
 *Quick note on paths, ".\" refers to the folder where your script sits. You can save this in any folder you like, but the script does look for subfolders within this folder (eg .\handle). 
@@ -40,8 +38,8 @@ Optional, only do this if you don't trust me and want to build the .exe yourself
 
 # Optional Script Config #
 - If you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this.
-- Set your default region if you just want to mash enter instead
 - Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
+- Set your default region if you just want to mash enter instead of choosing the region.
 
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
