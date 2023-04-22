@@ -1,7 +1,7 @@
 <# 
 Author: Shupershuff
-Version: 1.0
-Last Edited: 19/04/2023
+Version: See Github https://github.com/shupershuff/Diablo2RLoader
+Last Edited: See Github https://github.com/shupershuff/Diablo2RLoader
 Usage: Go nuts.
 Purpose:
 	Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle."
@@ -37,33 +37,23 @@ param($AccountUsername,$PW,$region)
 
 ###########################################################################################################################################
 # Script Options
+###########################################################################################################################################
 $Script:GamePath = "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"
 $Script:DefaultRegion = 1 #default region, 1 for NA, 2 for EU, 3 for Asia.
-$Script:AskForRegionOnceOnly = $true #To do, implement
-#$Script:EnterPasswordsManually = $false #Todo, remove as this is redundant. Set if you don't want passwords stored in plain text and would rather enter manually.
+$Script:AskForRegionOnceOnly = $false
 $Script:WindowRenamerConfigured = $True #set to false if you haven't configured the SetText executable for renaming the Diablo windows.
-###########################################################################################################################################
-
-
-
-
-
-
-
 
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
 if ($null -ne $AccountUsername){
-	$scriptarguments = "-accountusername $AccountUsername" 
-	#write-host "AccountUsername: $AccountUsername" 
+	$scriptarguments = "-accountusername $AccountUsername"  
 }
 if ($null -ne $pw){
 	$scriptarguments += " -pw $pw"  
 }
 if ($null -ne $region){
 	$scriptarguments += " -region $region"
-	#write-host "Region: $region" 
 }
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments" -Verb RunAs; exit } #run script as admin
 if ($AccountUsername -ne $null){
@@ -249,9 +239,6 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 		$Script:ActiveIDs = ""
 	}
 	if ($script:D2rRunning -eq $True){
-		#write-host
-		#write-host "Active D2r instances:"
-		#write-host "ID  Account"
 		$Script:ActiveAccountsList = New-Object -TypeName System.Collections.ArrayList
 		foreach ($ActiveID in $ActiveIDs){
 			$ActiveAccountDetails = $Script:AccountOptionsCSV | where-object {$_.id -eq $ActiveID}
@@ -286,7 +273,6 @@ Function Menu {
 		$lastopened = @(
 			[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$script:region}#Americas
 		)
-		#$lastopened | ft
 		write-host " " -NoNewLine
 		Write-Host ("Account:  " + $lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen 
 		write-host " " -NoNewLine
@@ -310,7 +296,6 @@ Function Menu {
 	}
 	if ($script:region.length -eq 0){#if no region parameter has been set already.
 		ChooseRegion
-		#$script:ParamsUsed = $false
 	}
 	Else {#if region parameter has been set already.
 		if ($script:region -ne "us.actual.battle.net" -and $script:region -ne "eu.actual.battle.net" -and $script:region -ne "kr.actual.battle.net"){
@@ -388,10 +373,6 @@ Function ChooseAccount {
 				}
 				$Script:AccountChoice = $Script:AccountOptionsCSV |where-object {$_.id -eq $Script:AccountID} #filter out to only include the account we selected.
 			}
-			#if ($enterpasswordsmanually -eq $true){
-			#	$script:PW = read-host "Enter the Battle.net password for $script:AccountUsername"
-			#	$Script:AccountChoice = @([pscustomobject]@{pw=$script:PW;acct=$Script:AccountOptionsCSV.acct}) #Tiny hashtable for account details.
-			#}
 		} until ($Script:AccountID -ne "r")
 	}
 }
