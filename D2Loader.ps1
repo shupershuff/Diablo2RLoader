@@ -146,6 +146,7 @@ $script:quotelist =
 "Good to see you!",
 "Looking for Baal?",
 "All who oppose me, beware",
+"I shall make weapons from your bones",
 "I am overburdened",
 "This magic ring does me no good.",
 "Beware, foul demons and beasts.",
