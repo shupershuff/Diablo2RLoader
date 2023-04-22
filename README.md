@@ -1,9 +1,11 @@
-This is a tool I made. Cool Huh.
+This is a tool I made for loading multiple Diablo 2 Resurrected instances. Cool Huh.
 
 # But what does it do? #
 
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.
-Script will import account details from CSV. Alternatively you can run script with account, region and password parameters ( "username@emailaddress.com"  "MyBNetAccountPassword" "na.actual.battle.net").
+Script will import account details from CSV. 
+
+Alternatively you can call script with account, password & region parameters: -account username@emailaddress.com  -pw MyBNetAccountPassword -region na.actual.battle.net
 
 
 Instructions for setup below.
