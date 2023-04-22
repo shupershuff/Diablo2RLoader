@@ -1,0 +1,505 @@
+<# 
+Author: Shupershuff
+Version: 1.0
+Last Edited: 19/04/2023
+Usage: Go nuts.
+Purpose:
+	Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle."
+	Script will import account details from CSV. Alternatively you can run script with account, region and password parameters.
+Pre-Requisites:
+	1. Download the handle tool https://learn.microsoft.com/en-gb/sysinternals/downloads/handle. 
+	2. Place the executables in a folder called "handle" in the same place this script lives. (ie folder path should be "./handle/")
+#################
+# Instructions: #
+#################
+See 
+ 1. Populate csv file "accounts.csv" with your account details. Headings for this CSV are ID,acct,pw,bnet_displayname
+	- ID is simply a number, number these 1 to 5 if you have 5 accounts.
+	- acct is your bnet email sign in address
+	- pw is your bnet account password.
+	- bnet_displayname is simply a friendly name you can add so you can tell which window is a particular account. I prefer to enter in my bnet usernames (without the #1234 at the end).
+ 2. Set any Script Options if required (Check Game Path is accurate, other options are...optional).
+ 3. ????
+ 4. ????
+ 5. Profit.
+ 
+#########
+# Notes #
+#########
+Multiple failed attempts (eg wrong Password) to sign onto a particular Realm via this method may temporarily lock you out. You should still be able to get in via the battlenet client if this occurs.
+Handle script stolen from https://forums.d2jsp.org/topic.php?t=90563264&f=87
+Servers:
+ NA - us.actual.battle.net
+ EU - eu.actual.battle.net
+ Asia - kr.actual.battle.net
+#>
+param($AccountUsername,$PW,$region)
+
+###########################################################################################################################################
+# Script Options
+$Script:GamePath = "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"
+$Script:DefaultRegion = 1 #default region, 1 for NA, 2 for EU, 3 for Asia.
+$Script:AskForRegionOnceOnly = $true #To do, implement
+#$Script:EnterPasswordsManually = $false #Todo, remove as this is redundant. Set if you don't want passwords stored in plain text and would rather enter manually.
+$Script:WindowRenamerConfigured = $True #set to false if you haven't configured the SetText executable for renaming the Diablo windows.
+###########################################################################################################################################
+
+
+
+
+
+
+
+
+###########################################################################################################################################
+# Script itself
+###########################################################################################################################################
+if ($null -ne $AccountUsername){
+	$scriptarguments = "-accountusername $AccountUsername" 
+	#write-host "AccountUsername: $AccountUsername" 
+}
+if ($null -ne $pw){
+	$scriptarguments += " -pw $pw"  
+}
+if ($null -ne $region){
+	$scriptarguments += " -region $region"
+	#write-host "Region: $region" 
+}
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments" -Verb RunAs; exit } #run script as admin
+if ($AccountUsername -ne $null){
+	$script:ParamsUsed = $true
+}
+Else {
+	$script:ParamsUsed = $false
+}
+
+$script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
+if($script:windowrenamerconfigured -eq $True){
+	if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){ #-PathType Leaf
+		write-host "SetText is not configured. See instructions for more details on setting this up." -foregroundcolor yellow
+		write-host "Script will continue to run but Diablo Windows will not be renamed." -foregroundcolor yellow
+		pause
+		$script:windowrenamerconfigured = $false
+	}
+}
+
+if ($script:AccountUsername -eq $null){#If no parameters sent to script.
+	try {
+		$Script:AccountOptionsCSV = import-csv "$script:WorkingDirectory\Accounts.csv" #import all accounts from csv
+	}
+	Catch {
+		write-host
+		write-host " Accounts.csv does not exist. Make sure you create this and populate with accounts first." -foregroundcolor red
+		write-host " Script exiting..." -foregroundcolor red
+		start-sleep 5
+		Exit
+	}
+}
+
+$Script:ServerOptions = @(
+	[pscustomobject]@{Option='1';region='NA';region_server='us.actual.battle.net'}#Americas
+	[pscustomobject]@{Option='2';region='EU';region_server='eu.actual.battle.net'}#Europe
+	[pscustomobject]@{Option='3';region='Asia';region_server='kr.actual.battle.net'}
+)
+
+$QualityArray = @(#quality and chances for things to drop based on 0MF values in D2r (I think?)
+	[pscustomobject]@{Type='Unique';Probability=25}
+	[pscustomobject]@{Type='SetItem';Probability=62}
+	[pscustomobject]@{Type='Rare';Probability=100}
+	[pscustomobject]@{Type='Magic';Probability=294}
+	[pscustomobject]@{Type='Normal';Probability=9518}
+)
+
+$QualityHash = @{}; 
+foreach ($object in $QualityArray | select-object type,probability){#convert to hashtable
+	$QualityHash.add($object.type,$object.probability) #add each PSObject to hash
+}
+$script:itemLookup = foreach ($entry in $QualityHash.GetEnumerator()){
+	[System.Linq.Enumerable]::Repeat($entry.Key, $entry.Value)
+}
+$x = [char]0x1b #escape character
+function Magic {
+    process { write-host " $x[38;2;65;105;225;48;2;1;1;1;4m$_$x[0m" }
+}
+function SetItem {
+    process { write-host " $x[38;2;0;225;0;48;2;1;1;1;4m$_$x[0m"}
+}
+function Unique {
+    process { write-host " $x[38;2;165;146;99;48;2;1;1;1;4m$_$x[0m"}
+}
+function Rare {
+    process { write-host " $x[38;2;255;255;0;48;2;1;1;1;4m$_$x[0m"}
+}
+function Normal {
+    process { write-host " $x[38;2;255;255;255;48;2;1;1;1;4m$_$x[0m"}
+}
+
+function quoteroll {#stupid thing to draw a random quote but also draw a random quality.
+	$quality = get-random $itemlookup
+	Write-Host
+	Write-output (Get-Random -inputobject $script:quotelist)  | &$quality
+	Write-Host
+}
+
+$script:quotelist =
+"Stay a while and listen..",
+"Destruction rains upon you.",
+"My brothers will not have died in vain!",
+"Do you fear death, nephalem? The power of the lord of terror is mine.",
+"Not even death can save you from me.",
+"Good Day!",
+"You have quite a treasure there in that Horadric Cube.",
+"There's nothing the right potion can't cure.",
+"Well, what the hell do you want? Oh, it's you. Uh, hi there.",
+"What do you need?",
+"Your presence honors me.",
+"Good to see you!",
+"Looking for Baal?",
+"All who oppose me, beware",
+"I am overburdened",
+"This magic ring does me no good.",
+"Beware, foul demons and beasts.",
+"They'll never see me coming.",
+"I will cleanse this wilderness.",
+"I shall purge this land of the shadow.",
+"I hear foul creatures about.",
+"Ahh yes, ruins, the fate of all cities.",
+"I have no grief for him. Oblivion is his reward.",
+"The catapults have been silenced.",
+"The staff of kings, you astound me",
+"When - or if - I get to Lut Gholein, I'm going to find the largest bowl of Narlant weed and smoke 'til all earthly sense has left my body.",
+"I've just about had my fill of the walking dead.",
+"Oh I hate staining my hands with the blood of foul Sorcerers!",
+"Damn it, I wish you people would just leave me alone!",
+"Beware! Beyond lies mortal danger for the likes of you!",
+"Only the darkest Magics can turn the sun black.",
+"You are too late! HAA HAA HAA",
+"You now speak to Ormus. He was once a great mage, but now lives like a rat in a sinking vessel",
+"I knew there was great potential in you, my friend. You've done a fantastic job.",
+"Hi there. I'm Charsi, the Blacksmith here in camp. It's good to see some strong adventurers around here.",
+"Whatcha need?",
+"Good day to you partner!",
+"Moomoo, moo, moo. Moo, Moo Moo Moo Mooo.",
+"Gem Activated",
+"Gem Deactivated"
+
+$BannerLogo = @"
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%#%%%%%%%/%%%%%%%%%%%#%%%%%%%%%%%%##%%%%%%%%%#/##%%%%%%%%%%%%%%%%%%
+ %%#(%/(%%%//(/*#%%%%%%%%%%%###%%%%#%%%%%###%%%%%###(*####%##%%%#%%*%%%%%%
+ %%%( **/*///%%%%%%%%%###%%#(######%%#########%####/*/*.,#((#%%%#*,/%%%%%%
+ %%%#*/.,*/,,*/#/%%%/(*#%%#*(%%(*/%#####%###%%%#%%%(///*,**/*/*(.&,%%%%%%%
+ %%%%%%// % ,***(./*/(///,/(*,./*,*####%#*/#####/,/(((/.*.,.. (@.(%%%%%%%%
+ %%%%%%%#%* &%%#..,,,,**,.,,.,,**///.*(#(*.,.,,*,,,,.,*, .&%&&.*%%%%%%%%%%
+ %%%%%%%%%%%#.@&&%&&&%%%%&&%%,.(((//,,/*,,*.%&%&&&&&&&&%%&@%,#%%%%%%%%%%%%
+ %%%%%%%%%%%%%(.&&&&&%&&&%(.,,*,,,,,.,,,,.,.*,%&&&%&&%&&&@*##%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%# @@@&&&&&(  @@&&@&&&&&&&&&*..,./(&&&&&&&&*####%%%%%%%%%%%%
+ %%%%%%%%%%%%%%# &@@&&&&&(*, @@@&.,,,,. %@@&&*.,(%&&&&&&&/%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%#.&@@&&&&&(*, @@@@,((#&&%#.&@@&&.*#&&@&&&&/#%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%*&@@@&&&&#*, @@@@,*(#%&&%#,@@@&@,(%&&&&&&(%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%*&@&&&%&&(,. @@@@,(%%%%%%#/,@@@& *#&&@&&%(%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%*&&&@&%&&(,. @@@@,%&%%%%%%(.@@@@ /#&&&&&&(%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%,&&&&&%%&(*, @@@@,&&&&&&&%//@@@@./%&&&&@&(%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%(*&&&&&&&%(,, @@@@,%&&&#(/*.@@@@&./%&&&&@&(%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%,&&&&&&&%(,, @@@@,/##/(// @@&@@,/#&&&&&&&(%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%(,&&&&&&&%(,, @@@@.*,,..*@@@&&*./#&&%&&&&&(%#%%#%%%%%%%%%%%
+ %%%%%%%%%%%#%%#.&&&&&%%#* @@@&&&@@@&&%&&&% */*%&&%#&&&&&/((#%%%%%%%%%%%%%
+ %%%%%%%%(#//*/.&&&#%#%#.@&& ..,,****,,*//((/*#%%%####%%%#/#/#%%%%%%%%%%%%
+ %%%%%##***.,**////*(//,&.*/***.*/%%#%/%#*.***/*/***//**/(((/.,*(//*/(##%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+"@
+
+Function Killhandle {#kudos the info in this post to save me from figuring it out: https://forums.d2jsp.org/topic.php?t=90563264&f=87
+	& "$PSScriptRoot\handle\handle64.exe" -accepteula -a -p D2R.exe > $PSScriptRoot\d2r_handles.txt
+	$proc_id_populated = ""
+	$handle_id_populated = ""
+
+	foreach($line in Get-Content $PSScriptRoot\d2r_handles.txt) {
+		$proc_id = $line | Select-String -Pattern '^D2R.exe pid\: (?<g1>.+) ' | %{$_.Matches.Groups[1].value}
+		if ($proc_id){
+			$proc_id_populated = $proc_id
+		}
+		$handle_id = $line | Select-String -Pattern '^(?<g2>.+): Event.*DiabloII Check For Other Instances' | %{$_.Matches.Groups[1].value}
+		if ($handle_id){
+			$handle_id_populated = $handle_id
+		}
+
+		if($handle_id){
+			Write-Host "Closing" $proc_id_populated $handle_id_populated
+			& "$PSScriptRoot\handle\handle64.exe" -p $proc_id_populated -c $handle_id_populated -y
+		}
+	}
+}
+
+Function CheckActiveAccounts {#Note: only works for accounts loaded by the script and only if SetText has been setup.
+	#check if there's any open instances and check the game title window for which account is being used.
+	try {	
+		$script:ActiveIDs = $null
+		$D2rRunning = $false
+		$script:ActiveIDs = New-Object -TypeName System.Collections.ArrayList
+		$script:ActiveIDs = (Get-Process | Where {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected -"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,1) #find all diablo 2 game windows and pull the account ID from the title
+		$script:D2rRunning = $true
+		#write-host "Running Instances."
+	}
+	catch {#if the above fails then there are no running D2r instances.
+		$script:D2rRunning = $false
+		#write-host "No Running Instances."
+		$Script:ActiveIDs = ""
+	}
+	if ($script:D2rRunning -eq $True){
+		#write-host
+		#write-host "Active D2r instances:"
+		#write-host "ID  Account"
+		$Script:ActiveAccountsList = New-Object -TypeName System.Collections.ArrayList
+		foreach ($ActiveID in $ActiveIDs){
+			$ActiveAccountDetails = $Script:AccountOptionsCSV | where-object {$_.id -eq $ActiveID}
+			$ActiveAccount = New-Object -TypeName psobject
+			$ActiveAccount | Add-Member -MemberType NoteProperty -Name ID -Value $ActiveAccountDetails.ID
+			$ActiveAccount | Add-Member -MemberType NoteProperty -Name AccountName -Value $ActiveAccountDetails.bnet_displayname
+			#$Script:ActiveAccount | Add-Member -MemberType NoteProperty -Name SignIn -Value $ActiveAccountDetails.acct
+			[VOID]$Script:ActiveAccountsList.Add($ActiveAccount)
+		}
+	}
+	else {
+		$Script:ActiveAccountsList = $null
+	}
+}
+Function DisplayActiveAccounts {
+	write-host 
+	write-host "ID  Battlenet Name"
+	foreach ($AccountOption in $Script:AccountOptionsCSV){
+		if ($AccountOption.id -in $Script:ActiveAccountsList.id){
+			write-host ($AccountOption.ID + "   " + $AccountOption.bnet_displayname + " - Account Currently In Use.") -foregroundcolor yellow
+		}
+		else {
+			write-host ($AccountOption.ID + "   " + $AccountOption.bnet_displayname) -foregroundcolor green
+		}
+	}
+}
+Function Menu {
+	cls
+	if($Script:ScriptHasBeenRun -eq $true){
+		$script:AccountUsername = $null
+		Write-Host "Account previously opened was:"  -foregroundcolor yellow -backgroundcolor darkgreen
+		$lastopened = @(
+			[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$script:region}#Americas
+		)
+		#$lastopened | ft
+		write-host " " -NoNewLine
+		Write-Host ("Account:  " + $lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen 
+		write-host " " -NoNewLine
+		Write-Host "Region:  " $lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
+	}
+	Else {
+		Write-Host "That's quite a treasure there that you have in that Horadric multibox"
+		Write-Host
+	}
+
+	Write-Host $BannerLogo -foregroundcolor yellow
+	QuoteRoll
+	start-sleep -milliseconds 10
+	ChooseAccount
+	if($script:ParamsUsed -eq $false -and ($Script:RegionOption.length -ne 0 -or $Script:Region.length -ne 0)){
+		if ($Script:AskForRegionOnceOnly -ne $true){
+			$Script:RegionOption = ""
+			$Script:Region = ""
+			#write-host "region reset" -foregroundcolor yellow #debug
+		}
+	}
+	if ($script:region.length -eq 0){#if no region parameter has been set already.
+		ChooseRegion
+		#$script:ParamsUsed = $false
+	}
+	Else {#if region parameter has been set already.
+		if ($script:region -ne "us.actual.battle.net" -and $script:region -ne "eu.actual.battle.net" -and $script:region -ne "kr.actual.battle.net"){
+			Write-host "Region not valid. Please choose region" -foregroundcolor red
+			ChooseRegion
+		}
+	}
+	Processing
+}
+Function ChooseAccount {
+	if ($null -ne $script:AccountUsername -and ($null -eq $script:PW -or "" -eq $script:PW) ){#-or $enterpasswordsmanually -eq $True){
+		$script:PW = read-host "Enter the Battle.net password for $script:AccountUsername"
+		$script:pwmanualset = $true
+	}
+	else {
+		$script:pwmanualset = $false
+	}
+	if ($null -ne $script:AccountUsername){ #if parameters have already been set.
+		$Script:AccountOptionsCSV = @(
+			[pscustomobject]@{pw=$script:PW;acct=$script:AccountUsername}
+		)
+	}
+	else {#if no account parameters have been set already		
+		do {
+			if ($Script:AccountID -eq "r"){#refresh
+				cls
+				if($Script:ScriptHasBeenRun -eq $true){
+					Write-Host "Account previously opened was:"  -foregroundcolor yellow -backgroundcolor darkgreen
+					$lastopened = @(
+						[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$script:region}#Americas
+					)
+					Write-Host " " -NoNewLine
+					Write-Host ("Account:  " + $lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen 
+					write-host " " -NoNewLine
+					Write-Host "Region:  " $lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
+				}
+				Write-Host $BannerLogo -foregroundcolor yellow
+				QuoteRoll
+				
+			}
+			if ($script:WindowRenamerConfigured -eq $True){
+				CheckActiveAccounts
+				DisplayActiveAccounts
+				$AcceptableValues = New-Object -TypeName System.Collections.ArrayList
+				foreach ($AccountOption in $Script:AccountOptionsCSV){
+					if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
+						$AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"	
+					}
+				}
+			}
+			Else {
+				$Script:AccountOptionsCSV | Format-Table id,@{L='Battlenet Name';E={$_.bnet_displayname}}#,@{L=’Account’;E={$_.acct}}
+				$AcceptableValues = ($Script:AccountOptionsCSV.ID) #+ "x"
+			}
+			$accountoptions = ($AcceptableValues -join  ", ").trim()
+			do {
+				Write-Host
+				if($accountoptions.length -gt 0){
+					Write-Host "Please select which account to sign into"
+					$Script:AccountID = Read-host ("Your Options are: " + $accountoptions + ", r to refresh, or x to quit.")
+				}
+				else {#if there aren't any available options, IE all accounts are open
+					Write-Host "All Accounts are currently open!" -foregroundcolor yellow
+					$Script:AccountID = Read-host "Press r to refresh, or x to quit."
+				}
+				if($Script:AccountID -notin ($AcceptableValues + "x" + "r") -and $null -ne $Script:AccountID){
+					Write-host "Invalid Input. Please enter one of the options above." -foregroundcolor red
+					$Script:AccountID = $Null
+				}
+			} until ($Null -ne $Script:AccountID)
+
+			if ($Null -ne $Script:AccountID){
+				if($Script:AccountID -eq "x"){
+					Exit
+				}
+				$Script:AccountChoice = $Script:AccountOptionsCSV |where-object {$_.id -eq $Script:AccountID} #filter out to only include the account we selected.
+			}
+			#if ($enterpasswordsmanually -eq $true){
+			#	$script:PW = read-host "Enter the Battle.net password for $script:AccountUsername"
+			#	$Script:AccountChoice = @([pscustomobject]@{pw=$script:PW;acct=$Script:AccountOptionsCSV.acct}) #Tiny hashtable for account details.
+			#}
+		} until ($Script:AccountID -ne "r")
+	}
+}
+Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo servers that host your games, which are all over the world :)
+param	([string] $script:region)
+	write-host
+	write-host "Available regions are:"
+	write-host "Option Region Server Address"
+	write-host "------ ------ --------------"
+	foreach ($server in $ServerOptions){
+		if ($server.region.length -eq 2){$regiontablespacing = "  "}
+		if ($server.region.length -eq 4){$regiontablespacing = ""}
+		write-host ($server.option + "      " + $server.region + $regiontablespacing + "   " + $server.region_server)
+	}
+	write-host	
+		do {
+			$Script:RegionOption = Read-host ("Please select a region (1, 2 or 3) or press enter for the default (" + $script:defaultregion + ": " +($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
+			if ("" -eq $Script:RegionOption){
+				$Script:RegionOption = $Script:DefaultRegion #default to NA
+			}
+			if($Script:RegionOption -notin $Script:ServerOptions.option){
+				Write-host "Invalid Input. Please enter one of the options above." -foregroundcolor red
+				$Script:RegionOption = ""
+			}
+		} until ("" -ne $Script:RegionOption)
+	if ($Script:RegionOption -eq 1 ){$script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server}
+	if ($Script:RegionOption -eq 2 ){$script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server}
+	if ($Script:RegionOption -eq 3 ){$script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server}
+}
+
+Function Processing {
+	if (($script:pw -eq "" -or $script:pw -eq $null) -and $script:pwmanualset -eq 0 ){
+		$script:pw = $Script:AccountChoice.pw.tostring()
+	}
+	if ($script:ParamsUsed -ne $true){
+		$script:acct = $Script:AccountChoice.acct.tostring()
+	}
+	else {
+		$script:acct = $script:AccountUsername
+		$Script:AccountID = "1"
+	}
+	$script:region = $script:region.tostring()
+	try {
+		$Script:AccountFriendlyName = $Script:AccountChoice.bnet_displayname.tostring()
+	}
+	Catch {
+		$Script:AccountFriendlyName = $script:AccountUsername
+	}	
+
+	#Open diablo with parameters
+		# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
+	$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region).tostring()
+	#write-output $arguments #debug
+	Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
+	start-sleep -milliseconds 1500
+
+	#Close the 'Check for other instances' handle
+	Write-host "Attempting to close `"Check for other instances`" handle..."
+	$maxattempts = 5 #try closing 20 times.
+	do {#wait for d2r process to start
+		$output = killhandle | out-string
+		start-sleep -milliseconds 1000
+		if(($output.contains("DiabloII Check For Other Instances")) -eq $true){
+			$handlekilled = $true
+			$attempt = $attempt + 1
+			write-host ("Attempt " + $attempt + "....")
+			write-host "Check for Other Instances Handle closed." -foregroundcolor green
+		}	
+	} until ($handlekilled -eq $True -or $attempt -eq $maxattempts)
+	if ($attempt -eq $maxattempts){
+		Write-Host " Couldn't find any handles to kill." -foregroundcolor red
+	}
+	#Rename the window
+	if($script:WindowRenamerConfigured -eq $True){
+		$rename = ($Script:AccountID + " - Diablo II: Resurrected - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")")
+		$command = ('"'+ $WorkingDirectory + '\SetText\SetText.exe" "Diablo II: Resurrected" "' + $rename +'"')
+		try {
+			cmd.exe /c $command
+			#write-output $command  #testing
+			write-host "Window Renamed." -foregroundcolor green
+		}
+		catch {
+			write-host "Couldn't rename window :(" -foregroundcolor red
+		}
+	}
+	Else {
+		write-host "SetText not configured, Diablo window not renamed." -foregroundcolor yellow
+	}
+	start-sleep -milliseconds 200
+	$Script:ScriptHasBeenRun = $true
+	if ($script:ParamsUsed -ne $true){
+		Menu
+	}
+	else {
+		write-host "I'm quitting LOL"
+		exit
+	}
+}
+cls
+Menu
+
+#For Diablo II: Resurrected
+#Dedicated to my cat Toby.
+
+#Text Colors
+#Color	Hex value	RGB Value	Description
+#FFA500	255 165 000	Crafted items
+#4169E1	065 105 225	Magic items
+#FFFF00	255 255 000	Rare items
+#00FF00	000 255 000	Set items
+#A59263	165 146 099	Unique items
