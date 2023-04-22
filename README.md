@@ -37,7 +37,8 @@ Optional, only do this if you don't trust me and want to build the .exe yourself
 5. This should compile SetText.exe. This is used to give the Diablo windows a unique name once it's initialized.
 
 # Optional Script Config #
-- If you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this.
+Some settings under the Script Options section can be changed by editing D2Loader.ps1 in a text editor.
+- Most importantly, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this.
 - Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
 - Set your default region if you just want to mash enter instead of choosing the region.
 
