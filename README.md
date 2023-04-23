@@ -1,10 +1,13 @@
-This is a tool I made for loading multiple Diablo 2 Resurrected instances. Cool Huh.
+This is a tool I made for loading multiple Diablo 2 Resurrected instances. Cool aye.
+Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from battlenet client) and then manually using ProcExp to kill the handle, run this one script instead.
 
 # But what does it do? #
+
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.
 Script will import account details from CSV. 
 
 Alternatively you can call script with account, password & region parameters: -account username@emailaddress.com  -pw MyBNetAccountPassword -region na.actual.battle.net
+
 
 Instructions for setup below.
 *Quick note on paths, ".\" refers to the folder where your script sits. You can save this in any folder you like, but the script does look for subfolders within this folder (eg .\handle). 
@@ -20,7 +23,7 @@ Instructions for setup below.
 1. Open Accounts.csv in a text editor or excel.
 2. Add number for each account starting from 1.
 3. Add your account sign in address
-4. Add your account password
+4. Add your account password (or not, if empty in the csv you can type this into the window each time)
 5. Add a 'friendly' name for each account, this will appear in your diablo window. I just added my Bnet usernames.
 
 If opening in Excel you add this info in each column. Otherwise open and edit in notepad.
