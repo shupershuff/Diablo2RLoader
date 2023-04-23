@@ -353,13 +353,6 @@ Function Menu {
 	Processing
 }
 Function ChooseAccount {
-	if ($null -ne $script:AccountUsername -and ($null -eq $script:PW -or "" -eq $script:PW) ){#-or $enterpasswordsmanually -eq $True){
-		$script:PW = read-host "Enter the Battle.net password for $script:AccountUsername"
-		$script:pwmanualset = $true
-	}
-	else {
-		$script:pwmanualset = $false
-	}
 	if ($null -ne $script:AccountUsername){ #if parameters have already been set.
 		$Script:AccountOptionsCSV = @(
 			[pscustomobject]@{pw=$script:PW;acct=$script:AccountUsername}
@@ -414,6 +407,13 @@ Function ChooseAccount {
 				$Script:AccountChoice = $Script:AccountOptionsCSV |where-object {$_.id -eq $Script:AccountID} #filter out to only include the account we selected.
 			}
 		} until ($Script:AccountID -ne "r")
+	}
+	if (($null -ne $script:AccountUsername -and ($null -eq $script:PW -or "" -eq $script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.pw.length -eq 0))){
+		$script:PW = read-host "Enter the Battle.net password for $script:AccountUsername"
+		$script:pwmanualset = $true
+	}
+	else {
+		$script:pwmanualset = $false
 	}
 }
 Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo servers that host your games, which are all over the world :)
@@ -496,7 +496,7 @@ Function Processing {
 	catch {
 		write-host "Couldn't rename window :(" -foregroundcolor red
 	}
-	start-sleep -milliseconds 20000
+	start-sleep -milliseconds 200
 	$Script:ScriptHasBeenRun = $true
 	if ($script:ParamsUsed -ne $true){
 		Menu
