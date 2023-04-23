@@ -16,10 +16,11 @@ This also helps the script know which games are open to prevent you accidentally
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
 # Is this Script against ToS? #
-This script is the same as opening multiple instaces from the battlenet client OR from setting up shortcuts to the game with account,region,pw parameters and launching that way and then killing the handle.
+This script is the same as opening multiple instaces from the battlenet client OR from setting up shortcuts to the game with account,region,pw parameters and launching that way and then killing the "Check for other instances" handle.
 No modifications to the game are being made, this script just helps save you mouse clicks to launch the game because RSI is real with this game.
 
-So the real question is, is Multiboxing against ToS. I don't think so, but there are discussions on various forums regarding this matter.
+So the real question is, is Multiboxing against ToS?
+I don't think so, but there are discussions on various forums regarding this matter.
 
 # Setup Steps #
 **Download**
