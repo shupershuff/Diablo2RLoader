@@ -13,11 +13,11 @@ Pre-Requisites:
 # Instructions: #
 #################
 See 
- 1. Populate csv file "accounts.csv" with your account details. Headings for this CSV are ID,acct,pw,bnet_displayname
+ 1. Populate csv file "accounts.csv" with your account details. Headings for this CSV are ID,acct,pw,accountlabel
 	- ID is simply a number, number these 1 to 5 if you have 5 accounts.
 	- acct is your bnet email sign in address
 	- pw is your bnet account password.
-	- bnet_displayname is simply a friendly name you can add so you can tell which window is a particular account. I prefer to enter in my bnet usernames (without the #1234 at the end).
+	- accountlabel is simply a friendly name you can add so you can tell which window is a particular account. I prefer to enter in my bnet usernames (without the #1234 at the end).
  2. Set any Script Options if required (Check Game Path is accurate, other options are...optional).
  3. ????
  4. ????
@@ -264,7 +264,7 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 			$ActiveAccountDetails = $Script:AccountOptionsCSV | where-object {$_.id -eq $ActiveID}
 			$ActiveAccount = New-Object -TypeName psobject
 			$ActiveAccount | Add-Member -MemberType NoteProperty -Name ID -Value $ActiveAccountDetails.ID
-			$ActiveAccount | Add-Member -MemberType NoteProperty -Name AccountName -Value $ActiveAccountDetails.bnet_displayname
+			$ActiveAccount | Add-Member -MemberType NoteProperty -Name AccountName -Value $ActiveAccountDetails.accountlabel
 			#$Script:ActiveAccount | Add-Member -MemberType NoteProperty -Name SignIn -Value $ActiveAccountDetails.acct
 			[VOID]$Script:ActiveAccountsList.Add($ActiveAccount)
 		}
@@ -275,13 +275,13 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 }
 Function DisplayActiveAccounts {
 	write-host 
-	write-host "ID  Battlenet Name"
+	write-host "ID  Account Label"
 	foreach ($AccountOption in $Script:AccountOptionsCSV){
 		if ($AccountOption.id -in $Script:ActiveAccountsList.id){
-			write-host ($AccountOption.ID + "   " + $AccountOption.bnet_displayname + " - Account Currently In Use.") -foregroundcolor yellow
+			write-host ($AccountOption.ID + "   " + $AccountOption.accountlabel + " - Account Currently In Use.") -foregroundcolor yellow
 		}
 		else {
-			write-host ($AccountOption.ID + "   " + $AccountOption.bnet_displayname) -foregroundcolor green
+			write-host ($AccountOption.ID + "   " + $AccountOption.accountlabel) -foregroundcolor green
 		}
 	}
 }
@@ -367,7 +367,7 @@ Function ChooseAccount {
 				}
 			}
 			Else {
-				$Script:AccountOptionsCSV | Format-Table id,@{L='Battlenet Name';E={$_.bnet_displayname}}#,@{L=’Account’;E={$_.acct}}
+				$Script:AccountOptionsCSV | Format-Table id,@{L='Battlenet Name';E={$_.accountlabel}}#,@{L=’Account’;E={$_.acct}}
 				$AcceptableValues = ($Script:AccountOptionsCSV.ID) #+ "x"
 			}
 			$accountoptions = ($AcceptableValues -join  ", ").trim()
@@ -436,7 +436,7 @@ Function Processing {
 	}
 	$script:region = $script:region.tostring()
 	try {
-		$Script:AccountFriendlyName = $Script:AccountChoice.bnet_displayname.tostring()
+		$Script:AccountFriendlyName = $Script:AccountChoice.accountlabel.tostring()
 	}
 	Catch {
 		$Script:AccountFriendlyName = $script:AccountUsername
