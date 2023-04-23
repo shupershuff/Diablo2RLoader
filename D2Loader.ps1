@@ -168,7 +168,7 @@ function quoteroll {#stupid thing to draw a random quote but also draw a random 
 	$desiredIndent = 2  # indent spaces
 	$chunkSize = $consoleWidth - $desiredIndent
 	[RegEx]::Matches($LeQuote, ".{$chunkSize}|.+").Groups.Value | ForEach-Object {
-		write-output $_ | magic
+		write-output $_ | &$quality
 	}
 	Write-Host
 }
@@ -496,7 +496,7 @@ Function Processing {
 	catch {
 		write-host "Couldn't rename window :(" -foregroundcolor red
 	}
-	start-sleep -milliseconds 200
+	start-sleep -milliseconds 20000
 	$Script:ScriptHasBeenRun = $true
 	if ($script:ParamsUsed -ne $true){
 		Menu
