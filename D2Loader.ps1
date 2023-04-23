@@ -60,17 +60,37 @@ if ($null -ne $region){
 }
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments "  -Verb RunAs;exit } #run script as admin
+$script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
+
 #set window size
 [console]::WindowWidth=77;
 [console]::WindowHeight=52;
 [console]::BufferWidth=[console]::WindowWidth
 
 #Check SetText.exe setup
-$script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
+Add-MpPreference -ExclusionPath "$script:WorkingDirectory\SetText" #Add Defender Exclusion for SetText.exe directory, at least until Microsoft reviews the file (submitted 24.4.2023) and stops flagging as "Trojan:Win32/Wacatac.B!ml" as per https://github.com/hankhank10/false-positive-malware-reporting
 if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
-	write-host "SetText.exe is in the .\SetText\ folder. See instructions for more details on setting this up." -foregroundcolor red
-	pause
-	exit
+	Write-Host
+	Write-Host "First Time run!" -foregroundcolor Yellow
+	Write-Host
+	write-host "SetText.exe not in .\SetText\ folder and needs to be built."
+	if((Test-Path -Path "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe") -ne $True){#check that .net4.0 is actually installed or compile will fail.
+		write-host ".Net v4.0 not installed. This is required to compile the Window Renamer for Diablo." -foregroundcolor red
+		write-host "Download and install it from Microsoft here:" -foregroundcolor red
+		write-host "https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40" #actual download link https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net40-web-installer
+		pause
+		exit
+	}
+	Write-Host "Compiling SetText.exe from SetText.bas..."
+	& "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" -target:winexe -out:"`"$WorkingDirectory\SetText\SetText.exe`"" "`"$WorkingDirectory\SetText\SetText.bas`"" | out-null #/verbose  #actually compile the bastard
+	if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){#if it fails for some reason and settext.exe still doesn't exist.
+		Write-Host "SetText Could not be built for some reason :/"
+		Write-Host "Exiting"
+		Pause
+		Exit
+	}
+	Write-Host "Successfully built SetText.exe for Diablo 2 Launcher script :)" -foregroundcolor green
+	start-sleep -milliseconds 4000 #a small delay so the first time run outputs can briefly be seen
 }
 
 #Check Handle64.exe downloaded and placed into correct folder
