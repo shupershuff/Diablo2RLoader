@@ -1,6 +1,9 @@
 This is a tool I made for loading multiple Diablo 2 Resurrected instances. Cool aye.
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from battlenet client) and then manually using ProcExp to kill the handle, run this one script instead.
 
+![Launcher](https://user-images.githubusercontent.com/63577525/233829526-2b28f2b9-761b-4d95-af0f-6561bda8ddf3.png)
+![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
+
 # But what does it do? #
 
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.
