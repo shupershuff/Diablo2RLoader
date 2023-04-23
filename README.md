@@ -39,6 +39,10 @@ I don't think so, but there are discussions on various forums regarding this mat
 
 If opening in Excel you add this info in each column. Otherwise open and edit in notepad.
 
+**Run the script manually**
+1. Browse to the folder, right click on D2Loader.ps1 and choose run.
+2. This will perform the first time setup for compiling settext.exe and will create a shortcut on your desktop.
+
 **Optional Script Config**
 Some settings under the Script Options section can be changed by editing D2Loader.ps1 in a text editor.
 - Most importantly, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this.
