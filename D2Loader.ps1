@@ -58,14 +58,14 @@ if ($null -ne $pw){
 if ($null -ne $region){
 	$scriptarguments += " -region $region"
 }
-if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments" -Verb RunAs; exit } #run script as admin
-if ($AccountUsername -ne $null){
-	$script:ParamsUsed = $true
-}
-Else {
-	$script:ParamsUsed = $false
-}
 
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments "  -Verb RunAs;exit } #run script as admin
+#set window size
+[console]::WindowWidth=77;
+[console]::WindowHeight=52;
+[console]::BufferWidth=[console]::WindowWidth
+
+#Check SetText.exe setup
 $script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
 	write-host "SetText.exe is in the .\SetText\ folder. See instructions for more details on setting this up." -foregroundcolor red
@@ -73,14 +73,15 @@ if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){ #-
 	exit
 }
 
+#Check Handle64.exe downloaded and placed into correct folder
 $script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 if((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
 	write-host "Handle64.exe is in the .\Handle\ folder. See instructions for more details on setting this up." -foregroundcolor red
 	pause
 	exit
 }
-
-if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ #Check Windows Game Path is accurate.
+#Check Windows Game Path for D2r.exe is accurate.
+if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ 
 	write-host "Gamepath is incorrect. Looks like you have a custom D2r install location! Edit the $GamePath variable in the script" -foregroundcolor red
 	pause
 	exit
@@ -98,6 +99,14 @@ if ($CreateDesktopShortcut -eq $True){
 	$shortcut.IconLocation = "$Script:GamePath\D2R.exe" 
 	$shortcut.Save()
 }
+#check if username was passed through via parameter
+if ($AccountUsername -ne $null){
+	$script:ParamsUsed = $true
+}
+Else {
+	$script:ParamsUsed = $false
+}
+
 #Import CSV
 if ($script:AccountUsername -eq $null){#If no parameters sent to script.
 	try {
@@ -135,25 +144,32 @@ $script:itemLookup = foreach ($entry in $QualityHash.GetEnumerator()){
 }
 $x = [char]0x1b #escape character for ANSI text colors
 function Magic {#text colour formatting for "magic" quotes
-    process { write-host " $x[38;2;65;105;225;48;2;1;1;1;4m$_$x[0m" }
+    process { write-host "  $x[38;2;65;105;225;48;2;1;1;1;4m$_$x[0m" }
 }
 function SetItem {
-    process { write-host " $x[38;2;0;225;0;48;2;1;1;1;4m$_$x[0m"}
+    process { write-host "  $x[38;2;0;225;0;48;2;1;1;1;4m$_$x[0m"}
 }
 function Unique {
-    process { write-host " $x[38;2;165;146;99;48;2;1;1;1;4m$_$x[0m"}
+    process { write-host "  $x[38;2;165;146;99;48;2;1;1;1;4m$_$x[0m"}
 }
 function Rare {
-    process { write-host " $x[38;2;255;255;0;48;2;1;1;1;4m$_$x[0m"}
+    process { write-host "  $x[38;2;255;255;0;48;2;1;1;1;4m$_$x[0m"}
 }
 function Normal {
-    process { write-host " $x[38;2;255;255;255;48;2;1;1;1;4m$_$x[0m"}
+    process { write-host "  $x[38;2;255;255;255;48;2;1;1;1;4m$_$x[0m"}
 }
 
 function quoteroll {#stupid thing to draw a random quote but also draw a random quality.
 	$quality = get-random $itemlookup
 	Write-Host
-	Write-output (Get-Random -inputobject $script:quotelist)  | &$quality
+	#Write-output (Get-Random -inputobject $script:quotelist)  | &$quality
+	$LeQuote = (Get-Random -inputobject $script:quotelist)  #| &$quality
+	$consoleWidth = $Host.UI.RawUI.BufferSize.Width
+	$desiredIndent = 2  # indent spaces
+	$chunkSize = $consoleWidth - $desiredIndent
+	[RegEx]::Matches($LeQuote, ".{$chunkSize}|.+").Groups.Value | ForEach-Object {
+		write-output $_ | magic
+	}
 	Write-Host
 }
 
@@ -169,10 +185,12 @@ $script:quotelist =
 "Well, what the hell do you want? Oh, it's you. Uh, hi there.",
 "What do you need?",
 "Your presence honors me.",
+"I'll put that to good use.",
 "Good to see you!",
 "Looking for Baal?",
 "All who oppose me, beware",
 "Greetings",
+"Ner. Ner! Nur. Roah. Hork, Hork.",
 "I shall make weapons from your bones",
 "I am overburdened",
 "This magic ring does me no good.",
@@ -205,30 +223,30 @@ $script:quotelist =
 
 $BannerLogo = @"
 
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%%%%%%%%%%%%%%%%%%%
- %%%%%%%#%%%%%%%/%%%%%%%%%%%#%%%%%%%%%%%%##%%%%%%%%%#/##%%%%%%%%%%%%%%%%%%
- %%#(%/(%%%//(/*#%%%%%%%%%%%###%%%%#%%%%%###%%%%%###(*####%##%%%#%%*%%%%%%
- %%%( **/*///%%%%%%%%%###%%#(######%%#########%####/*/*.,#((#%%%#*,/%%%%%%
- %%%#*/.,*/,,*/#/%%%/(*#%%#*(%%(*/%#####%###%%%#%%%(///*,**/*/*(.&,%%%%%%%
- %%%%%%// % ,***(./*/(///,/(*,./*,*####%#*/#####/,/(((/.*.,.. (@.(%%%%%%%%
- %%%%%%%#%* &%%#..,,,,**,.,,.,,**///.*(#(*.,.,,*,,,,.,*, .&%&&.*%%%%%%%%%%
- %%%%%%%%%%%#.@&&%&&&%%%%&&%%,.(((//,,/*,,*.%&%&&&&&&&&%%&@%,#%%%%%%%%%%%%
- %%%%%%%%%%%%%(.&&&&&%&&&%(.,,*,,,,,.,,,,.,.*,%&&&%&&%&&&@*##%%%%%%%%%%%%%
- %%%%%%%%%%%%%%# @@@&&&&&(  @@&&@&&&&&&&&&*..,./(&&&&&&&&*####%%%%%%%%%%%%
- %%%%%%%%%%%%%%# &@@&&&&&(*, @@@&.,,,,. %@@&&*.,(%&&&&&&&/%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%#.&@@&&&&&(*, @@@@,((#&&%#.&@@&&.*#&&@&&&&/#%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%%*&@@@&&&&#*, @@@@,*(#%&&%#,@@@&@,(%&&&&&&(%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%%*&@&&&%&&(,. @@@@,(%%%%%%#/,@@@& *#&&@&&%(%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%%*&&&@&%&&(,. @@@@,%&%%%%%%(.@@@@ /#&&&&&&(%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%%,&&&&&%%&(*, @@@@,&&&&&&&%//@@@@./%&&&&@&(%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%(*&&&&&&&%(,, @@@@,%&&&#(/*.@@@@&./%&&&&@&(%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%%,&&&&&&&%(,, @@@@,/##/(// @@&@@,/#&&&&&&&(%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%(,&&&&&&&%(,, @@@@.*,,..*@@@&&*./#&&%&&&&&(%#%%#%%%%%%%%%%%
- %%%%%%%%%%%#%%#.&&&&&%%#* @@@&&&@@@&&%&&&% */*%&&%#&&&&&/((#%%%%%%%%%%%%%
- %%%%%%%%(#//*/.&&&#%#%#.@&& ..,,****,,*//((/*#%%%####%%%#/#/#%%%%%%%%%%%%
- %%%%%##***.,**////*(//,&.*/***.*/%%#%/%#*.***/*/***//**/(((/.,*(//*/(##%%
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%#%%%%%%%/%%%%%%%%%%%#%%%%%%%%%%%%##%%%%%%%%%#/##%%%%%%%%%%%%%%%%%%
+  %%#(%/(%%%//(/*#%%%%%%%%%%%###%%%%#%%%%%###%%%%%###(*####%##%%%#%%*%%%%%%
+  %%%( **/*///%%%%%%%%%###%%#(######%%#########%####/*/*.,#((#%%%#*,/%%%%%%
+  %%%#*/.,*/,,*/#/%%%/(*#%%#*(%%(*/%#####%###%%%#%%%(///*,**/*/*(.&,%%%%%%%
+  %%%%%%// % ,***(./*/(///,/(*,./*,*####%#*/#####/,/(((/.*.,.. (@.(%%%%%%%%
+  %%%%%%%#%* &%%#..,,,,**,.,,.,,**///.*(#(*.,.,,*,,,,.,*, .&%&&.*%%%%%%%%%%
+  %%%%%%%%%%%#.@&&%&&&%%%%&&%%,.(((//,,/*,,*.%&%&&&&&&&&%%&@%,#%%%%%%%%%%%%
+  %%%%%%%%%%%%%(.&&&&&%&&&%(.,,*,,,,,.,,,,.,.*,%&&&%&&%&&&@*##%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%# @@@&&&&&(  @@&&@&&&&&&&&&*..,./(&&&&&&&&*####%%%%%%%%%%%%
+  %%%%%%%%%%%%%%# &@@&&&&&(*, @@@&.,,,,. %@@&&*.,(%&&&&&&&/%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%#.&@@&&&&&(*, @@@@,((#&&%#.&@@&&.*#&&@&&&&/#%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%*&@@@&&&&#*, @@@@,*(#%&&%#,@@@&@,(%&&&&&&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%*&@&&&%&&(,. @@@@,(%%%%%%#/,@@@& *#&&@&&%(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%*&&&@&%&&(,. @@@@,%&%%%%%%(.@@@@ /#&&&&&&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%,&&&&&%%&(*, @@@@,&&&&&&&%//@@@@./%&&&&@&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%(*&&&&&&&%(,, @@@@,%&&&#(/*.@@@@&./%&&&&@&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%,&&&&&&&%(,, @@@@,/##/(// @@&@@,/#&&&&&&&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%(,&&&&&&&%(,, @@@@.*,,..*@@@&&*./#&&%&&&&&(%#%%#%%%%%%%%%%%
+  %%%%%%%%%%%#%%#.&&&&&%%#* @@@&&&@@@&&%&&&% */*%&&%#&&&&&/((#%%%%%%%%%%%%%
+  %%%%%%%%(#//*/.&&&#%#%#.@&& ..,,****,,*//((/*#%%%####%%%#/#/#%%%%%%%%%%%%
+  %%%%%##***.,**////*(//,&.*/***.*/%%#%/%#*.***/*/***//**/(((/.,*(//*/(##%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 "@
 
 Function Killhandle {#kudos the info in this post to save me from figuring it out: https://forums.d2jsp.org/topic.php?t=90563264&f=87
