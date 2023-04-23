@@ -1,18 +1,25 @@
-This is a tool I made for loading multiple Diablo 2 Resurrected instances. Cool aye.
+# Overview  #
+This is a free tool I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/Multiboxes). 
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from battlenet client) and then manually using ProcExp to kill the handle, run this one script instead.
+Cool aye?
 
 ![Launcher](https://user-images.githubusercontent.com/63577525/233829526-2b28f2b9-761b-4d95-af0f-6561bda8ddf3.png)
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
 
 # But what does it do? #
-
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.
-Script will import account details from CSV. 
+It will achieve this by importing account details from a CSV that you populate.
+	Note: If you don't want your password details stored here, you can leave blank and type in manually when running script.
+Once the Game has initialised, the window will be renamed so it's easier to tell which game is which.
+This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.
 
-Alternatively you can call script with account, password & region parameters: -account username@emailaddress.com  -pw MyBNetAccountPassword -region na.actual.battle.net
+Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
+# Is this Script against ToS? #
+This script is the same as opening multiple instaces from the battlenet client OR from setting up shortcuts to the game with account,region,pw parameters and launching that way and then killing the handle.
+No modifications to the game are being made, this script just helps save you mouse clicks to launch the game because RSI is real with this game.
 
-Instructions for setup below.
+So the real question is, is Multiboxing against ToS. I don't think so, but there are discussions on various forums regarding this matter.
 
 # Setup Steps #
 **Download**
