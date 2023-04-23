@@ -68,13 +68,20 @@ Else {
 
 $script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
-	write-host "SetText is not configured. See instructions for more details on setting this up." -foregroundcolor red
+	write-host "SetText.exe is in the .\SetText\ folder. See instructions for more details on setting this up." -foregroundcolor red
+	pause
+	exit
+}
+
+$script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
+if((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
+	write-host "Handle64.exe is in the .\Handle\ folder. See instructions for more details on setting this up." -foregroundcolor red
 	pause
 	exit
 }
 
 if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ #Check Windows Game Path is accurate.
-	write-host "Gamepath is incorrect. Edit the $" -foregroundcolor red
+	write-host "Gamepath is incorrect. Looks like you have a custom D2r install location! Edit the $GamePath variable in the script" -foregroundcolor red
 	pause
 	exit
 }
@@ -91,7 +98,7 @@ if ($CreateDesktopShortcut -eq $True){
 	$shortcut.IconLocation = "$Script:GamePath\D2R.exe" 
 	$shortcut.Save()
 }
-
+#Import CSV
 if ($script:AccountUsername -eq $null){#If no parameters sent to script.
 	try {
 		$Script:AccountOptionsCSV = import-csv "$script:WorkingDirectory\Accounts.csv" #import all accounts from csv
@@ -104,13 +111,13 @@ if ($script:AccountUsername -eq $null){#If no parameters sent to script.
 		Exit
 	}
 }
-
+#Set Region Array
 $Script:ServerOptions = @(
 	[pscustomobject]@{Option='1';region='NA';region_server='us.actual.battle.net'}#Americas
 	[pscustomobject]@{Option='2';region='EU';region_server='eu.actual.battle.net'}#Europe
 	[pscustomobject]@{Option='3';region='Asia';region_server='kr.actual.battle.net'}
 )
-
+#Set item quality array for randomizing quote colours. A stupid addition to script but meh.
 $QualityArray = @(#quality and chances for things to drop based on 0MF values in D2r (I think?)
 	[pscustomobject]@{Type='Unique';Probability=25}
 	[pscustomobject]@{Type='SetItem';Probability=62}
@@ -120,14 +127,14 @@ $QualityArray = @(#quality and chances for things to drop based on 0MF values in
 )
 
 $QualityHash = @{}; 
-foreach ($object in $QualityArray | select-object type,probability){#convert to hashtable
+foreach ($object in $QualityArray | select-object type,probability){#convert PSOobjects to hashtable for enumerator
 	$QualityHash.add($object.type,$object.probability) #add each PSObject to hash
 }
 $script:itemLookup = foreach ($entry in $QualityHash.GetEnumerator()){
 	[System.Linq.Enumerable]::Repeat($entry.Key, $entry.Value)
 }
-$x = [char]0x1b #escape character
-function Magic {
+$x = [char]0x1b #escape character for ANSI text colors
+function Magic {#text colour formatting for "magic" quotes
     process { write-host " $x[38;2;65;105;225;48;2;1;1;1;4m$_$x[0m" }
 }
 function SetItem {
@@ -165,6 +172,7 @@ $script:quotelist =
 "Good to see you!",
 "Looking for Baal?",
 "All who oppose me, beware",
+"Greetings",
 "I shall make weapons from your bones",
 "I am overburdened",
 "This magic ring does me no good.",
@@ -190,6 +198,8 @@ $script:quotelist =
 "Whatcha need?",
 "Good day to you partner!",
 "Moomoo, moo, moo. Moo, Moo Moo Moo Mooo.",
+"Moo.",
+"Moooooooooooooo",
 "Gem Activated",
 "Gem Deactivated"
 
@@ -265,7 +275,7 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 			$ActiveAccount = New-Object -TypeName psobject
 			$ActiveAccount | Add-Member -MemberType NoteProperty -Name ID -Value $ActiveAccountDetails.ID
 			$ActiveAccount | Add-Member -MemberType NoteProperty -Name AccountName -Value $ActiveAccountDetails.accountlabel
-			#$Script:ActiveAccount | Add-Member -MemberType NoteProperty -Name SignIn -Value $ActiveAccountDetails.acct
+			#$ActiveAccount | Add-Member -MemberType NoteProperty -Name SignIn -Value $ActiveAccountDetails.acct
 			[VOID]$Script:ActiveAccountsList.Add($ActiveAccount)
 		}
 	}
@@ -305,7 +315,6 @@ Function Menu {
 
 	Write-Host $BannerLogo -foregroundcolor yellow
 	QuoteRoll
-	start-sleep -milliseconds 10
 	ChooseAccount
 	if($script:ParamsUsed -eq $false -and ($Script:RegionOption.length -ne 0 -or $Script:Region.length -ne 0)){
 		if ($Script:AskForRegionOnceOnly -ne $true){
@@ -353,22 +362,15 @@ Function ChooseAccount {
 					Write-Host "Region:  " $lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
 				}
 				Write-Host $BannerLogo -foregroundcolor yellow
-				QuoteRoll
-				
+				QuoteRoll	
 			}
-			if ($script:WindowRenamerConfigured -eq $True){
-				CheckActiveAccounts
-				DisplayActiveAccounts
-				$AcceptableValues = New-Object -TypeName System.Collections.ArrayList
-				foreach ($AccountOption in $Script:AccountOptionsCSV){
-					if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
-						$AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"	
-					}
+			CheckActiveAccounts
+			DisplayActiveAccounts
+			$AcceptableValues = New-Object -TypeName System.Collections.ArrayList
+			foreach ($AccountOption in $Script:AccountOptionsCSV){
+				if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
+					$AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"	
 				}
-			}
-			Else {
-				$Script:AccountOptionsCSV | Format-Table id,@{L='Battlenet Name';E={$_.accountlabel}}#,@{L=’Account’;E={$_.acct}}
-				$AcceptableValues = ($Script:AccountOptionsCSV.ID) #+ "x"
 			}
 			$accountoptions = ($AcceptableValues -join  ", ").trim()
 			do {
@@ -465,7 +467,7 @@ Function Processing {
 	if ($attempt -eq $maxattempts){
 		Write-Host " Couldn't find any handles to kill." -foregroundcolor red
 	}
-	#Rename the window
+	#Rename the Diablo Game window for easier identification of which account and region the game is.
 	$rename = ($Script:AccountID + " - Diablo II: Resurrected - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")")
 	$command = ('"'+ $WorkingDirectory + '\SetText\SetText.exe" "Diablo II: Resurrected" "' + $rename +'"')
 	try {
@@ -493,9 +495,9 @@ Menu
 #Dedicated to my cat Toby.
 
 #Text Colors
-#Color	Hex value	RGB Value	Description
-#FFA500	255 165 000	Crafted items
-#4169E1	065 105 225	Magic items
-#FFFF00	255 255 000	Rare items
-#00FF00	000 255 000	Set items
-#A59263	165 146 099	Unique items
+#Color Hex	RGB Value	Description
+#FFA500		255 165 000	Crafted items
+#4169E1		065 105 225	Magic items
+#FFFF00		255 255 000	Rare items
+#00FF00		000 255 000	Set items
+#A59263		165 146 099	Unique items
