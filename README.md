@@ -14,7 +14,7 @@ Alternatively you can call script with account, password & region parameters: -a
 
 Instructions for setup below.
 
-# Setup Steps#
+# Setup Steps #
 **Download**
 1. Download the latest release this and save it to a folder of your choosing :)
 
