@@ -22,7 +22,7 @@ See
  3. ????
  4. ????
  5. Profit.
- 
+
 #########
 # Notes #
 #########
@@ -33,19 +33,22 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 #>
-param($AccountUsername,$PW,$region)
+param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
 
 ###########################################################################################################################################
 # Script Options
 ###########################################################################################################################################
-$Script:GamePath = "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"
-$Script:DefaultRegion = 1 #default region, 1 for NA, 2 for EU, 3 for Asia.
-$Script:AskForRegionOnceOnly = $false
-$Script:WindowRenamerConfigured = $True #set to false if you haven't configured the SetText executable for renaming the Diablo windows.
+#Adjust the below to suit your setup and preferences :)
+$GamePath = "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"
+$DefaultRegion = 1 #default region, 1 for NA, 2 for EU, 3 for Asia.
+$AskForRegionOnceOnly = $false
+$CreateDesktopShortcut = $True #Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to $false.
+
 
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
+$host.ui.RawUI.WindowTitle = "Diablo 2 Resurrected Loader"
 if ($null -ne $AccountUsername){
 	$scriptarguments = "-accountusername $AccountUsername"  
 }
@@ -64,13 +67,29 @@ Else {
 }
 
 $script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
-if($script:windowrenamerconfigured -eq $True){
-	if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){ #-PathType Leaf
-		write-host "SetText is not configured. See instructions for more details on setting this up." -foregroundcolor yellow
-		write-host "Script will continue to run but Diablo Windows will not be renamed." -foregroundcolor yellow
-		pause
-		$script:windowrenamerconfigured = $false
-	}
+if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
+	write-host "SetText is not configured. See instructions for more details on setting this up." -foregroundcolor red
+	pause
+	exit
+}
+
+if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ #Check Windows Game Path is accurate.
+	write-host "Gamepath is incorrect. Edit the $" -foregroundcolor red
+	pause
+	exit
+}
+
+# Create Shortcut
+if ($CreateDesktopShortcut -eq $True){
+	$DesktopPath = [Environment]::GetFolderPath("Desktop")
+	$Targetfile = "-File `"$WorkingDirectory\D2Loader.ps1`""
+	$shortcutFile = "$DesktopPath\D2R Loader.lnk"
+	$WScriptShell = New-Object -ComObject WScript.Shell
+	$shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
+	$shortcut.TargetPath = "powershell.exe" 
+	$Shortcut.Arguments = $TargetFile
+	$shortcut.IconLocation = "$Script:GamePath\D2R.exe" 
+	$shortcut.Save()
 }
 
 if ($script:AccountUsername -eq $null){#If no parameters sent to script.
@@ -280,7 +299,7 @@ Function Menu {
 		Write-Host "Region:  " $lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
 	}
 	Else {
-		Write-Host "That's quite a treasure there that you have in that Horadric multibox"
+		Write-Host "You have quite a treasure there in that Horadric multibox script"
 		Write-Host
 	}
 
@@ -355,7 +374,7 @@ Function ChooseAccount {
 			do {
 				Write-Host
 				if($accountoptions.length -gt 0){
-					Write-Host "Please select which account to sign into"
+					Write-Host "Please select which account to sign into."
 					$Script:AccountID = Read-host ("Your Options are: " + $accountoptions + ", r to refresh, or x to quit.")
 				}
 				else {#if there aren't any available options, IE all accounts are open
@@ -447,20 +466,15 @@ Function Processing {
 		Write-Host " Couldn't find any handles to kill." -foregroundcolor red
 	}
 	#Rename the window
-	if($script:WindowRenamerConfigured -eq $True){
-		$rename = ($Script:AccountID + " - Diablo II: Resurrected - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")")
-		$command = ('"'+ $WorkingDirectory + '\SetText\SetText.exe" "Diablo II: Resurrected" "' + $rename +'"')
-		try {
-			cmd.exe /c $command
-			#write-output $command  #testing
-			write-host "Window Renamed." -foregroundcolor green
-		}
-		catch {
-			write-host "Couldn't rename window :(" -foregroundcolor red
-		}
+	$rename = ($Script:AccountID + " - Diablo II: Resurrected - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")")
+	$command = ('"'+ $WorkingDirectory + '\SetText\SetText.exe" "Diablo II: Resurrected" "' + $rename +'"')
+	try {
+		cmd.exe /c $command
+		#write-output $command  #testing
+		write-host "Window Renamed." -foregroundcolor green
 	}
-	Else {
-		write-host "SetText not configured, Diablo window not renamed." -foregroundcolor yellow
+	catch {
+		write-host "Couldn't rename window :(" -foregroundcolor red
 	}
 	start-sleep -milliseconds 200
 	$Script:ScriptHasBeenRun = $true
