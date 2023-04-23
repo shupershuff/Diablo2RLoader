@@ -28,7 +28,7 @@ I don't think so, but there are discussions on various forums regarding this mat
 
 **Setup Handle viewer**
 1. Download handle viewer from https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
-2. Extract the executable files (specifically handle64.exe) to the .\Handle folder
+2. Extract the executable files (specifically handle64.exe) to the .\Handle\ folder
 
 **Setup Your Accounts**
 1. Open Accounts.csv in a text editor or excel.
@@ -45,9 +45,12 @@ Some settings under the Script Options section can be changed by editing D2Loade
 - Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
 - Set your default region if you just want to mash enter instead of choosing the region.
 
-**Optional - Recompile SetText**
-Optional, only do this if you don't trust me and want to build the .exe yourself. I've left my compile of SetText.exe in here for those who can't be bothered :)
+**Notes about the Window title rename (SetText.exe)**
+The script will generate the .exe file if it doesn't exist. This is to prevent your browser considering it a dodgy file.
+To compile the .exe this requires .Net4.0. If you don't have it the script will prompt you to download this from Microsoft.
+A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy. A submission has since been sent to Microsoft.
 
+Optional: If you don't trust me and want to build the .exe yourself you can do the following.
 1. Browse to the SetText Folder.
 2. In the Address bar (the part that shows the path of the folder you're in), click in this, clear out anything that's in it, type in cmd and press enter.
 3. This will open the command prompt with it set in the path of where you've saved the script.
@@ -56,6 +59,7 @@ Optional, only do this if you don't trust me and want to build the .exe yourself
 	"C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" /target:winexe /out:"%var%\SetText.exe" "%var%\SetText.bas" /verbose
 5. This should compile SetText.exe. This is used to give the Diablo windows a unique name once it's initialized.
 
+See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
