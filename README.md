@@ -49,6 +49,7 @@ Some settings under the Script Options section can be changed by editing D2Loade
 The script will generate the .exe file if it doesn't exist. This is to prevent your browser considering it a dodgy file.
 To compile the .exe this requires .Net4.0. If you don't have it the script will prompt you to download this from Microsoft.
 A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy. A submission has since been sent to Microsoft.
+If you have an Anti-Virus product installed you may need to manually add an exception to the .\SetText\ folder.
 
 Optional: If you don't trust me and want to build the .exe yourself you can do the following.
 1. Browse to the SetText Folder.
