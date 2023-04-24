@@ -34,14 +34,14 @@ I don't think so, but there are discussions on various forums regarding this mat
 1. Open Accounts.csv in a text editor or excel.
 2. Add number for each account starting from 1.
 3. Add your account sign in address
-4. Add your account password (or not, if empty in the csv you can type this into the window each time)
+4. Add your account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
 5. Add a 'friendly' name for each account, this will appear in your diablo window. I just added my Bnet usernames.
 
 If opening in Excel you add this info in each column. Otherwise open and edit in notepad.
 
-**Run the script manually**
+**Run the script manually for the first time**
 1. Browse to the folder, right click on D2Loader.ps1 and choose run.
-2. This will perform the first time setup for compiling settext.exe and will create a shortcut on your desktop.
+2. This will perform the first time setup for compiling settext.exe, encrypting your passwords and will create a shortcut on your desktop.
 
 **Optional Script Config**
 Some settings under the Script Options section can be changed by editing D2Loader.ps1 in a text editor.
@@ -50,10 +50,11 @@ Some settings under the Script Options section can be changed by editing D2Loade
 - Set your default region if you just want to mash enter instead of choosing the region.
 
 **Notes about the Window title rename (SetText.exe)**
-The script will generate the .exe file if it doesn't exist. This is to prevent your browser considering it a dodgy file.
-To compile the .exe this requires .Net4.0. If you don't have it the script will prompt you to download this from Microsoft.
-A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy. A submission has since been sent to Microsoft.
-If you have an Anti-Virus product installed you may need to manually add an exception to the .\SetText\ folder.
+The script will generate the .exe file if it doesn't exist. This is to prevent your browser considering it a dodgy file and stopping the download.
+To compile the .exe this requires DotNet4.0. If you don't have it the script will prompt you to download this from Microsoft.
+~~A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy.~~ A submission has since been sent to Microsoft and submission has been cleared :)
+
+If you have a Anti-Virus product installed and it kicks up a fuss you may need to manually add an exception to the .\SetText\ folder.
 
 Optional: If you don't trust me and want to build the .exe yourself you can do the following.
 1. Browse to the SetText Folder.
@@ -67,11 +68,12 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-* Plan to make things a bit more secure by having any passwords encrypted or stored as hash instead of clear text in accounts.csv
 * Perhaps make a GUI if there's enough interest.
+* Maybe add a counter for how many times you've launched each account.
 
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
 - Set Text executable: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
+- MoonUnit for thoughts around converting plain text passwords to encrypted strings.
 - Google.com
