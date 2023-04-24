@@ -110,7 +110,7 @@ if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){
 # Create Shortcut
 if ($CreateDesktopShortcut -eq $True){
 	$DesktopPath = [Environment]::GetFolderPath("Desktop")
-	$Targetfile = "-File `"$WorkingDirectory\D2Loader.ps1`""
+	$Targetfile = "-ExecutionPolicy Bypass -File `"$WorkingDirectory\D2Loader.ps1`""
 	$shortcutFile = "$DesktopPath\D2R Loader.lnk"
 	$WScriptShell = New-Object -ComObject WScript.Shell
 	$shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
