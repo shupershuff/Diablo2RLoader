@@ -15,12 +15,6 @@ This also helps the script know which games are open to prevent you accidentally
 
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
-# Is this Script against ToS? #
-This script is the same as opening multiple instaces from the battlenet client OR from setting up shortcuts to the game with account,region,pw parameters and launching that way and then killing the "Check for other instances" handle.
-No modifications to the game are being made, this script just helps save you mouse clicks to launch the game because RSI is real with this game.
-
-So the real question is, is Multiboxing against ToS?
-I don't think so, but there are discussions on various forums regarding this matter.
 
 # Setup Steps #
 **Download**
@@ -66,6 +60,13 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 5. This should compile SetText.exe. This is used to give the Diablo windows a unique name once it's initialized.
 
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
+
+# Is this Script against ToS? #
+This script is the same as opening multiple instaces from the battlenet client OR from setting up shortcuts to the game with account,region,pw parameters and launching that way and then killing the "Check for other instances" handle.
+No modifications to the game are being made, this script just helps save you mouse clicks to launch the game because RSI is real with this game.
+
+So the real question is, is Multiboxing against ToS?
+I don't think so, but there are discussions on various forums regarding this matter.
 
 # What's Next #
 * Perhaps make a GUI if there's enough interest.
