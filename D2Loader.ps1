@@ -43,7 +43,7 @@ $GamePath = "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"
 $DefaultRegion = 1 #default region, 1 for NA, 2 for EU, 3 for Asia.
 $AskForRegionOnceOnly = $false
 $CreateDesktopShortcut = $True #Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to $false.
-
+$ConvertPlainTextPasswords = $True #converts passwords in your accounts.csv to an encrypted string. Recommend leaving this set to $True, but if you want you can set to $false.
 
 ###########################################################################################################################################
 # Script itself
@@ -140,6 +140,63 @@ if ($script:AccountUsername -eq $null){#If no parameters sent to script.
 		Exit
 	}
 }
+
+if ($Script:AccountOptionsCSV -ne $null){
+	#check Accounts.csv has been updated and doesn't contain the example account.
+	if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
+		write-host
+		write-host "You haven't setup accounts.csv with your accounts." -foregroundcolor red
+		write-host "Add your account details to the CSV file and run the script again :)" -foregroundcolor red
+		write-host
+		pause
+		exit
+	}
+	if ($ConvertPlainTextPasswords -ne $false){
+		#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
+		$NewCSV = Foreach ($Entry in $AccountOptionsCSV) {
+			if ($Entry.PWisSecureString.length -gt 0 -and $Entry.PWisSecureString -ne $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+				$Entry
+			}
+			if (($Entry.PWisSecureString.length -eq 0 -or $Entry.PWisSecureString -eq "no" -or $Entry.PWisSecureString -eq $false) -and $Entry.PW.length -ne 0){
+				$Entry.pw = ConvertTo-SecureString -String $Entry.pw -AsPlainText -Force
+				$Entry.pw = $Entry.pw | ConvertFrom-SecureString
+				$Entry.PWisSecureString = "Yes"
+				write-host ("Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
+				start-sleep -milliseconds 100
+				$Entry
+				$CSVupdated = $true
+			}
+			if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
+				write-host
+				write-host ("The account " + $Entry.AccountLabel + "Does not currently have a password defined.") -foregroundcolor yellow
+				write-host
+				$Entry.pw = read-host -AsSecureString "Enter the Battle.net password for"$Entry.AccountLabel
+				$Entry.pw = $Entry.pw | ConvertFrom-SecureString
+				$Entry.PWisSecureString = "Yes"
+				write-host ("Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
+				start-sleep -milliseconds 100
+				$Entry
+				$CSVupdated = $true
+			}
+		}
+		if ($CSVupdated -eq $true){
+			Try {
+				$NewCSV | Export-CSV "$script:WorkingDirectory\Accounts.csv" -NoTypeInformation #update CSV file
+				Write-host "Accounts.csv updated: Passwords have been secured." -foregroundcolor green
+				start-sleep -milliseconds 4000
+			}
+			Catch {
+				Write-host
+				Write-host "Couldn't update Accounts.csv, probably because the file is open and locked." -foregroundcolor red
+				write-host "Please close accounts.csv and run the script again!" -foregroundcolor red
+				Write-host
+				pause
+				exit
+			}
+		}
+	}
+}
+
 #Set Region Array
 $Script:ServerOptions = @(
 	[pscustomobject]@{Option='1';region='NA';region_server='us.actual.battle.net'}#Americas
@@ -190,7 +247,6 @@ function quoteroll {#stupid thing to draw a random quote but also draw a random 
 	[RegEx]::Matches($LeQuote, ".{$chunkSize}|.+").Groups.Value | ForEach-Object {
 		write-output $_ | &$quality
 	}
-	Write-Host
 }
 
 $script:quotelist =
@@ -222,17 +278,17 @@ $script:quotelist =
 "Ahh yes, ruins, the fate of all cities.",
 "I have no grief for him. Oblivion is his reward.",
 "The catapults have been silenced.",
-"The staff of kings, you astound me",
-"When - or if - I get to Lut Gholein, I'm going to find the largest bowl of Narlant weed and smoke 'til all earthly sense has left my body.",
+"The staff of kings, you astound me!",
+"When - or if - I get to Lut Gholein, I'm going to find the largest bowl`nof Narlant weed and smoke 'til all earthly sense has left my body.",
 "I've just about had my fill of the walking dead.",
 "Oh I hate staining my hands with the blood of foul Sorcerers!",
 "Damn it, I wish you people would just leave me alone!",
 "Beware! Beyond lies mortal danger for the likes of you!",
 "Only the darkest Magics can turn the sun black.",
 "You are too late! HAA HAA HAA",
-"You now speak to Ormus. He was once a great mage, but now lives like a rat in a sinking vessel",
-"I knew there was great potential in you, my friend. You've done a fantastic job.",
-"Hi there. I'm Charsi, the Blacksmith here in camp. It's good to see some strong adventurers around here.",
+"You now speak to Ormus. He was once a great mage, but now lives like a`nrat in a sinking vessel",
+"I knew there was great potential in you, my friend. You've done a`nfantastic job.",
+"Hi there. I'm Charsi, the Blacksmith here in camp. It's good to see some`nstrong adventurers around here.",
 "Whatcha need?",
 "Good day to you partner!",
 "Moomoo, moo, moo. Moo, Moo Moo Moo Mooo.",
@@ -365,6 +421,9 @@ Function Menu {
 		ChooseRegion
 	}
 	Else {#if region parameter has been set already.
+		if ($script:region -eq "NA" -or $script:region -eq "us"){$script:region = "us.actual.battle.net"}
+		if ($script:region -eq "EU"){$script:region = "eu.actual.battle.net"}
+		if ($script:region -eq "Asia" -or $script:region -eq "As"){$script:region = "kr.actual.battle.net"}
 		if ($script:region -ne "us.actual.battle.net" -and $script:region -ne "eu.actual.battle.net" -and $script:region -ne "kr.actual.battle.net"){
 			Write-host "Region not valid. Please choose region" -foregroundcolor red
 			ChooseRegion
@@ -428,7 +487,7 @@ Function ChooseAccount {
 			}
 		} until ($Script:AccountID -ne "r")
 	}
-	if (($null -ne $script:AccountUsername -and ($null -eq $script:PW -or "" -eq $script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.pw.length -eq 0))){
+	if (($null -ne $script:AccountUsername -and ($null -eq $script:PW -or "" -eq $script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.pw.length -eq 0))){#This is called when params are used but the password wasn't entered.
 		$securedPW = read-host -AsSecureString "Enter the Battle.net password for $script:AccountUsername"
 		$bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($securedPW)
 		$script:PW = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
@@ -439,7 +498,6 @@ Function ChooseAccount {
 	}
 }
 Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo servers that host your games, which are all over the world :)
-param	([string] $script:region)
 	write-host
 	write-host "Available regions are:"
 	write-host "Option Region Server Address"
@@ -469,8 +527,11 @@ Function Processing {
 	if (($script:pw -eq "" -or $script:pw -eq $null) -and $script:pwmanualset -eq 0 ){
 		$script:pw = $Script:AccountChoice.pw.tostring()
 	}
-	if ($script:ParamsUsed -ne $true){
+	if ($script:ParamsUsed -ne $true -and $ConvertPlainTextPasswords -ne $false){
 		$script:acct = $Script:AccountChoice.acct.tostring()
+		$encryptedPassword = $pw | ConvertTo-SecureString
+		$pw = New-Object System.Management.Automation.PsCredential("N/A", $encryptedPassword)
+		$script:pw = $pw.GetNetworkCredential().Password
 	}
 	else {
 		$script:acct = $script:AccountUsername
@@ -512,13 +573,14 @@ Function Processing {
 	$command = ('"'+ $WorkingDirectory + '\SetText\SetText.exe" "Diablo II: Resurrected" "' + $rename +'"')
 	try {
 		cmd.exe /c $command
-		#write-output $command  #testing
-		write-host "Window Renamed." -foregroundcolor green
+		#write-output $command  #debug
+		write-host "Window Renamed to $rename" -foregroundcolor green
+		start-sleep -milliseconds 200
 	}
 	catch {
 		write-host "Couldn't rename window :(" -foregroundcolor red
 	}
-	start-sleep -milliseconds 200
+	start-sleep -milliseconds 100
 	$Script:ScriptHasBeenRun = $true
 	if ($script:ParamsUsed -ne $true){
 		Menu
