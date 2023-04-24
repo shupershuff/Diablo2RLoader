@@ -66,6 +66,10 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
+# What's Next #
+* Plan to make things a bit more secure by having any passwords encrypted or stored as hash instead of clear text in accounts.csv
+* Perhaps make a GUI if there's enough interest.
+
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
 - Set Text executable: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
