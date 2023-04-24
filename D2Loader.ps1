@@ -429,7 +429,9 @@ Function ChooseAccount {
 		} until ($Script:AccountID -ne "r")
 	}
 	if (($null -ne $script:AccountUsername -and ($null -eq $script:PW -or "" -eq $script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.pw.length -eq 0))){
-		$script:PW = read-host "Enter the Battle.net password for $script:AccountUsername"
+		$securedPW = read-host -AsSecureString "Enter the Battle.net password for $script:AccountUsername"
+		$bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($securedPW)
+		$script:PW = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
 		$script:pwmanualset = $true
 	}
 	else {
