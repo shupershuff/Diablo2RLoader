@@ -168,7 +168,7 @@ if ($Script:AccountOptionsCSV -ne $null){
 			}
 			if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
 				write-host
-				write-host ("The account " + $Entry.AccountLabel + "Does not currently have a password defined.") -foregroundcolor yellow
+				write-host ("The account " + $Entry.AccountLabel + " doesn't yet have a password defined.") -foregroundcolor yellow
 				write-host
 				$Entry.pw = read-host -AsSecureString "Enter the Battle.net password for"$Entry.AccountLabel
 				$Entry.pw = $Entry.pw | ConvertFrom-SecureString
@@ -524,14 +524,15 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 }
 
 Function Processing {
+	
 	if (($script:pw -eq "" -or $script:pw -eq $null) -and $script:pwmanualset -eq 0 ){
 		$script:pw = $Script:AccountChoice.pw.tostring()
 	}
 	if ($script:ParamsUsed -ne $true -and $ConvertPlainTextPasswords -ne $false){
 		$script:acct = $Script:AccountChoice.acct.tostring()
 		$encryptedPassword = $pw | ConvertTo-SecureString
-		$pw = New-Object System.Management.Automation.PsCredential("N/A", $encryptedPassword)
-		$script:pw = $pw.GetNetworkCredential().Password
+		$pwobject = New-Object System.Management.Automation.PsCredential("N/A", $encryptedPassword)
+		$script:pw = $pwobject.GetNetworkCredential().Password
 	}
 	else {
 		$script:acct = $script:AccountUsername
@@ -548,25 +549,32 @@ Function Processing {
 	#Open diablo with parameters
 		# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
 	$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region).tostring()
+	$script:pw = $null
 	#write-output $arguments #debug
 	Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
-	start-sleep -milliseconds 1500
-
+	start-sleep -milliseconds 1250 #give D2r a bit of a chance to start up before trying to kill handle
 	#Close the 'Check for other instances' handle
 	Write-host "Attempting to close `"Check for other instances`" handle..."
-	$maxattempts = 5 #try closing 20 times.
+	$attempt = 0
+	$maxattempts = 10 #try closing x amount of times.
 	do {#wait for d2r process to start
+		#$output = "test" #debug
+		#$handlekilled = $true #debug
+		$attempt = $attempt + 1
+		write-host ("Attempt " + $attempt + " of $maxattempts" +"....")
 		$output = killhandle | out-string
-		start-sleep -milliseconds 1000
 		if(($output.contains("DiabloII Check For Other Instances")) -eq $true){
 			$handlekilled = $true
-			$attempt = $attempt + 1
-			write-host ("Attempt " + $attempt + "....")
 			write-host "Check for Other Instances Handle closed." -foregroundcolor green
-		}	
+		}
+		else {
+			start-sleep -milliseconds 1000 #if handle couldn't be closed give it another second before trying again.
+		}
 	} until ($handlekilled -eq $True -or $attempt -eq $maxattempts)
 	if ($attempt -eq $maxattempts){
 		Write-Host " Couldn't find any handles to kill." -foregroundcolor red
+		Write-Host " Game may not have launched as expected." -foregroundcolor red
+		pause
 	}
 	#Rename the Diablo Game window for easier identification of which account and region the game is.
 	$rename = ($Script:AccountID + " - Diablo II: Resurrected - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")")
@@ -579,6 +587,7 @@ Function Processing {
 	}
 	catch {
 		write-host "Couldn't rename window :(" -foregroundcolor red
+		pause
 	}
 	start-sleep -milliseconds 100
 	$Script:ScriptHasBeenRun = $true
