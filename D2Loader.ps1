@@ -68,7 +68,7 @@ $script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).sub
 [console]::BufferWidth=[console]::WindowWidth
 
 #Check SetText.exe setup
-Add-MpPreference -ExclusionPath "$script:WorkingDirectory\SetText" #Add Defender Exclusion for SetText.exe directory, at least until Microsoft reviews the file (submitted 24.4.2023) and stops flagging as "Trojan:Win32/Wacatac.B!ml" as per https://github.com/hankhank10/false-positive-malware-reporting
+#Add-MpPreference -ExclusionPath "$script:WorkingDirectory\SetText" #Removed on 24.4.23 as MS cleared this PUP from their end. #Add Defender Exclusion for SetText.exe directory, at least until Microsoft reviews the file (submitted 24.4.2023) and stops flagging as "Trojan:Win32/Wacatac.B!ml" as per https://github.com/hankhank10/false-positive-malware-reporting
 if((Test-Path -Path ($workingdirectory + '\SetText\SetText.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
 	Write-Host
 	Write-Host "First Time run!" -foregroundcolor Yellow
