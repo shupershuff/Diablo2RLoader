@@ -1,2 +1,2 @@
-ID,acct,pw,accountlabel
-1,YourBNetEmailAddress,YourBNetPassword,FriendlyDisplayname
+ID,acct,accountlabel,pw,pwissecurestring
+1,YourBNetEmailAddress,FriendlyDisplayname,YourBNetPassword,Leaveblank
