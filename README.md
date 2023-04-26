@@ -20,7 +20,7 @@ Note: If for some unknown reason you prefer to, you can call the script with acc
 ## Download##
 1. Download the latest [release](https://github.com/shupershuff/Diablo2RLoader/releases) this and extract the zip file to a folder of your choosing.
 2. Right click on D2loader.ps1 and open properties.
-3. Check the "Unblock" box and click apply.
+3. Check the "Unblock" box and click apply.<br>
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
 
