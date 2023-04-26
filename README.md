@@ -39,12 +39,14 @@ If opening in Excel you add this info in each column. Otherwise open and edit in
 
 ## Run the script manually for the first time
 1. Browse to the folder, right click on D2Loader.ps1 and choose run.
-   a) If you get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following.
-   b) Open the start menu and type in powershell. Open PowerShell
-   c) Enter the following command: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-   d) Type in y and press enter to confirm.
-   e) Run the script again. If the script prompts to trust it, type in y and press enter to confirm.
-2. This will perform the first time setup for compiling settext.exe, encrypting your passwords and will create a shortcut on your desktop.
+2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
+   ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
+   a) If you instead get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following steps:   
+   b) Open the start menu and type in powershell. Open PowerShell.<br>
+   c) Enter the following command: **Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser**<br>
+   d) Type in y and press enter to confirm.<br>
+3. If the script prompts to trust it and add it to the unblock list, type in y and press enter to confirm.
+4. This will perform the first time setup for compiling settext.exe, encrypting your passwords and will create a shortcut on your desktop.
 
 ## Optional Script Config
 
