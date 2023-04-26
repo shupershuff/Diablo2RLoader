@@ -57,7 +57,7 @@ Q: I have reset one of my Bnet account passwords, how do I update accounts.csv<b
 A: Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it. 
 
 Q: Is this Script against ToS?<br>
-A: Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "check for Other instances handle".
+A: Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "check for Other instances handle".
 
 Outside of killing the this handle and renaming the window, there are absolutely no modifications to the game made by this script.
 The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle. This script just helps save you mouse clicks to get you to the character select screen faster with a reduced chance of RSI :).
