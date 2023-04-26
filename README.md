@@ -56,23 +56,23 @@ Some settings under the Script Options section can be changed by editing D2Loade
 # Notes #
 ## FAQ / Common Issues
 
-Q: The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
-A: See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
+**Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
+**A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
 
-Q: I can't login despite my password being entered in correctly.<br>
-A: Try logging into the Battlenet client and approve any 2FA/verification requests that might pop up.
+**Q:** I can't login despite my password being entered in correctly.<br>
+**A:** Try logging into the Battlenet client and approve any 2FA/verification requests that might pop up.
 
-Q: I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
-A: Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it. 
+**Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
+**A:** Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it. 
 
-Q: A UAC prompt opens each time asking me to run as Admin. This is annoying. Can I disable this?<br>
-A: Yes, there are a couple ways to do this, see here: https://silicophilic.com/add-program-to-uac-exception/#Method_2_Run_Programs_With_Admin_Privileges_Without_UAC_Prompt
+**Q:** A UAC prompt opens each time asking me to run as Admin. This is annoying. Can I disable this?<br>
+**A:** Yes, there are a couple ways to do this, see here: https://silicophilic.com/add-program-to-uac-exception/#Method_2_Run_Programs_With_Admin_Privileges_Without_UAC_Prompt
 
-Q: Why does the script need to run as admin?<br>
-A: The script needs to run as admin in order to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
+**Q:** Why does the script need to run as admin?<br>
+**A:** The script needs to run as admin in order to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
 
-Q: Is this Script against ToS?<br>
-A: Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "check for Other instances handle".
+**Q:** Is this Script against ToS?<br>
+**A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "check for Other instances handle".
 
 Outside of killing this handle and renaming the window, there are absolutely no modifications to the game made by this script.
 The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle. This script just helps save you mouse clicks to get you to the character select screen faster with a reduced chance of RSI :).
