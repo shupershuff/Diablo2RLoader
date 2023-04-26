@@ -84,6 +84,7 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
+* Ability to launch accounts from separate game installs to retain game config for each account.
 * Perhaps make a GUI if there's enough interest.
 * Maybe add a counter for how many times you've launched each account.
 
