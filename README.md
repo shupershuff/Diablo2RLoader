@@ -54,16 +54,23 @@ If you've skipped ahead, the script will error out and tell you which of the pre
 
 ## Optional Script Config
 
-Some settings under the Script Options section can be changed by editing D2Loader.ps1 in a text editor.
-- Most importantly, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this.
-- Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
+Default settings within config.xml *should* be ok but can be optionally changed.
+- **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this.
 - Set your default region if you just want to mash enter instead of choosing the region.
+- Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
+- Set CreateDesktopShortcut to False if you don't want a handy dandy
+- Set ShortcutCustomIconPath to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo).
+- Set ConvertPlainTextPasswords to False if you want your passwords to be ~~stolen~~ in plain text.
+- Set ForceWindowedMode to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed.
 
 # Notes #
 ## FAQ / Common Issues
 
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
 **A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
+
+**Q:** When Diablo opens it won't allow me to select an online character<br>
+**A:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).
 
 **Q:** I can't login despite my password being entered in correctly.<br>
 **A:** Try logging into the Battlenet client and approve any 2FA/verification requests that might pop up.
@@ -105,8 +112,6 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-* Check for updates by comparing script version to github release version.
-* Move script config to xml file instead of script. - Tested, will release soon
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
 * Perhaps make a GUI if there's enough interest.
 
