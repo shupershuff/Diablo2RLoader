@@ -3,18 +3,19 @@ This is a free tool I made for loading multiple Diablo 2 Resurrected instances (
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades/dclones etc.
 Oh yea, and no more plain text passwords either. Cool aye?
 
-![Launcher](https://user-images.githubusercontent.com/63577525/233829526-2b28f2b9-761b-4d95-af0f-6561bda8ddf3.png)
+Script Screenshot:<br>
+![Launcher](https://user-images.githubusercontent.com/63577525/233829526-2b28f2b9-761b-4d95-af0f-6561bda8ddf3.png)<br>
+What your windows will look like:<br>
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
 
 ## But what does it do?
-Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.
-It will achieve this by importing account details from a CSV that you populate.
-	Note: If you don't want your password details stored here, you can leave blank and type in manually when running script.
-Once the Game has initialised, the window will be renamed so it's easier to tell which game is which.
-This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.
+Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
+It will achieve this by importing account details from a CSV that you populate.<br>
+	Note: Plain text passwords entered into the CSV will be convered into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave blank and type in manually when running script.<br>
+Once the game has initialised, the window will be renamed so it's easier to tell which game is which.<br>
+This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.<br>
 
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
-
 
 # Setup Steps
 ## Download
@@ -45,8 +46,11 @@ If opening in Excel you add this info in each column. Otherwise open and edit in
    b) Open the start menu and type in powershell. Open PowerShell.<br>
    c) Enter the following command: **Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser**<br>
    d) Type in y and press enter to confirm.<br>
+   e) Run the D2Loader.ps1 script again.<br>
 3. If the script prompts to trust it and add it to the unblock list, type in y and press enter to confirm.
 4. This will perform the first time setup for compiling settext.exe, encrypting your passwords and will create a shortcut on your desktop.
+
+If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
 
 ## Optional Script Config
 
@@ -101,8 +105,8 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-* Move script config to xml file instead of script.
-* Ability to launch accounts from separate game installs to retain game config for each account.
+* Check for updates by comparing script version to github release version.
+* Move script config to xml file instead of script. - Tested, will release soon
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
 * Perhaps make a GUI if there's enough interest.
 
