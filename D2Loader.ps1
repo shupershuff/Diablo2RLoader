@@ -67,7 +67,18 @@ Catch {
 	exit
 }
 
-$GamePath = $script:config.GamePath
+if ($config.GamePath -match "`""){#Remove any quotes from path in case someone ballses this up.
+	$script:GamePath = $config.GamePath.replace("`"","")
+}
+else {
+	$script:GamePath = $config.GamePath
+}
+if ($config.ShortcutCustomIconPath -match "`""){#Remove any quotes from path in case someone ballses this up.
+	$ShortcutCustomIconPath = $config.ShortcutCustomIconPath.replace("`"","")
+}
+else {
+	$ShortcutCustomIconPath = $config.ShortcutCustomIconPath
+}
 $DefaultRegion = $config.DefaultRegion
 $AskForRegionOnceOnly = $config.AskForRegionOnceOnly
 $CreateDesktopShortcut = $config.CreateDesktopShortcut
@@ -89,7 +100,12 @@ if ($CreateDesktopShortcut -eq $True){
 	$shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
 	$shortcut.TargetPath = "powershell.exe" 
 	$Shortcut.Arguments = $TargetFile
-	$shortcut.IconLocation = "$Script:GamePath\D2R.exe" 
+	if ($ShortcutCustomIconPath.length -eq 0){
+		$shortcut.IconLocation = "$Script:GamePath\D2R.exe"
+	}
+	Else {
+		$shortcut.IconLocation = $ShortcutCustomIconPath
+	}
 	$shortcut.Save()
 }
 
@@ -603,14 +619,14 @@ Function Processing {
 		#write-output $command  #debug
 		#write-host "Window Renamed to $rename" -foregroundcolor green
 		write-host "Window Renamed" -foregroundcolor green
-		start-sleep -milliseconds 300
-		write-host "Good luck hero." -foregroundcolor magenta
+		start-sleep -milliseconds 200
+		write-host "Good luck hero..." -foregroundcolor magenta
 	}
 	catch {
 		write-host "Couldn't rename window :(" -foregroundcolor red
 		pause
 	}
-	start-sleep -milliseconds 100
+	start-sleep -milliseconds 900
 	$Script:ScriptHasBeenRun = $true
 	if ($script:ParamsUsed -ne $true){
 		Menu
