@@ -52,10 +52,12 @@ If opening in Excel you add this info in each column. Otherwise open and edit in
 
 If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
 
-## Optional Script Config
+## Script Config (Mostly Optional)
 
 Default settings within config.xml *should* be ok but can be optionally changed.
-- **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this.
+- **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
+
+All other config options below this are strictly optional:<br>
 - Set your default region if you just want to mash enter instead of choosing the region.
 - Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
 - Set CreateDesktopShortcut to False if you don't want a handy dandy
