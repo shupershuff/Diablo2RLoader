@@ -1,33 +1,16 @@
 <# 
 Author: Shupershuff
-Version: See Github https://github.com/shupershuff/Diablo2RLoader
-Last Edited: See Github https://github.com/shupershuff/Diablo2RLoader
 Usage: Go nuts.
 Purpose:
 	Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle."
 	Script will import account details from CSV. Alternatively you can run script with account, region and password parameters.
-Pre-Requisites:
-	1. Download the handle tool https://learn.microsoft.com/en-gb/sysinternals/downloads/handle. 
-	2. Place the executables in a folder called "handle" in the same place this script lives. (ie folder path should be "./handle/")
-#################
-# Instructions: #
-#################
-See 
- 1. Populate csv file "accounts.csv" with your account details. Headings for this CSV are ID,acct,pw,accountlabel
-	- ID is simply a number, number these 1 to 5 if you have 5 accounts.
-	- acct is your bnet email sign in address
-	- pw is your bnet account password.
-	- accountlabel is simply a friendly name you can add so you can tell which window is a particular account. I prefer to enter in my bnet usernames (without the #1234 at the end).
- 2. Set any Script Options if required (Check Game Path is accurate, other options are...optional).
- 3. ????
- 4. ????
- 5. Profit.
+Instructions: See GitHub readme https://github.com/shupershuff/Diablo2RLoader
 
 #########
 # Notes #
 #########
 Multiple failed attempts (eg wrong Password) to sign onto a particular Realm via this method may temporarily lock you out. You should still be able to get in via the battlenet client if this occurs.
-Handle script stolen from https://forums.d2jsp.org/topic.php?t=90563264&f=87
+
 Servers:
  NA - us.actual.battle.net
  EU - eu.actual.battle.net
@@ -83,11 +66,13 @@ Catch {
 	pause
 	exit
 }
+
 $GamePath = $script:config.GamePath
 $DefaultRegion = $config.DefaultRegion
 $AskForRegionOnceOnly = $config.AskForRegionOnceOnly
 $CreateDesktopShortcut = $config.CreateDesktopShortcut
 $ConvertPlainTextPasswords = $config.ConvertPlainTextPasswords
+
 #Check Windows Game Path for D2r.exe is accurate.
 if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ 
 	write-host "Gamepath is incorrect. Looks like you have a custom D2r install location! Edit the $GamePath variable in the script" -foregroundcolor red
