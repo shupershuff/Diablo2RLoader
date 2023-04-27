@@ -1,5 +1,6 @@
 <!--D2Loader Config-->
 <D2loaderconfig>
+
 	<!--Default Gamepath. The below is the default install path, change this if you've installed somewhere different.
 		Note, if using multiple game installs (to keep client specific config persistent for each account), ensure these are referenced in the CustomGamePath field in accounts.csv.
 		Otherwise you can use a single install instead by linking the path below.-->
@@ -13,7 +14,10 @@
 
 	<!--Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to $false.-->
 	<CreateDesktopShortcut>True</CreateDesktopShortcut>
-
+	
+	<!--If you have a custom .ico you want to use, put the path of it here. Do not enter with quotes-->
+	<ShortcutCustomIconPath></ShortcutCustomIconPath>
+	
 	<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->
 	<ConvertPlainTextPasswords>True</ConvertPlainTextPasswords>
 	
