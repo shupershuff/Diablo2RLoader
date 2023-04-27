@@ -1,2 +1,3 @@
 ID,acct,AccountLabel,PW,PWIsSecureString
 1,YourBNetEmailAddress,FriendlyDisplayname,YourBNetPassword,LeaveBlank
+2,example@address.com,BigJoeBloggs,ExamplePassw0rd!,
