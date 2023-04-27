@@ -1,4 +1,5 @@
 # Overview
+Greetings Stranger! I'm not surprised to see your kind here.
 This is a free tool I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/Multiboxes). 
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades/dclones etc.
 Oh yea, and no more plain text passwords either. Cool aye?
