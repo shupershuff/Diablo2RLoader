@@ -34,21 +34,13 @@ Servers:
  Asia - kr.actual.battle.net
 #>
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-
-###########################################################################################################################################
-# Script Options
-###########################################################################################################################################
-#Adjust the below to suit your setup and preferences :)
-$GamePath = "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"
-$DefaultRegion = 1 #default region, 1 for NA, 2 for EU, 3 for Asia.
-$AskForRegionOnceOnly = $false
-$CreateDesktopShortcut = $True #Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to $false.
-$ConvertPlainTextPasswords = $True #converts passwords in your accounts.csv to an encrypted string. Recommend leaving this set to $True, but if you want you can set to $false.
+$CurrentVersion = "1.1.4"
 
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
 $host.ui.RawUI.WindowTitle = "Diablo 2 Resurrected Loader"
+
 if ($null -ne $AccountUsername){
 	$scriptarguments = "-accountusername $AccountUsername"  
 }
@@ -60,12 +52,61 @@ if ($null -ne $region){
 }
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments "  -Verb RunAs;exit } #run script as admin
+#Check for updates
+$tagList = Invoke-RestMethod https://api.github.com/repos/Shupershuff/Diablo2RLoader/tags
+if ([version[]]$taglist.Name.Trim('v') -gt $Script:CurrentVersion) {
+	Write-Host
+	Write-Host " Update available, See Github for latest version:" -foregroundcolor Yellow
+	write-host " https://github.com/shupershuff/Diablo2RLoader/releases/latest"
+	Write-Host
+	start-sleep 3
+}
+
 $script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 
 #set window size
 [console]::WindowWidth=77;
-[console]::WindowHeight=52;
+[console]::WindowHeight=48;
 [console]::BufferWidth=[console]::WindowWidth
+
+#Import Config XML
+try {
+	$Script:Config = ([xml](Get-Content "$script:WorkingDirectory\Config.xml")).D2loaderconfig
+	#Write-host "Config imported successfully." -foregroundcolor green
+}
+Catch {
+	write-host ""
+	write-host "Config.xml Was not able to be imported. This could be due to a typo or a special character such as `'&`' being incorrectly used." -foregroundcolor red
+	write-host "The error message below will show which line in the clientconfig.xml is invalid:" -foregroundcolor red
+	write-host $PSitem.exception.message -foregroundcolor red
+	write-host ""
+	pause
+	exit
+}
+$GamePath = $script:config.GamePath
+$DefaultRegion = $config.DefaultRegion
+$AskForRegionOnceOnly = $config.AskForRegionOnceOnly
+$CreateDesktopShortcut = $config.CreateDesktopShortcut
+$ConvertPlainTextPasswords = $config.ConvertPlainTextPasswords
+#Check Windows Game Path for D2r.exe is accurate.
+if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ 
+	write-host "Gamepath is incorrect. Looks like you have a custom D2r install location! Edit the $GamePath variable in the script" -foregroundcolor red
+	pause
+	exit
+}
+
+# Create Shortcut
+if ($CreateDesktopShortcut -eq $True){
+	$DesktopPath = [Environment]::GetFolderPath("Desktop")
+	$Targetfile = "-ExecutionPolicy Bypass -File `"$WorkingDirectory\D2Loader.ps1`""
+	$shortcutFile = "$DesktopPath\D2R Loader.lnk"
+	$WScriptShell = New-Object -ComObject WScript.Shell
+	$shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
+	$shortcut.TargetPath = "powershell.exe" 
+	$Shortcut.Arguments = $TargetFile
+	$shortcut.IconLocation = "$Script:GamePath\D2R.exe" 
+	$shortcut.Save()
+}
 
 #Check SetText.exe setup
 #Add-MpPreference -ExclusionPath "$script:WorkingDirectory\SetText" #Removed on 24.4.23 as MS cleared this PUP from their end. #Add Defender Exclusion for SetText.exe directory, at least until Microsoft reviews the file (submitted 24.4.2023) and stops flagging as "Trojan:Win32/Wacatac.B!ml" as per https://github.com/hankhank10/false-positive-malware-reporting
@@ -100,25 +141,8 @@ if((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-
 	pause
 	exit
 }
-#Check Windows Game Path for D2r.exe is accurate.
-if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ 
-	write-host "Gamepath is incorrect. Looks like you have a custom D2r install location! Edit the $GamePath variable in the script" -foregroundcolor red
-	pause
-	exit
-}
 
-# Create Shortcut
-if ($CreateDesktopShortcut -eq $True){
-	$DesktopPath = [Environment]::GetFolderPath("Desktop")
-	$Targetfile = "-ExecutionPolicy Bypass -File `"$WorkingDirectory\D2Loader.ps1`""
-	$shortcutFile = "$DesktopPath\D2R Loader.lnk"
-	$WScriptShell = New-Object -ComObject WScript.Shell
-	$shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
-	$shortcut.TargetPath = "powershell.exe" 
-	$Shortcut.Arguments = $TargetFile
-	$shortcut.IconLocation = "$Script:GamePath\D2R.exe" 
-	$shortcut.Save()
-}
+
 #check if username was passed through via parameter
 if ($AccountUsername -ne $null){
 	$script:ParamsUsed = $true
@@ -151,6 +175,7 @@ if ($Script:AccountOptionsCSV -ne $null){
 		pause
 		exit
 	}
+	
 	if ($ConvertPlainTextPasswords -ne $false){
 		#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
 		$NewCSV = Foreach ($Entry in $AccountOptionsCSV) {
@@ -205,11 +230,12 @@ $Script:ServerOptions = @(
 )
 #Set item quality array for randomizing quote colours. A stupid addition to script but meh.
 $QualityArray = @(#quality and chances for things to drop based on 0MF values in D2r (I think?)
-	[pscustomobject]@{Type='Unique';Probability=25}
-	[pscustomobject]@{Type='SetItem';Probability=62}
-	[pscustomobject]@{Type='Rare';Probability=100}
-	[pscustomobject]@{Type='Magic';Probability=294}
-	[pscustomobject]@{Type='Normal';Probability=9518}
+	[pscustomobject]@{Type='HighRune';Probability=1}
+	[pscustomobject]@{Type='Unique';Probability=50}
+	[pscustomobject]@{Type='SetItem';Probability=124}
+	[pscustomobject]@{Type='Rare';Probability=200}
+	[pscustomobject]@{Type='Magic';Probability=588}
+	[pscustomobject]@{Type='Normal';Probability=19036}
 )
 
 $QualityHash = @{}; 
@@ -235,6 +261,9 @@ function Rare {
 function Normal {
     process { write-host "  $x[38;2;255;255;255;48;2;1;1;1;4m$_$x[0m"}
 }
+function HighRune {
+	process { write-host "  $x[38;2;255;165;000;48;2;1;1;1;4m$_$x[0m"}
+}	
 
 function quoteroll {#stupid thing to draw a random quote but also draw a random quality.
 	$quality = get-random $itemlookup
@@ -267,6 +296,8 @@ $script:quotelist =
 "All who oppose me, beware",
 "Greetings",
 "Ner. Ner! Nur. Roah. Hork, Hork.",
+"Greetings, stranger. I'm not surprised to see your kind here.",
+"There is a place of great evil in the wilderness.",
 "I shall make weapons from your bones",
 "I am overburdened",
 "This magic ring does me no good.",
@@ -322,7 +353,6 @@ $BannerLogo = @"
   %%%%%%%%(#//*/.&&&#%#%#.@&& ..,,****,,*//((/*#%%%####%%%#/#/#%%%%%%%%%%%%
   %%%%%##***.,**////*(//,&.*/***.*/%%#%/%#*.***/*/***//**/(((/.,*(//*/(##%%
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 "@
 
 Function Killhandle {#kudos the info in this post to save me from figuring it out: https://forums.d2jsp.org/topic.php?t=90563264&f=87
@@ -341,7 +371,7 @@ Function Killhandle {#kudos the info in this post to save me from figuring it ou
 		}
 
 		if($handle_id){
-			Write-Host "Closing" $proc_id_populated $handle_id_populated
+			#Write-Host "Closing" $proc_id_populated $handle_id_populated
 			& "$PSScriptRoot\handle\handle64.exe" -p $proc_id_populated -c $handle_id_populated -y
 		}
 	}
@@ -404,7 +434,6 @@ Function Menu {
 	}
 	Else {
 		Write-Host "You have quite a treasure there in that Horadric multibox script"
-		Write-Host
 	}
 
 	Write-Host $BannerLogo -foregroundcolor yellow
@@ -481,6 +510,9 @@ Function ChooseAccount {
 
 			if ($Null -ne $Script:AccountID){
 				if($Script:AccountID -eq "x"){
+					Write-host
+					Write-host "Good day to you partner :)"
+					start-sleep -milliseconds 233
 					Exit
 				}
 				$Script:AccountChoice = $Script:AccountOptionsCSV |where-object {$_.id -eq $Script:AccountID} #filter out to only include the account we selected.
@@ -549,29 +581,31 @@ Function Processing {
 	#Open diablo with parameters
 		# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
 	$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region).tostring()
+	if ($config.ForceWindowedMode -eq $true){
+		$arguments = $arguments + " -w"
+	}
 	$script:pw = $null
+
 	#write-output $arguments #debug
 	Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
-	start-sleep -milliseconds 1250 #give D2r a bit of a chance to start up before trying to kill handle
+	start-sleep -milliseconds 1500 #give D2r a bit of a chance to start up before trying to kill handle
 	#Close the 'Check for other instances' handle
 	Write-host "Attempting to close `"Check for other instances`" handle..."
-	$attempt = 0
-	$maxattempts = 10 #try closing x amount of times.
-	do {#wait for d2r process to start
-		#$output = "test" #debug
-		#$handlekilled = $true #debug
-		$attempt = $attempt + 1
-		write-host ("Attempt " + $attempt + " of $maxattempts" +"....")
-		$output = killhandle | out-string
-		if(($output.contains("DiabloII Check For Other Instances")) -eq $true){
-			$handlekilled = $true
-			write-host "Check for Other Instances Handle closed." -foregroundcolor green
-		}
-		else {
-			start-sleep -milliseconds 1000 #if handle couldn't be closed give it another second before trying again.
-		}
-	} until ($handlekilled -eq $True -or $attempt -eq $maxattempts)
-	if ($attempt -eq $maxattempts){
+	#$handlekilled = $true #debug
+	$output = killhandle | out-string
+	if(($output.contains("DiabloII Check For Other Instances")) -eq $true){
+		$handlekilled = $true
+		write-host "`"Check for Other Instances`" Handle closed." -foregroundcolor green
+	}
+	else {
+		write-host "`"Check for Other Instances`" Handle was NOT closed." -foregroundcolor red
+		write-host "Who even knows what happened. I sure don't." -foregroundcolor red
+		write-host "You may need to kill this manually via procexp. Good luck hero." -foregroundcolor red
+		write-host
+		pause
+	}
+
+	if ($handlekilled -ne $True){
 		Write-Host " Couldn't find any handles to kill." -foregroundcolor red
 		Write-Host " Game may not have launched as expected." -foregroundcolor red
 		pause
@@ -582,8 +616,10 @@ Function Processing {
 	try {
 		cmd.exe /c $command
 		#write-output $command  #debug
-		write-host "Window Renamed to $rename" -foregroundcolor green
-		start-sleep -milliseconds 200
+		#write-host "Window Renamed to $rename" -foregroundcolor green
+		write-host "Window Renamed" -foregroundcolor green
+		start-sleep -milliseconds 300
+		write-host "Good luck hero." -foregroundcolor magenta
 	}
 	catch {
 		write-host "Couldn't rename window :(" -foregroundcolor red
