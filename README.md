@@ -110,7 +110,7 @@ All other config options below this are strictly optional:<br>
 **Q:** I would like to say Thankyou. How do I do that?<br>
 **A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or just a message :)<br>
 
-**Q:** I have suggestions and/or issues with, where do I post these?
+**Q:** I have suggestions and/or issues with, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
 
 **Q:** Is this Script against ToS?<br>
