@@ -17,7 +17,7 @@ Servers:
  Asia - kr.actual.battle.net
 #>
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.3.0"
+$CurrentVersion = "1.3.1"
 
 ###########################################################################################################################################
 # Script itself
