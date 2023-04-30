@@ -76,7 +76,7 @@ Catch {
 #check if there's any missing config.xml options, if so user has out of date config file.
 if ($config.GamePath -eq $null -or $config.DefaultRegion -eq $null -or $config.AskForRegionOnceOnly -eq $null -or $config.CreateDesktopShortcut -eq $null -or $config.ShortcutCustomIconPath -eq $null -or $config.ConvertPlainTextPasswords -eq $null -or $config.ForceWindowedMode -eq $null -or $config.SettingSwitcherEnabled -eq $null){
 	write-host
-	write-host "Config.xml file is missing a variable." -foregroundcolor yellow
+	write-host "Config.xml file is missing a config option." -foregroundcolor yellow
 	write-host "Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
 	write-host " $x[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$x[0m"
 	write-host
