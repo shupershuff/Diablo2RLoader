@@ -1,5 +1,5 @@
 # Overview
-Greetings Stranger! I'm not surprised to see your kind here.
+Greetings Stranger! I'm not surprised to see your kind here.<br>
 This is a free tool I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/Multiboxes). 
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades/dclones etc.
 Oh yea, and no more plain text passwords either. Cool aye?
@@ -53,6 +53,24 @@ If opening in Excel you add this info in each column. Otherwise open and edit in
 
 If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
 
+## Settings Switcher (Optional)
+Do you want your primary account to launch with half decent graphics settings with your other accounts to be set to poo tier settings? This is for you! This feature is disabled by default, as it will cause confusing behaviour for users who haven't read and understood this first.<br>
+
+What this feature does is create copies Settings.json (found in the "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected" folder) for each account you have.<br>
+E.G if you have 3 accounts, you will have Settings1.json, Settings2.json & Settings3.json. When the script runs and you choose account 1, it copies Settings1.json to Settings.json causing the game to essentially load off those settings. This essentially turns Settings.json into a temporary file that's just used at load time.<br>
+NOTE: Any changes you make to non-character options in game (eg graphics, audio, game options) will be saved to Settings.json, which will be overwritten the next time you launch a game via this loader. Therefore if you want to edit your game settings for say your 2nd account, you would need to open your 2nd account, make the options changes you'd like to see that account have each time, close the game and then copy Settings.json to Settings2.json.
+
+**Quick Guide to updating Game settings** for a particular account with this auto switcher.<br>
+*For these instructions, let's assume we're trying to edit the config for account 1*
+1. Launch the Game (via the Loader or via Bnet client, doesn't matter, the account you log into doesn't matter either).
+2. Make the required graphics/audio/game changes via the menu.
+3. Close the game.
+4. Browse to "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected"
+5. If there's already a file called Settings1.json, delete it (1 being the account ID in accounts.csv).
+6. Copy the Settings.json file and paste into the same folder.
+7. Rename to Settings1.json
+8. Launch the game and proceed find all of the high runes. All of them.
+
 ## Script Config (Mostly Optional)
 
 Default settings within config.xml *should* be ok but can be optionally changed.
@@ -65,6 +83,7 @@ All other config options below this are strictly optional:<br>
 - Set ShortcutCustomIconPath to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo).
 - Set ConvertPlainTextPasswords to False if you want your passwords to be ~~stolen~~ in plain text.
 - Set ForceWindowedMode to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed.
+- Set SettingSwitcherEnabled to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the Setting Switcher section above for more info. Disabled by default.
 
 # Notes #
 ## FAQ / Common Issues
@@ -86,6 +105,9 @@ All other config options below this are strictly optional:<br>
 
 **Q:** Why does the script need to run as admin?<br>
 **A:** The script needs to run as admin in order to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
+
+**Q:** I would like to say Thankyou. How do I do that?<br>
+**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510)<br>
 
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "check for Other instances handle".
