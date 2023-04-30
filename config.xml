@@ -15,7 +15,7 @@
 	<!--Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to $false.-->
 	<CreateDesktopShortcut>True</CreateDesktopShortcut>
 	
-	<!--If you have a custom .ico you want to use, put the path of it here. Do not enter with quotes-->
+	<!--If you have a custom .ico you want to use, put the path of it here.-->
 	<ShortcutCustomIconPath></ShortcutCustomIconPath>
 	
 	<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->
@@ -25,8 +25,8 @@
 	<ForceWindowedMode>False</ForceWindowedMode>
 	
 	<!--This enables the script to match a config file (settings.json) to the account you are launching. 
-		Eg if using account 1, this is achieved by overwriting settings.json with settings1.json.
-		Due to this, if enabled, settings1.json,settins2.json etc will not be updated if you update your game settings.
-		As such	you will need to manually update your settings.json config file, see readme for more details. -->
-	<SettingSwitcherEnabled>False</SettingSwitcherEnabled>
+	Eg if using account 1, this is achieved by overwriting settings.json with settings1.json.
+	Due to this, if enabled, settings1.json,settins2.json etc will not be updated if you update your game settings.
+	As such	you will need to manually update your settings.json config file, see readme for more details. -->
+	<SettingSwitcherEnabled>false</SettingSwitcherEnabled>
 </D2loaderconfig>
