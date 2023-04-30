@@ -429,13 +429,26 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 }
 Function DisplayActiveAccounts {
 	write-host 
-	write-host "ID  Account Label"
+	if ($Script:ActiveAccountsList.id -ne ""){
+		write-host "ID  Region  Account Label"
+	}
+	else {
+		write-host "ID  Account Label"
+	}
+	$pattern = "(?<=- \w+ \()([a-z]+)"
 	foreach ($AccountOption in $Script:AccountOptionsCSV){
 		if ($AccountOption.id -in $Script:ActiveAccountsList.id){
-			write-host ($AccountOption.ID + "   " + $AccountOption.accountlabel + " - Account Currently In Use.") -foregroundcolor yellow
+			$Windowname = (Get-Process | Where {$_.processname -eq "D2r" -and $_.MainWindowTitle -match ($AccountOption.id + " - Diablo II: Resurrected -")} | Select-Object MainWindowTitle).mainwindowtitle
+			$CurrentRegion = [regex]::Match($WindowName, $pattern).value
+			write-host ($AccountOption.ID + "     "  + $CurrentRegion.ToUpper() + "    " + $AccountOption.accountlabel + " - Account Currently In Use.") -foregroundcolor yellow
 		}
 		else {
-			write-host ($AccountOption.ID + "   " + $AccountOption.accountlabel) -foregroundcolor green
+			if ($Script:ActiveAccountsList.id -ne ""){
+				write-host ($AccountOption.ID + "     -     " + $AccountOption.accountlabel) -foregroundcolor green
+			}
+			else {
+				write-host ($AccountOption.ID + "   " + $AccountOption.accountlabel) -foregroundcolor green
+			}
 		}
 	}
 }
