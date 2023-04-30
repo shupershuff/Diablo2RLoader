@@ -17,7 +17,7 @@ Servers:
  Asia - kr.actual.battle.net
 #>
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.2.0"
+$CurrentVersion = "1.3.0"
 
 ###########################################################################################################################################
 # Script itself
@@ -35,22 +35,28 @@ if ($null -ne $region){
 }
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments "  -Verb RunAs;exit } #run script as admin
-#Check for updates
-$tagList = Invoke-RestMethod https://api.github.com/repos/Shupershuff/Diablo2RLoader/tags
-if ([version[]]$taglist.Name.Trim('v') -gt $Script:CurrentVersion) {
-	Write-Host
-	Write-Host " Update available, See Github for latest version:" -foregroundcolor Yellow
-	write-host " https://github.com/shupershuff/Diablo2RLoader/releases/latest"
-	Write-Host
-	start-sleep 3
-}
-
-$script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 
 #set window size
 [console]::WindowWidth=77;
 [console]::WindowHeight=48;
 [console]::BufferWidth=[console]::WindowWidth
+$x = [char]0x1b #escape character for ANSI text colors
+
+#Check for updates
+$tagList = Invoke-RestMethod https://api.github.com/repos/Shupershuff/Diablo2RLoader/tags
+if ([version[]]$taglist.Name.Trim('v') -gt $Script:CurrentVersion) {
+	$LatestReleaseNotes = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases/latest"
+	Write-Host
+	Write-Host " Update available, See Github for latest version:" -foregroundcolor Yellow
+	write-host " $x[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$x[0m"
+	Write-Host
+	$LatestReleaseNotes = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases/latest"
+	Write-Host $LatestReleaseNotes.body
+	Write-Host
+	pause
+}
+
+$script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 
 #Import Config XML
 try {
@@ -65,6 +71,16 @@ Catch {
 	write-host ""
 	pause
 	exit
+}
+
+#check if there's any missing config.xml options, if so user has out of date config file.
+if ($config.GamePath -eq $null -or $config.DefaultRegion -eq $null -or $config.AskForRegionOnceOnly -eq $null -or $config.CreateDesktopShortcut -eq $null -or $config.ShortcutCustomIconPath -eq $null -or $config.ConvertPlainTextPasswords -eq $null -or $config.ForceWindowedMode -eq $null -or $config.SettingSwitcherEnabled -eq $null){
+	write-host
+	write-host "Config.xml file is missing a variable." -foregroundcolor yellow
+	write-host "Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
+	write-host " $x[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$x[0m"
+	write-host
+	pause
 }
 
 if ($config.GamePath -match "`""){#Remove any quotes from path in case someone ballses this up.
@@ -142,7 +158,6 @@ if((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-
 	pause
 	exit
 }
-
 
 #check if username was passed through via parameter
 if ($AccountUsername -ne $null){
@@ -246,8 +261,8 @@ foreach ($object in $QualityArray | select-object type,probability){#convert PSO
 $script:itemLookup = foreach ($entry in $QualityHash.GetEnumerator()){
 	[System.Linq.Enumerable]::Repeat($entry.Key, $entry.Value)
 }
-$x = [char]0x1b #escape character for ANSI text colors
-function Magic {#text colour formatting for "magic" quotes
+
+function Magic {#text colour formatting for "magic" quotes. The variable $x (for the escape character) is defined earlier in the script.
     process { write-host "  $x[38;2;65;105;225;48;2;1;1;1;4m$_$x[0m" }
 }
 function SetItem {
@@ -289,6 +304,7 @@ $script:quotelist =
 "You have quite a treasure there in that Horadric Cube.",
 "There's nothing the right potion can't cure.",
 "Well, what the hell do you want? Oh, it's you. Uh, hi there.",
+"Your souls shall fuel the Hellforge!",
 "What do you need?",
 "Your presence honors me.",
 "I'll put that to good use.",
@@ -302,12 +318,14 @@ $script:quotelist =
 "I shall make weapons from your bones",
 "I am overburdened",
 "This magic ring does me no good.",
+"The siege has everything in short supply...except fools.",
 "Beware, foul demons and beasts.",
 "They'll never see me coming.",
 "I will cleanse this wilderness.",
 "I shall purge this land of the shadow.",
 "I hear foul creatures about.",
 "Ahh yes, ruins, the fate of all cities.",
+"I'm never gunna give you up, never gunna let you down - Griswold, 1996.",
 "I have no grief for him. Oblivion is his reward.",
 "The catapults have been silenced.",
 "The staff of kings, you astound me!",
@@ -587,7 +605,36 @@ Function Processing {
 		$arguments = $arguments + " -w"
 	}
 	$script:pw = $null
+	
+	#Switch Settings file to load D2r from.
+	if ($config.SettingSwitcherEnabled -eq $True){
+		$SettingsProfilePath = ("C:\Users\" + $env:UserName + "\Saved Games\Diablo II Resurrected\")
+		$SettingsJSON = ($SettingsProfilePath + "Settings.json")
+		foreach ($id in $Script:AccountOptionsCSV){#create a copy of settings.json file per account so user doesn't have to do it themselves
+			if ((Test-Path -Path ($SettingsProfilePath+ "Settings" + $id.id +".json")) -ne $true){
+				try {
+					Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
+				}
+				catch {
+					write-host
+					write-host "Couldn't find settings.json in $SettingsProfilePath" -foregroundcolor red
+					write-host "Please start the game normally (via Bnet client) and this file will be rebuilt." -foregroundcolor red
+					pause
+					exit
+				}
+			}
+		}
+		try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
+			write-host ("Custom game settings (settings.json) being used for " + $id.accountlabel) -foregroundcolor green
+			start-sleep -milliseconds 100
+		}
+		catch {
+			write-host "Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -foregroundcolor red
+			pause
+		}
+	}
 
+	#Start Game
 	#write-output $arguments #debug
 	Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
 	start-sleep -milliseconds 1500 #give D2r a bit of a chance to start up before trying to kill handle
