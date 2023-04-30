@@ -11,10 +11,11 @@ What your windows will look like:<br>
 
 ## But what does it do?
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
-It will achieve this by importing account details from a CSV that you populate.<br>
-	Note: Plain text passwords entered into the CSV will be convered into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave blank and type in manually when running script.<br>
+It will achieve this by importing account details from a CSV that you populate and essentially launches the game the same way you would with a shortcut by passing account, password and region arguments to D2r.exe.<br>
+	Note: Plain text passwords entered into the CSV will be convered into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave the PW field in the CSV blank and manually type in when running the script.<br>
 Once the game has initialised, the window will be renamed so it's easier to tell which game is which.<br>
 This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.<br>
+Optionally you can also have the game launch using custom settings.json for each account in case you want different graphics/audio/game settings for each account you have.
 
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
@@ -54,7 +55,7 @@ If opening in Excel you add this info in each column. Otherwise open and edit in
 If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
 
 ## Settings Switcher (Optional)
-Do you want your primary account to launch with half decent graphics settings with your other accounts to be set to poo tier settings? This is for you! This feature is disabled by default, as it will cause confusing behaviour for users who haven't read and understood this first.<br>
+Do you want your primary account to launch with decent graphics settings with your other accounts to be set to poo tier settings? This is for you! This feature is disabled by default, as it will cause confusing behaviour for users who haven't read and understood this first.<br>
 
 What this feature does is create copies Settings.json (found in the "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected" folder) for each account you have.<br>
 E.G if you have 3 accounts, you will have Settings1.json, Settings2.json & Settings3.json. When the script runs and you choose account 1, it copies Settings1.json to Settings.json causing the game to essentially load off those settings. This essentially turns Settings.json into a temporary file that's just used at load time.<br>
@@ -107,7 +108,10 @@ All other config options below this are strictly optional:<br>
 **A:** The script needs to run as admin in order to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
 
 **Q:** I would like to say Thankyou. How do I do that?<br>
-**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510)<br>
+**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or just a message :)<br>
+
+**Q:** I have suggestions and/or issues with, where do I post these?
+**A:** Please use GitHub issues for any feedback. Thanks!
 
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "check for Other instances handle".
@@ -138,7 +142,7 @@ See this site for more information on what this does: https://stackoverflow.com/
 
 # What's Next #
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
-* Perhaps make a GUI if there's enough interest.
+* Perhaps make a GUI *if* there's enough interest.
 
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
