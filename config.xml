@@ -23,4 +23,10 @@
 	
 	<!--Make sure game always starts in Windowed mode rather than full screen. Note that this seems to cause issues remembering your last window size. Recommend leaving false-->
 	<ForceWindowedMode>False</ForceWindowedMode>
+	
+	<!--This enables the script to match a config file (settings.json) to the account you are launching. 
+	Eg if using account 1, this is achieved by overwriting settings.json with settings1.json.
+	Due to this, if enabled, settings1.json,settins2.json etc will not be updated if you update your game settings.
+	As such	you will need to manually update your settings.json config file, see readme for more details. -->
+	<SettingSwitcherEnabled>False</SettingSwitcherEnabled>
 </D2loaderconfig>
