@@ -9,15 +9,16 @@ Instructions: See GitHub readme https://github.com/shupershuff/Diablo2RLoader
 #########
 # Notes #
 #########
-Multiple failed attempts (eg wrong Password) to sign onto a particular Realm via this method may temporarily lock you out. You should still be able to get in via the battlenet client if this occurs.
 
+Multiple failed attempts (eg wrong Password) to sign onto a particular Realm via this method may temporarily lock you out. You should still be able to get in via the battlenet client if this occurs.
+1.3.1 notes, added region into display, added cancel button.
 Servers:
  NA - us.actual.battle.net
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 #>
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.3.1"
+$CurrentVersion = "1.3.2"
 
 ###########################################################################################################################################
 # Script itself
@@ -74,9 +75,26 @@ Catch {
 }
 
 #check if there's any missing config.xml options, if so user has out of date config file.
-if ($config.GamePath -eq $null -or $config.DefaultRegion -eq $null -or $config.AskForRegionOnceOnly -eq $null -or $config.CreateDesktopShortcut -eq $null -or $config.ShortcutCustomIconPath -eq $null -or $config.ConvertPlainTextPasswords -eq $null -or $config.ForceWindowedMode -eq $null -or $config.SettingSwitcherEnabled -eq $null){
+$AvailableConfigs = #add to this if adding features.
+"AskForRegionOnceOnly",
+"ConvertPlainTextPasswords",
+"CreateDesktopShortcut",
+"DefaultRegion",
+"ForceWindowedMode",
+"GamePath",
+"SettingSwitcherEnabled",
+"ShortcutCustomIconPath"
+
+$ConfigXMLlist = ($config | Get-Member | Where-Object {$_.membertype -eq "Property" -and $_.name -notlike "#comment"}).name
+write-host
+foreach ($option in $AvailableConfigs){
+	if ($option -notin $ConfigXMLlist){
+
+		write-host "Config.xml file is missing a config option for $option." -foregroundcolor yellow
+	}
+}
+if ($option -notin $ConfigXMLlist){
 	write-host
-	write-host "Config.xml file is missing a config option." -foregroundcolor yellow
 	write-host "Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
 	write-host " $x[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$x[0m"
 	write-host
@@ -435,12 +453,17 @@ Function DisplayActiveAccounts {
 	else {
 		write-host "ID  Account Label"
 	}
-	$pattern = "(?<=- \w+ \()([a-z]+)"
+	$pattern = "(?<=- \w+ \()([a-z]+)"#Regex pattern to pull the region characters out of the window title.
 	foreach ($AccountOption in $Script:AccountOptionsCSV){
+		$AccountDisplayPostIndent = ""
+		$AccountDisplayPreIndent = ""
 		if ($AccountOption.id -in $Script:ActiveAccountsList.id){
 			$Windowname = (Get-Process | Where {$_.processname -eq "D2r" -and $_.MainWindowTitle -match ($AccountOption.id + " - Diablo II: Resurrected -")} | Select-Object MainWindowTitle).mainwindowtitle
 			$CurrentRegion = [regex]::Match($WindowName, $pattern).value
-			write-host ($AccountOption.ID + "     "  + $CurrentRegion.ToUpper() + "    " + $AccountOption.accountlabel + " - Account Currently In Use.") -foregroundcolor yellow
+			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $AccountDisplayPreIndent = " "; $AccountDisplayPostIndent = " "}
+			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
+			if ($CurrentRegion -eq "EU"){$CurrentRegion = "EU"; $AccountDisplayPreIndent = " "; $AccountDisplayPostIndent = " "}
+			write-host ($AccountOption.ID + "    "  + $AccountDisplayPreIndent + $CurrentRegion + "   " + $AccountDisplayPostIndent + $AccountOption.accountlabel + " - Account Currently In Use.") -foregroundcolor yellow
 		}
 		else {
 			if ($Script:ActiveAccountsList.id -ne ""){
@@ -458,7 +481,7 @@ Function Menu {
 		$script:AccountUsername = $null
 		Write-Host "Account previously opened was:"  -foregroundcolor yellow -backgroundcolor darkgreen
 		$lastopened = @(
-			[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$script:region}#Americas
+			[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$script:LastRegion}
 		)
 		write-host " " -NoNewLine
 		Write-Host ("Account:  " + $lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen 
@@ -474,8 +497,8 @@ Function Menu {
 	ChooseAccount
 	if($script:ParamsUsed -eq $false -and ($Script:RegionOption.length -ne 0 -or $Script:Region.length -ne 0)){
 		if ($Script:AskForRegionOnceOnly -ne $true){
-			$Script:RegionOption = ""
 			$Script:Region = ""
+			$Script:RegionOption = ""
 			#write-host "region reset" -foregroundcolor yellow #debug
 		}
 	}
@@ -578,123 +601,128 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Script:DefaultRegion #default to NA
 			}
-			if($Script:RegionOption -notin $Script:ServerOptions.option){
+			if($Script:RegionOption -notin $Script:ServerOptions.option + "c"){
 				Write-host "Invalid Input. Please enter one of the options above." -foregroundcolor red
 				$Script:RegionOption = ""
 			}
 		} until ("" -ne $Script:RegionOption)
-	if ($Script:RegionOption -eq 1 ){$script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server}
-	if ($Script:RegionOption -eq 2 ){$script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server}
-	if ($Script:RegionOption -eq 3 ){$script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server}
+	if ($Script:RegionOption -in 1..3 ){# if value is 1,2 or 3 set the region string.
+		$script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server
+		$Script:LastRegion = $Script:Region
+	}
 }
 
 Function Processing {
-	
-	if (($script:pw -eq "" -or $script:pw -eq $null) -and $script:pwmanualset -eq 0 ){
-		$script:pw = $Script:AccountChoice.pw.tostring()
-	}
-	if ($script:ParamsUsed -ne $true -and $ConvertPlainTextPasswords -ne $false){
-		$script:acct = $Script:AccountChoice.acct.tostring()
-		$encryptedPassword = $pw | ConvertTo-SecureString
-		$pwobject = New-Object System.Management.Automation.PsCredential("N/A", $encryptedPassword)
-		$script:pw = $pwobject.GetNetworkCredential().Password
-	}
-	else {
-		$script:acct = $script:AccountUsername
-		$Script:AccountID = "1"
-	}
-	$script:region = $script:region.tostring()
-	try {
-		$Script:AccountFriendlyName = $Script:AccountChoice.accountlabel.tostring()
-	}
-	Catch {
-		$Script:AccountFriendlyName = $script:AccountUsername
-	}	
+	if ($Script:RegionOption -ne "c"){
+		if (($script:pw -eq "" -or $script:pw -eq $null) -and $script:pwmanualset -eq 0 ){
+			$script:pw = $Script:AccountChoice.pw.tostring()
+		}
+		if ($script:ParamsUsed -ne $true -and $ConvertPlainTextPasswords -ne $false){
+			$script:acct = $Script:AccountChoice.acct.tostring()
+			$encryptedPassword = $pw | ConvertTo-SecureString
+			$pwobject = New-Object System.Management.Automation.PsCredential("N/A", $encryptedPassword)
+			$script:pw = $pwobject.GetNetworkCredential().Password
+		}
+		else {
+			$script:acct = $script:AccountUsername
+			$Script:AccountID = "1"
+		}
+		$script:region = $script:region.tostring()
+		try {
+			$Script:AccountFriendlyName = $Script:AccountChoice.accountlabel.tostring()
+		}
+		Catch {
+			$Script:AccountFriendlyName = $script:AccountUsername
+		}	
 
-	#Open diablo with parameters
-		# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
-	$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region).tostring()
-	if ($config.ForceWindowedMode -eq $true){
-		$arguments = $arguments + " -w"
-	}
-	$script:pw = $null
-	
-	#Switch Settings file to load D2r from.
-	if ($config.SettingSwitcherEnabled -eq $True){
-		$SettingsProfilePath = ("C:\Users\" + $env:UserName + "\Saved Games\Diablo II Resurrected\")
-		$SettingsJSON = ($SettingsProfilePath + "Settings.json")
-		foreach ($id in $Script:AccountOptionsCSV){#create a copy of settings.json file per account so user doesn't have to do it themselves
-			if ((Test-Path -Path ($SettingsProfilePath+ "Settings" + $id.id +".json")) -ne $true){
-				try {
-					Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
-				}
-				catch {
-					write-host
-					write-host "Couldn't find settings.json in $SettingsProfilePath" -foregroundcolor red
-					write-host "Please start the game normally (via Bnet client) and this file will be rebuilt." -foregroundcolor red
-					pause
-					exit
+		#Open diablo with parameters
+			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
+		$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region).tostring()
+		if ($config.ForceWindowedMode -eq $true){
+			$arguments = $arguments + " -w"
+		}
+		$script:pw = $null
+		
+		#Switch Settings file to load D2r from.
+		if ($config.SettingSwitcherEnabled -eq $True){
+			$SettingsProfilePath = ("C:\Users\" + $env:UserName + "\Saved Games\Diablo II Resurrected\")
+			$SettingsJSON = ($SettingsProfilePath + "Settings.json")
+			foreach ($id in $Script:AccountOptionsCSV){#create a copy of settings.json file per account so user doesn't have to do it themselves
+				if ((Test-Path -Path ($SettingsProfilePath+ "Settings" + $id.id +".json")) -ne $true){
+					try {
+						Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
+					}
+					catch {
+						write-host
+						write-host "Couldn't find settings.json in $SettingsProfilePath" -foregroundcolor red
+						write-host "Please start the game normally (via Bnet client) and this file will be rebuilt." -foregroundcolor red
+						pause
+						exit
+					}
 				}
 			}
+			try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
+				write-host ("Custom game settings (settings.json) being used for " + $id.accountlabel) -foregroundcolor green
+				start-sleep -milliseconds 100
+			}
+			catch {
+				write-host "Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -foregroundcolor red
+				pause
+			}
 		}
-		try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
-			write-host ("Custom game settings (settings.json) being used for " + $id.accountlabel) -foregroundcolor green
-			start-sleep -milliseconds 100
+
+		#Start Game
+		#write-output $arguments #debug
+		Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
+		start-sleep -milliseconds 1500 #give D2r a bit of a chance to start up before trying to kill handle
+		#Close the 'Check for other instances' handle
+		Write-host "Attempting to close `"Check for other instances`" handle..."
+		#$handlekilled = $true #debug
+		$output = killhandle | out-string
+		if(($output.contains("DiabloII Check For Other Instances")) -eq $true){
+			$handlekilled = $true
+			write-host "`"Check for Other Instances`" Handle closed." -foregroundcolor green
 		}
-		catch {
-			write-host "Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -foregroundcolor red
+		else {
+			write-host "`"Check for Other Instances`" Handle was NOT closed." -foregroundcolor red
+			write-host "Who even knows what happened. I sure don't." -foregroundcolor red
+			write-host "You may need to kill this manually via procexp. Good luck hero." -foregroundcolor red
+			write-host
 			pause
 		}
-	}
 
-	#Start Game
-	#write-output $arguments #debug
-	Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
-	start-sleep -milliseconds 1500 #give D2r a bit of a chance to start up before trying to kill handle
-	#Close the 'Check for other instances' handle
-	Write-host "Attempting to close `"Check for other instances`" handle..."
-	#$handlekilled = $true #debug
-	$output = killhandle | out-string
-	if(($output.contains("DiabloII Check For Other Instances")) -eq $true){
-		$handlekilled = $true
-		write-host "`"Check for Other Instances`" Handle closed." -foregroundcolor green
+		if ($handlekilled -ne $True){
+			Write-Host " Couldn't find any handles to kill." -foregroundcolor red
+			Write-Host " Game may not have launched as expected." -foregroundcolor red
+			pause
+		}
+		#Rename the Diablo Game window for easier identification of which account and region the game is.
+		$rename = ($Script:AccountID + " - Diablo II: Resurrected - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")")
+		$command = ('"'+ $WorkingDirectory + '\SetText\SetText.exe" "Diablo II: Resurrected" "' + $rename +'"')
+		try {
+			cmd.exe /c $command
+			#write-output $command  #debug
+			#write-host "Window Renamed to $rename" -foregroundcolor green
+			write-host "Window Renamed" -foregroundcolor green
+			start-sleep -milliseconds 200
+			write-host "Good luck hero..." -foregroundcolor magenta
+		}
+		catch {
+			write-host "Couldn't rename window :(" -foregroundcolor red
+			pause
+		}
+		start-sleep -milliseconds 900
+		$Script:ScriptHasBeenRun = $true
+		if ($script:ParamsUsed -ne $true){
+			Menu
+		}
+		else {
+			write-host "I'm quitting LOL"
+			exit
+		}
 	}
 	else {
-		write-host "`"Check for Other Instances`" Handle was NOT closed." -foregroundcolor red
-		write-host "Who even knows what happened. I sure don't." -foregroundcolor red
-		write-host "You may need to kill this manually via procexp. Good luck hero." -foregroundcolor red
-		write-host
-		pause
-	}
-
-	if ($handlekilled -ne $True){
-		Write-Host " Couldn't find any handles to kill." -foregroundcolor red
-		Write-Host " Game may not have launched as expected." -foregroundcolor red
-		pause
-	}
-	#Rename the Diablo Game window for easier identification of which account and region the game is.
-	$rename = ($Script:AccountID + " - Diablo II: Resurrected - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")")
-	$command = ('"'+ $WorkingDirectory + '\SetText\SetText.exe" "Diablo II: Resurrected" "' + $rename +'"')
-	try {
-		cmd.exe /c $command
-		#write-output $command  #debug
-		#write-host "Window Renamed to $rename" -foregroundcolor green
-		write-host "Window Renamed" -foregroundcolor green
-		start-sleep -milliseconds 200
-		write-host "Good luck hero..." -foregroundcolor magenta
-	}
-	catch {
-		write-host "Couldn't rename window :(" -foregroundcolor red
-		pause
-	}
-	start-sleep -milliseconds 900
-	$Script:ScriptHasBeenRun = $true
-	if ($script:ParamsUsed -ne $true){
 		Menu
-	}
-	else {
-		write-host "I'm quitting LOL"
-		exit
 	}
 }
 cls
