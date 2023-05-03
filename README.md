@@ -1,7 +1,7 @@
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
-This is a free tool I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/Multiboxes). 
-Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades/dclones etc.
+This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing). 
+Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, dclones, rushes etc.
 Oh yea, and no more plain text passwords either. Cool aye?
 
 Script Screenshot:<br>
@@ -59,7 +59,7 @@ Do you want your primary account to launch with decent graphics settings with yo
 
 What this feature does is create copies Settings.json (found in the "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected" folder) for each account you have.<br>
 E.G if you have 3 accounts, you will have Settings1.json, Settings2.json & Settings3.json. When the script runs and you choose account 1, it copies Settings1.json to Settings.json causing the game to essentially load off those settings. This essentially turns Settings.json into a temporary file that's just used at load time.<br>
-NOTE: Any changes you make to non-character options in game (eg graphics, audio, game options) will be saved to Settings.json, which will be overwritten the next time you launch a game via this loader. Therefore if you want to edit your game settings for say your 2nd account, you would need to open your 2nd account, make the options changes you'd like to see that account have each time, close the game and then copy Settings.json to Settings2.json.
+NOTE: Any changes you make to non-character options in game (eg graphics, audio, game options) will be saved to Settings.json, which will be overwritten the next time you launch a game via this loader. Therefore if you want to edit your game settings for say your 2nd account, you would need to open diablo (on any account), make the options changes you'd like to see that account have each time, close the game and then copy Settings.json to Settings2.json.
 
 **Quick Guide to updating Game settings** for a particular account with this auto switcher.<br>
 *For these instructions, let's assume we're trying to edit the config for account 1*
@@ -114,12 +114,14 @@ All other config options below this are strictly optional:<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
 
 **Q:** Is this Script against ToS?<br>
-**A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "check for Other instances handle".
+**A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
 
-Outside of killing this handle and renaming the window, there are absolutely no modifications to the game made by this script.
-The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle. This script just helps save you mouse clicks to get you to the character select screen faster with a reduced chance of RSI :).
+Outside of killing this handle and changing the window title, there are absolutely no modifications to the game made by this script, it's simply an improved alternative way to start the application.
+To be clear, this script in no way enhances or assists with actual game play and I would strongly advise against seeking/using any tools.
+The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle. This script is a QOL tool to help consolidate your accounts to one simple launcher to simply open the game.
 
-So the real question is, is using procexp or another method to kill the "check for other instances" handle against ToS? I don't think so, but there are discussions on various forums regarding this matter.
+So the real question is, regardless of this script, is using procexp or another method to kill the "check for other instances" handle against ToS? Stricly speaking yes and this topic has been broached in Blizzard forums many times without an official response either for or against.
+If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances handle'?" which to that I'm confident the answer is no. If I wasn't confident this script wouldn't exist and people wouldn't be using procexp to multibox through traditional methods. Given the widespread use of procexp being used to multibox, this method (and therefore also this script), is considered safe.
 
 ## Notes about the Window title rename (SetText.exe)
 
@@ -142,11 +144,18 @@ See this site for more information on what this does: https://stackoverflow.com/
 
 # What's Next #
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
+* Maybe add a counter for time spent in each account (given Blizzard won't implement this).
+* Maybe a stats screen (by pressing "s" instead of choosing an account) to display above for each account. As a silly addition, stats to include how many "magic" or above quality quotes have been found in the script.
 * Perhaps make a GUI *if* there's enough interest.
 
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
-- Set Text executable: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
-- https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
+- Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
+- Handle tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 - MoonUnit for thoughts around converting plain text passwords to encrypted strings.
 - Google.com
+
+<br>
+<br>
+
+Tags for Google SEO: Multiboxing, Multiboxes, Shuper, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, windows, battle.net, warriv, 
