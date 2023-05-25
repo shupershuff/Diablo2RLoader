@@ -150,6 +150,7 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
+* Configure TZ checker to display accurate as of the forum post date instead of the time the check was performed.
 * Figure out how to make the script run without elevated rights (which will prevent Discord PTT issues).
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
 * Maybe add a counter for time spent in each account (given Blizzard won't implement this).
