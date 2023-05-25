@@ -2,7 +2,7 @@
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing). 
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, dclones, rushes etc.
-Oh yea, and no more plain text passwords either. Cool aye?
+Oh yea, and no more plain text passwords either. Oh and you can check the current and next TZ from this launcher. Cool aye?
 
 Script Screenshot:<br>
 ![Launcher](https://user-images.githubusercontent.com/63577525/233829526-2b28f2b9-761b-4d95-af0f-6561bda8ddf3.png)<br>
@@ -95,9 +95,6 @@ All other config options below this are strictly optional:<br>
 **Q:** When Diablo opens it won't allow me to select an online character<br>
 **A:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).
 
-**Q:** I can't login despite my password being entered in correctly.<br>
-**A:** Try logging into the Battlenet client and approve any 2FA/verification requests that might pop up.
-
 **Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
 **A:** Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it. 
 
@@ -106,6 +103,9 @@ All other config options below this are strictly optional:<br>
 
 **Q:** Why does the script need to run as admin?<br>
 **A:** The script needs to run as admin in order to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
+
+**Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
+**A:** Bad news here sorry, Diablo does not work with 2FA enabled when launching the game from a shortcut with parameters.
 
 **Q:** I would like to say Thankyou. How do I do that?<br>
 **A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or just a message :)<br>
@@ -143,6 +143,7 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
+* Figure out how to make the script run without elevated rights (which will prevent Discord PTT issues).
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
 * Maybe add a counter for time spent in each account (given Blizzard won't implement this).
 * Maybe a stats screen (by pressing "s" instead of choosing an account) to display above for each account. As a silly addition, stats to include how many "magic" or above quality quotes have been found in the script.
