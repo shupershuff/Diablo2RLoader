@@ -42,6 +42,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
 [console]::WindowHeight=48;
 [console]::BufferWidth=[console]::WindowWidth
 $x = [char]0x1b #escape character for ANSI text colors
+$ProgressPreference = "SilentlyContinue"
 
 #Check for updates
 $tagList = Invoke-RestMethod https://api.github.com/repos/Shupershuff/Diablo2RLoader/tags
@@ -613,11 +614,12 @@ Function ChooseAccount {
 				Write-Host
 				if($accountoptions.length -gt 0){
 					Write-Host "Please select which account to sign into."
-					$Script:AccountID = Read-host ("Your Options are: " + $accountoptions + ", r to refresh, t for TZ, or x to quit.")
+					Write-Host ("Your Options are: " + $accountoptions)
+					$Script:AccountID = Read-host "Alternatively choose 'r' to refresh, 't' for TZ info or 'x' to quit."
 				}
 				else {#if there aren't any available options, IE all accounts are open
 					Write-Host "All Accounts are currently open!" -foregroundcolor yellow
-					$Script:AccountID = Read-host "Press r to refresh, t for TZ, or x to quit."
+					$Script:AccountID = Read-host "Press 'r' to refresh, 't' for TZ info, or 'x' to quit."
 				}
 				if($Script:AccountID -notin ($AcceptableValues + "x" + "r" +"t") -and $null -ne $Script:AccountID){
 					Write-host "Invalid Input. Please enter one of the options above." -foregroundcolor red
@@ -658,7 +660,8 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 	}
 	write-host	
 		do {
-			$Script:RegionOption = Read-host ("Please select a region (1, 2 or 3) or press enter for the default (" + $script:defaultregion + ": " +($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
+			write-host "Please select a region (1, 2 or 3)"
+			$Script:RegionOption = Read-host ("Alternatively select 'c' to cancel or press enter for the default (" + $script:defaultregion + ": " +($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Script:DefaultRegion #default to NA
 			}
