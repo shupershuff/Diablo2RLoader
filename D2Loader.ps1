@@ -9,16 +9,16 @@ Instructions: See GitHub readme https://github.com/shupershuff/Diablo2RLoader
 #########
 # Notes #
 #########
-
 Multiple failed attempts (eg wrong Password) to sign onto a particular Realm via this method may temporarily lock you out. You should still be able to get in via the battlenet client if this occurs.
-1.3.1 notes, added region into display, added cancel button.
+
 Servers:
  NA - us.actual.battle.net
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 #>
+
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.3.2"
+$CurrentVersion = "1.4"
 
 ###########################################################################################################################################
 # Script itself
@@ -120,7 +120,7 @@ $ConvertPlainTextPasswords = $config.ConvertPlainTextPasswords
 
 #Check Windows Game Path for D2r.exe is accurate.
 if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ 
-	write-host "Gamepath is incorrect. Looks like you have a custom D2r install location! Edit the $GamePath variable in the script" -foregroundcolor red
+	write-host "Gamepath is incorrect. Looks like you have a custom D2r install location! Edit the GamePath variable in the config file" -foregroundcolor red
 	pause
 	exit
 }
@@ -128,7 +128,8 @@ if((Test-Path -Path "$GamePath\d2r.exe") -ne $True){
 # Create Shortcut
 if ($CreateDesktopShortcut -eq $True){
 	$DesktopPath = [Environment]::GetFolderPath("Desktop")
-	$Targetfile = "-ExecutionPolicy Bypass -File `"$WorkingDirectory\D2Loader.ps1`""
+	$ScriptName = $MyInvocation.MyCommand.Name #in case someone renames the script.
+	$Targetfile = "-ExecutionPolicy Bypass -File `"$WorkingDirectory\$ScriptName`""
 	$shortcutFile = "$DesktopPath\D2R Loader.lnk"
 	$WScriptShell = New-Object -ComObject WScript.Shell
 	$shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
@@ -302,7 +303,6 @@ function HighRune {
 function quoteroll {#stupid thing to draw a random quote but also draw a random quality.
 	$quality = get-random $itemlookup
 	Write-Host
-	#Write-output (Get-Random -inputobject $script:quotelist)  | &$quality
 	$LeQuote = (Get-Random -inputobject $script:quotelist)  #| &$quality
 	$consoleWidth = $Host.UI.RawUI.BufferSize.Width
 	$desiredIndent = 2  # indent spaces
@@ -392,6 +392,62 @@ $BannerLogo = @"
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 "@
+
+function NextTZ {
+	# Get the current time data was pulled
+	$TimeDataObtained = (Get-Date -Format 'h:mm tt')
+	#find URL of latest post
+	Write-Host
+	Write-Host " Finding TZ Update Posts...."
+	$url = "https://gall.dcinside.com/mgallery/board/lists/?id=diablo2resurrected&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
+	$geturl = Invoke-WebRequest $url
+	$TDs = $geturl.ParsedHtml.body.getElementsByTagName("td") | Select-Object innerhtml,classname | Where-Object { $_.className -eq "gall_num" } #find Table elements
+	[array]$AllPostIDs = foreach($number in $TDs.innerhtml) {([int]::parse($number))}
+	#$latestpostID = ($divs.innerhtml |Measure-Object -maximum).maximum
+	$latestpostID = ($AllPostIDs | Sort-Object -Descending)[0]
+	$previouspostID = ($AllPostIDs | Sort-Object -Descending)[1]
+
+	#Find Current TZ and Convert to English.
+	Write-Host " Finding Current TZ Name..."
+	$url = ("https://gall.dcinside.com/mgallery/board/view/?id=diablo2resurrected&no") + "=" + $previouspostID +"&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
+	$geturl = Invoke-WebRequest $url
+	$divs = $geturl.ParsedHtml.body.getElementsByTagName('div') | Select-Object innerhtml,classname | Where-Object { $_.className -eq "write_div" }
+	foreach ($div in $divs) {
+		   $divContent = $div.innerHTML
+	}
+	$CurrentZoneKorean = [regex]::Matches($divContent, "&lt;(.*?)&gt;") | ForEach-Object { $_.Groups[1].Value }
+	
+	#Find next TZ and Convert to English.
+	Write-Host " Finding Next TZ Name..."
+	$url = ("https://gall.dcinside.com/mgallery/board/view/?id=diablo2resurrected&no") + "=" + $latestpostID +"&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
+	$geturl=Invoke-WebRequest $url
+	$divs =$geturl.ParsedHtml.body.getElementsByTagName('div') | Select-Object innerhtml,classname | Where-Object { $_.className -eq "write_div" }
+	foreach ($div in $divs) {
+		   $divContent = $div.innerHTML
+	}
+	$NextZoneKorean = [regex]::Matches($divContent, "&lt;(.*?)&gt;") | ForEach-Object { $_.Groups[1].Value }
+	
+	#Write-Host " Translating Current TZ to English..."
+	Write-Host " Translating Korean to English..."
+	$TargetLanguage = "en"
+	$Uri = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$($TargetLanguage)&dt=t&q=$CurrentZoneKorean"
+	$Response = Invoke-RestMethod -Uri $Uri -Method Get
+	$CurrentTZTranslation = $Response[0].SyncRoot | foreach { $_[0] }
+	#Write-Host " Translating Next TZ to English..."
+	$TargetLanguage = "en"
+	$Uri = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$($TargetLanguage)&dt=t&q=$NextZoneKorean"
+	$Response = Invoke-RestMethod -Uri $Uri -Method Get
+	$NextTZTranslation = $Response[0].SyncRoot | foreach { $_[0] }
+
+	# Extract the time component
+	write-host
+	write-host " Current TZ is: "  -nonewline;write-host $CurrentTZTranslation -ForegroundColor magenta
+	write-host " Next TZ is:    "  -nonewline;write-host $NextTZTranslation -ForegroundColor magenta
+	write-host
+	write-host " Accurate as of:" $TimeDataObtained
+	write-host 
+	pause
+}
 
 Function Killhandle {#kudos the info in this post to save me from figuring it out: https://forums.d2jsp.org/topic.php?t=90563264&f=87
 	& "$PSScriptRoot\handle\handle64.exe" -accepteula -a -p D2R.exe > $PSScriptRoot\d2r_handles.txt
@@ -524,6 +580,11 @@ Function ChooseAccount {
 	}
 	else {#if no account parameters have been set already		
 		do {
+			if ($Script:AccountID -eq "t"){
+				NextTZ
+
+				$Script:AccountID = "r"
+			}
 			if ($Script:AccountID -eq "r"){#refresh
 				cls
 				if($Script:ScriptHasBeenRun -eq $true){
@@ -552,13 +613,13 @@ Function ChooseAccount {
 				Write-Host
 				if($accountoptions.length -gt 0){
 					Write-Host "Please select which account to sign into."
-					$Script:AccountID = Read-host ("Your Options are: " + $accountoptions + ", r to refresh, or x to quit.")
+					$Script:AccountID = Read-host ("Your Options are: " + $accountoptions + ", r to refresh, t for TZ, or x to quit.")
 				}
 				else {#if there aren't any available options, IE all accounts are open
 					Write-Host "All Accounts are currently open!" -foregroundcolor yellow
-					$Script:AccountID = Read-host "Press r to refresh, or x to quit."
+					$Script:AccountID = Read-host "Press r to refresh, t for TZ, or x to quit."
 				}
-				if($Script:AccountID -notin ($AcceptableValues + "x" + "r") -and $null -ne $Script:AccountID){
+				if($Script:AccountID -notin ($AcceptableValues + "x" + "r" +"t") -and $null -ne $Script:AccountID){
 					Write-host "Invalid Input. Please enter one of the options above." -foregroundcolor red
 					$Script:AccountID = $Null
 				}
@@ -573,7 +634,7 @@ Function ChooseAccount {
 				}
 				$Script:AccountChoice = $Script:AccountOptionsCSV |where-object {$_.id -eq $Script:AccountID} #filter out to only include the account we selected.
 			}
-		} until ($Script:AccountID -ne "r")
+		} until ($Script:AccountID -ne "r" -and $Script:AccountID -ne "t")
 	}
 	if (($null -ne $script:AccountUsername -and ($null -eq $script:PW -or "" -eq $script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.pw.length -eq 0))){#This is called when params are used but the password wasn't entered.
 		$securedPW = read-host -AsSecureString "Enter the Battle.net password for $script:AccountUsername"
