@@ -18,7 +18,7 @@ Servers:
 #>
 
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.4.0"
+$CurrentVersion = "1.4.1"
 
 ###########################################################################################################################################
 # Script itself
@@ -726,7 +726,8 @@ Function Processing {
 				}
 			}
 			try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
-				write-host ("Custom game settings (settings.json) being used for " + $id.accountlabel) -foregroundcolor green
+				$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
+				write-host ("Custom game settings (settings.json) being used for " + $CurrentLabel) -foregroundcolor green
 				start-sleep -milliseconds 100
 			}
 			catch {
