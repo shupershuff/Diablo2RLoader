@@ -19,6 +19,13 @@ Optionally you can also have the game launch using custom settings.json for each
 
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
+## Anything else?
+Why yes! You can also check the current and next Terror Zone by pressing T.
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)
+
+You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes. 
+There's also a 1 in 19,999 to land a High Rune but you'll never see this :)
+
 # Setup Steps
 ## Download
 1. Download the latest [release](https://github.com/shupershuff/Diablo2RLoader/releases) this and extract the zip file to a folder of your choosing.
