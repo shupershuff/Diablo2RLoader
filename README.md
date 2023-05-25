@@ -5,7 +5,7 @@ Instead of setting up shortcuts on your desktop for each account (or worse, open
 Oh yea, and no more plain text passwords either. Oh and you can check the current and next TZ from this launcher. Cool aye?
 
 Script Screenshot:<br>
-![Launcher](https://user-images.githubusercontent.com/63577525/233829526-2b28f2b9-761b-4d95-af0f-6561bda8ddf3.png)<br>
+![Launcher](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/b16692f4-49f0-4341-9d00-ba5d27cd6f42)<br>
 What your windows will look like:<br>
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
 
