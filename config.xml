@@ -8,7 +8,10 @@
 
 	<!--default region, 1 for NA, 2 for EU, 3 for Asia.-->
 	<DefaultRegion>1</DefaultRegion>
-
+	
+	<!--Optionally add any command line arguments that you'd like the game to start with-->
+	<CommandLineArguments></CommandLineArguments>
+	
 	<!--Whether script should only prompt you once for region-->
 	<AskForRegionOnceOnly>False</AskForRegionOnceOnly>
 
