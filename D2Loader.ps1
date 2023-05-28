@@ -15,10 +15,15 @@ Servers:
  NA - us.actual.battle.net
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
+ 
+ 
+Notes since 1.4.1 (next version edits):
+- Added Custom Command line arguments for players who use mods (eg mosaic reduce gfx mods). Config file will autoupdate.
+
 #>
 
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.4.1"
+$CurrentVersion = "1.4.2"
 
 ###########################################################################################################################################
 # Script itself
@@ -73,6 +78,22 @@ Catch {
 	write-host ""
 	pause
 	exit
+}
+
+if ($script:config.CommandLineArguments -eq $null){
+	Write-Host
+	Write-Host " Config option 'CommandLineArguments' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This is an optional config option to add custom arguments when launching D2" -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$xml = Get-Content "$script:WorkingDirectory\Config.xml"
+	$pattern = "</DefaultRegion>"
+	$replacement = "</DefaultRegion>`n`n`t<!--Optionally add any command line arguments that you'd like the game to start with-->`n`t<CommandLineArguments></CommandLineArguments>"
+	$newxml = $xml -replace [regex]::Escape($pattern), $replacement
+	$newxml | Set-Content -Path "$script:WorkingDirectory\Config.xml"
+	start-sleep -milliseconds 1500
+	pause
 }
 
 #check if there's any missing config.xml options, if so user has out of date config file.
@@ -701,7 +722,7 @@ Function Processing {
 
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
-		$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region).tostring()
+		$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region +" " +$config.CommandLineArguments).tostring()
 		if ($config.ForceWindowedMode -eq $true){
 			$arguments = $arguments + " -w"
 		}
