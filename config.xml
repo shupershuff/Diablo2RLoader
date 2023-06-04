@@ -9,6 +9,10 @@
 	<!--default region, 1 for NA, 2 for EU, 3 for Asia.-->
 	<DefaultRegion>1</DefaultRegion>
 	
+	<!--Choose whether or not TZ checker should look online for Next TZ updates.
+	Choose False if Next TZ data is unreliable and you want faster updates for current TZ.-->
+	<CheckForNextTZ>false</CheckForNextTZ>
+	
 	<!--Optionally add any command line arguments that you'd like the game to start with-->
 	<CommandLineArguments></CommandLineArguments>
 	
