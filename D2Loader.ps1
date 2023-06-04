@@ -15,13 +15,25 @@ Servers:
  NA - us.actual.battle.net
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
+ 
+Notes since 1.4.1 (next version edits):
+- Can now open all accounts at once using "a"
+- Added Custom Command line arguments for players who use mods (eg mosaic reduce gfx mods). Config file will autoupdate.
+- Adjusted TZ checker to pull current TZ from https://d2rapi.fly.dev/.
+- Adjusted TZ checker to drastically reduce the wait time for info to be obtained and processed (was 30 seconds, now about 10 seconds).
+- Only run Next TZ checker if there's been a new TZ post within the hour.
+- Added Dclone Checker (option D in the menu).
+- Minor formatting changes.
+- Can now update script automatically without having to browse to GitHub and download latest release.
+- Fixed Try/Catch statement for missing config file.
+- Added config option for CheckForNextTZ. Set to False to avoid delays looking for online updates for next TZ.
 
-1.5 notes:
+1.5.0 notes:
 Unfortunately, the site used to pull Next TZ data seems dead.
 Currently looking for alternative locations or methods to pull this data from game client directly.
 Please get in touch if you can assist in this matter.
 
-Omitted changes - Improving search criteria for TZ checker to weed out the script reading spam posts (Couldn't figure out and appears forum is dead anyway)
+Omitted changes - Slightly Improved search criteria for TZ checker to weed out the script reading spam posts (Couldn't figure out and appears forum is dead anyway)
 #>
 
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
@@ -879,7 +891,7 @@ Function ChooseAccount {
 				Write-Host
 				$script:OpenAllAccounts = $False
 				if ($accountoptions.length -gt 0){
-					Write-Host (" Please select which account to sign into: " + $accountoptions + " or a for all")
+					Write-Host (" Select which account to sign into: " + $accountoptions + " or 'a' for all.")
 					Write-Host " Alternatively choose from the following menu options:"
 					$Script:AccountID = Read-host " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit"
 				}
@@ -930,7 +942,7 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 	write-host	
 		do {
 			write-host " Please select a region: 1, 2 or 3"
-			$Script:RegionOption = Read-host (" Alternatively select 'c' to cancel or press enter for the default (" + $script:defaultregion + "-" +($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
+			$Script:RegionOption = Read-host (" Alternatively select 'c' to cancel or press enter for the default (" + $script:defaultregion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Script:DefaultRegion #default to NA
 			}
