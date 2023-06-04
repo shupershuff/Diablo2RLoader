@@ -15,15 +15,17 @@ Servers:
  NA - us.actual.battle.net
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
- 
- 
-Notes since 1.4.1 (next version edits):
-- Added Custom Command line arguments for players who use mods (eg mosaic reduce gfx mods). Config file will autoupdate.
 
+1.5 notes:
+Unfortunately, the site used to pull Next TZ data seems dead.
+Currently looking for alternative locations or methods to pull this data from game client directly.
+Please get in touch if you can assist in this matter.
+
+Omitted changes - Improving search criteria for TZ checker to weed out the script reading spam posts (Couldn't figure out and appears forum is dead anyway)
 #>
 
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.4.2"
+$CurrentVersion = "1.5.0"
 
 ###########################################################################################################################################
 # Script itself
@@ -48,26 +50,55 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
 [console]::BufferWidth=[console]::WindowWidth
 $x = [char]0x1b #escape character for ANSI text colors
 $ProgressPreference = "SilentlyContinue"
+$script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 
 #Check for updates
-$tagList = Invoke-RestMethod https://api.github.com/repos/Shupershuff/Diablo2RLoader/tags
-if ([version[]]$taglist.Name.Trim('v') -gt $Script:CurrentVersion) {
-	$LatestReleaseNotes = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases/latest"
-	Write-Host
-	Write-Host " Update available, See Github for latest version:" -foregroundcolor Yellow
-	write-host " $x[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$x[0m"
-	Write-Host
-	$LatestReleaseNotes = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases/latest"
-	Write-Host $LatestReleaseNotes.body
-	Write-Host
-	pause
+try {
+	$tagList = Invoke-RestMethod "https://api.github.com/repos/Shupershuff/Diablo2RLoader/tags" -erroraction stop
+	if ([version[]]$taglist.Name.Trim('v') -gt $Script:CurrentVersion) {
+		$releaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases/latest"
+		Write-Host
+		Write-Host " Update available! See Github for latest version and info:" -foregroundcolor Yellow
+		write-host " $x[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$x[0m"
+		Write-Host
+		Write-Host $releaseInfo.body
+		Write-Host
+		Write-Host
+		Do {
+			$ShouldUpdate = Read-host " Would you like to update? Y/N"
+			if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes" -or $ShouldUpdate -eq "n" -or $ShouldUpdate -eq "no"){
+				$UpdateResponseValid = $True
+			} Else {
+				write-host "Invalid response. Choose Y or N" -ForegroundColor red
+			}
+		} Until ($UpdateResponseValid -eq $True)
+		if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes"){#if user wants to update script, download .zip of latest release, extract to temporary folder and replace old D2Loader.ps1 with new D2Loader.ps1
+			New-Item -ItemType Directory -Path ($script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
+			$zipUrl = $releaseInfo.zipball_url #get zip download URL	
+			$zipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $releaseInfo.tag_name + "_temp.zip")
+			Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+			$extractPath = ($script:WorkingDirectory + "\UpdateTemp\")
+			Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+			$FolderPath = Get-ChildItem -Path $extractPath -Directory -Filter "shupershuff*" | Select-Object -ExpandProperty FullName
+			($FolderPath + "\D2Loader.ps1")
+			($script:WorkingDirectory + "D2Loaders.ps1")
+			Copy-Item -Path ($FolderPath + "\D2Loader.ps1") -Destination ($script:WorkingDirectory + "\D2Loader.ps1")
+			Remove-Item -Path ($script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force #delete update temporary folder
+			write-host "Updated :)"
+			& ($script:WorkingDirectory + "\D2Loader.ps1")
+			exit
+		}
+		$releaseInfo = $null
+	}
 }
-
-$script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
+Catch {
+	write-host "Couldn't check for updates. GitHub API limit may have been reached..." -foregroundcolor Yellow
+	start-sleep -milliseconds 2500
+}
 
 #Import Config XML
 try {
-	$Script:Config = ([xml](Get-Content "$script:WorkingDirectory\Config.xml")).D2loaderconfig
+	$Script:Config = ([xml](Get-Content "$script:WorkingDirectory\Config.xml" -ErrorAction Stop)).D2loaderconfig
 	#Write-host "Config imported successfully." -foregroundcolor green
 }
 Catch {
@@ -96,6 +127,22 @@ if ($script:config.CommandLineArguments -eq $null){
 	pause
 }
 
+if ($script:config.CheckForNextTZ -eq $null){
+	Write-Host
+	Write-Host " Config option 'CheckForNextTZ' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This is an optional config option to skip looking for NextTZ updates." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$xml = Get-Content "$script:WorkingDirectory\Config.xml"
+	$pattern = "</DefaultRegion>"
+	$replacement = "</DefaultRegion>`n`n`t<!--Choose whether or not TZ checker should look online for Next TZ updates.`n`tChoose False if Next TZ data is unreliable and you want faster updates for current TZ.-->`n`t<CheckForNextTZ>True</CheckForNextTZ>"
+	$newxml = $xml -replace [regex]::Escape($pattern), $replacement
+	$newxml | Set-Content -Path "$script:WorkingDirectory\Config.xml"
+	start-sleep -milliseconds 1500
+	pause
+}
+
 #check if there's any missing config.xml options, if so user has out of date config file.
 $AvailableConfigs = #add to this if adding features.
 "AskForRegionOnceOnly",
@@ -106,6 +153,12 @@ $AvailableConfigs = #add to this if adding features.
 "GamePath",
 "SettingSwitcherEnabled",
 "ShortcutCustomIconPath"
+
+if($script:config.CheckForNextTZ -ne $true -and $script:config.CheckForNextTZ -ne $false){#if CheckForNextTZ config is invalid, set to false
+	$script:CheckForNextTZ = $false
+} Else {
+	$script:CheckForNextTZ = $script:config.CheckForNextTZ
+}
 
 $ConfigXMLlist = ($config | Get-Member | Where-Object {$_.membertype -eq "Property" -and $_.name -notlike "#comment"}).name
 write-host
@@ -415,60 +468,222 @@ $BannerLogo = @"
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 "@
 
-function NextTZ {
-	# Get the current time data was pulled
-	$TimeDataObtained = (Get-Date -Format 'h:mm tt')
-	#find URL of latest post
-	Write-Host
-	Write-Host " Finding TZ Update Posts...."
-	$url = "https://gall.dcinside.com/mgallery/board/lists/?id=diablo2resurrected&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
-	$geturl = Invoke-WebRequest $url
-	$TDs = $geturl.ParsedHtml.body.getElementsByTagName("td") | Select-Object innerhtml,classname | Where-Object { $_.className -eq "gall_num" } #find Table elements
-	[array]$AllPostIDs = foreach($number in $TDs.innerhtml) {([int]::parse($number))}
-	#$latestpostID = ($divs.innerhtml |Measure-Object -maximum).maximum
-	$latestpostID = ($AllPostIDs | Sort-Object -Descending)[0]
-	$previouspostID = ($AllPostIDs | Sort-Object -Descending)[1]
-
-	#Find Current TZ and Convert to English.
-	Write-Host " Finding Current TZ Name..."
-	$url = ("https://gall.dcinside.com/mgallery/board/view/?id=diablo2resurrected&no") + "=" + $previouspostID +"&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
-	$geturl = Invoke-WebRequest $url
-	$divs = $geturl.ParsedHtml.body.getElementsByTagName('div') | Select-Object innerhtml,classname | Where-Object { $_.className -eq "write_div" }
-	foreach ($div in $divs) {
-		   $divContent = $div.innerHTML
+Function Dclone {
+	$headers = @{
+		"D2R-Contact" = "placeholderemail@email.com"
+		"D2R-Platform" = "GitHub"
+		"D2R-Repo" = "https://github.com/shupershuff/Diablo2RLoader"
 	}
-	$CurrentZoneKorean = [regex]::Matches($divContent, "&lt;(.*?)&gt;") | ForEach-Object { $_.Groups[1].Value }
-	
-	#Find next TZ and Convert to English.
-	Write-Host " Finding Next TZ Name..."
-	$url = ("https://gall.dcinside.com/mgallery/board/view/?id=diablo2resurrected&no") + "=" + $latestpostID +"&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
-	$geturl=Invoke-WebRequest $url
-	$divs =$geturl.ParsedHtml.body.getElementsByTagName('div') | Select-Object innerhtml,classname | Where-Object { $_.className -eq "write_div" }
-	foreach ($div in $divs) {
-		   $divContent = $div.innerHTML
-	}
-	$NextZoneKorean = [regex]::Matches($divContent, "&lt;(.*?)&gt;") | ForEach-Object { $_.Groups[1].Value }
-	
-	#Write-Host " Translating Current TZ to English..."
-	Write-Host " Translating Korean to English..."
-	$TargetLanguage = "en"
-	$Uri = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$($TargetLanguage)&dt=t&q=$CurrentZoneKorean"
-	$Response = Invoke-RestMethod -Uri $Uri -Method Get
-	$CurrentTZTranslation = $Response[0].SyncRoot | foreach { $_[0] }
-	#Write-Host " Translating Next TZ to English..."
-	$TargetLanguage = "en"
-	$Uri = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$($TargetLanguage)&dt=t&q=$NextZoneKorean"
-	$Response = Invoke-RestMethod -Uri $Uri -Method Get
-	$NextTZTranslation = $Response[0].SyncRoot | foreach { $_[0] }
+	$uri = "https://d2runewizard.com/api/diablo-clone-progress/all?token=Pzttbnf1LduTScqauozCLQ"
+	$D2RWDCloneResponse = Invoke-RestMethod -Uri $uri -Method GET -header $headers
+	write-host
+	$LadderStatus = $D2RWDCloneResponse.servers | where-object {$_.Server -match "^ladder"} | select server,progress | sort server
+	$NonLadderStatus = $D2RWDCloneResponse.servers | where-object {$_.Server -match "nonladder"} | select server,progress | sort server
+	$CurrentStatus = $D2RWDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} | sort server
 
-	# Extract the time component
-	write-host
-	write-host " Current TZ is: "  -nonewline;write-host $CurrentTZTranslation -ForegroundColor magenta
-	write-host " Next TZ is:    "  -nonewline;write-host $NextTZTranslation -ForegroundColor magenta
-	write-host
-	write-host " Accurate as of:" $TimeDataObtained
-	write-host 
+	$DCloneLadderTable = New-Object -TypeName System.Collections.ArrayList
+	$DCloneNonLadderTable = New-Object -TypeName System.Collections.ArrayList
+	foreach ($Status in $CurrentStatus){
+		$DCloneLadderInfo = New-Object -TypeName psobject
+		$DCloneNonLadderInfo = New-Object -TypeName psobject
+		if ($Status.server -match "^ladder"){
+			$DCloneLadderInfo  | Add-Member -MemberType NoteProperty -Name LadderServer -Value $Status.server
+			$DCloneLadderInfo  | Add-Member -MemberType NoteProperty -Name LadderProgress -Value $Status.progress
+			[VOID]$DCloneLadderTable.Add($DCloneLadderInfo)
+		}
+		Else {
+			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderServer -Value $Status.server
+			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderProgress -Value $Status.progress
+			[VOID]$DCloneNonLadderTable.Add($DCloneNonLadderInfo)
+		}
+	}
+	$count = 0
+	Do {
+		if ($count -eq 0){
+			write-host
+
+			write-host "                         Current Dclone Status:"
+			write-host
+			write-host " ##########################################################################"
+			write-host " #             Ladder               |             Non-Ladder              #"
+			write-host " ###################################|######################################"
+			write-host " #  Server                  Status  |  Server                     Status  #"
+			write-host " #----------------------------------|-------------------------------------#"
+		}
+		if ($count -eq 3){write-host " #----------------------------------|-------------------------------------#"}
+		$LadderServer = ($DCloneLadderTable.LadderServer[$count]).tostring()
+		do {
+			#write-host "ladder serv was less than 22"
+			#$LadderServer.length
+			$LadderServer = ($LadderServer + " ")
+		}
+		until ($LadderServer.length -ge 26)
+		$NonLadderServer = ($DCloneNonLadderTable.NonLadderServer[$count]).tostring()
+		do {
+			#write-host "nonladder serv was less than 25"
+			$NonLadderServer = ($NonLadderServer + " ")
+		}
+		until ($NonLadderServer.length -ge 29)
+		write-host (" #  " + $LadderServer + " " + $DCloneLadderTable.LadderProgress[$count] + "    |  " + $NonLadderServer + " " + $DCloneNonLadderTable.NonLadderProgress[$count]+ "    #")
+		$count = $count + 1
+		#write-host $count
+		if ($count -eq 6){
+			write-host " #                                  |                                     #"
+			write-host " ##########################################################################"
+			write-host
+			write-host "   DClone Status provided D2runewizard.com"
+			write-host
+		}
+	}
+	Until ($count -eq 6)	
+	#$D2RWDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} | sort server
 	pause
+}
+
+function TerrorZone {
+	# Get the current time data was pulled
+	$TimeDataObtained = (Get-Date -Format 'h:mmtt')
+	
+	#Find Current TZ from D2RuneWizard
+	Write-Host
+	Write-Host "  Finding Current TZ Name..."
+	#$QLC = "zouaqcSTudL"
+	#$tokreg = ("QLC" + $qlc + 1 +"fnbttzP")
+	#$D2RWref = ""
+	#for ($i = $tokreg.Length - 1; $i -ge 0; $i--) {
+	#	$D2RWref += $tokreg[$i]
+	#}
+	#$headers = @{
+	#	"D2R-Contact" = "placeholderemail@email.com"
+	#	"D2R-Platform" = "GitHub"
+	#	"D2R-Repo" = "https://github.com/shupershuff/Diablo2RLoader"
+	#}
+	#$uri = "https://d2runewizard.com/api/terror-zone?token=Pzttbnf1LduTScqauozCLQ"
+	#$D2RWTZResponse = Invoke-RestMethod -Uri $uri -Method GET -header $headers
+	#$CurrentTZ = $D2RWTZResponse.terrorzone.zone
+	#$CurrentTZProvider = "D2runewizard.com"
+	#Alternative Website to get current API, possibly more reliable, might replace in the future.
+	$FlyURI = "https://d2rapi.fly.dev/" #Get TZ from d2rapi.fly.dev
+	$D2FlyTZResponse = Invoke-WebRequest -Uri $FlyURI -Method GET -header $headers
+	$CurrentTZ = ($D2FlyTZResponse | Select-String -Pattern '(?<=<\/a> - )(.*?)(?=<br>)' -AllMatches | ForEach-Object { $_.Matches.Value })[0]	
+	$CurrentTZProvider = "d2rapi.fly.dev"
+	
+	if ($CheckForNextTZ -ne $False){
+		#Find URL of latest forum post indicating Next TZ
+		Write-Host "  Finding TZ Update Posts...."
+		$url = "https://gall.dcinside.com/mgallery/board/lists/?id=diablo2resurrected&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
+		$geturl = Invoke-WebRequest $url
+		$geturl.ParsedHtml.body.innerhtml | Out-File ($WorkingDirectory + "\TZData.txt") -Encoding ascii  #create temp file to store forum html to search.
+
+		$reader = New-Object System.IO.StreamReader($WorkingDirectory + "\TZData.txt")
+		$IDs = New-Object -TypeName System.Collections.ArrayList
+		$lines = @()
+		if ($reader -ne $null) {
+			while (!$reader.EndOfStream) {
+				$line = $reader.ReadLine()
+				if ($line.Contains('<a href="/mgallery/board/view/?id=diablo2resurrected&amp;no=')) {
+					$lines += $line
+				}
+			}
+			$reader.close()
+			$ForumURLPattern = 'no=\d+'
+			foreach ($line in $lines){
+				$id = [regex]::Match($line, $ForumURLPattern).Value.replace("no=","")
+				$PostID = New-Object -TypeName psobject
+				$PostID | Add-Member -MemberType NoteProperty -Name ID -Value $ID
+				[VOID]$IDs.Add($PostID)
+			}
+			$LatestPostID = $ids.id[0]
+			$LatestTZPostIDFile = ($WorkingDirectory + "\LatestTZPostID.txt")
+			if (-not (Test-Path -Path $LatestTZPostIDFile)) {
+				#write-host "  LatestTZPostIDFile doesn't exist, creating..." 
+				$LatestPostID | Out-File -FilePath $LatestTZPostIDFile
+			}
+			$content = (Get-Content -Path $LatestTZPostIDFile -Raw).trim()
+
+			if ($content -ne $LatestPostID){#only update text file if the values are different.
+				$LatestPostID | Out-File -FilePath $LatestTZPostIDFile
+				$content = Get-Content -Path $LatestTZPostIDFile -Raw
+			}
+			$LatestTZPostIDFileInfo = get-item -path $LatestTZPostIDFile
+			#$MinutePercentage = ($LatestTZPostIDFileInfo.lastwritetime.minute / 60).tostring().replace("0","")
+			#$isFileEditedRecently = ($LatestTZPostIDFileInfo.LastWriteTime -ge (Get-Date).AddHours(("-0"+ $MinutePercentage)))
+			$startOfHour = Get-Date -Hour (Get-Date -Format "HH") -Minute 0 -Second 0
+			$isFileEditedRecently = ($LatestTZPostIDFileInfo.lastwritetime -ge $startOfHour)
+			if ($content -eq $LatestPostID -or $isFileEditedRecently -eq $true){ #if the latest post ID on the forum is equal to the id in the text file, and the text file hasn't been updated since xx:00, don't bother trying to pull next TZ details.
+				If ($isFileEditedRecently -eq $true){
+					#write-host "  LatestTZPostID.txt was edited within the last hour"
+					$GetNextTZDetails = $True #get next tz details and display it. IE, if someone has checked for TZ within the hour, and checks it again, still display the NextTZ details.
+				}
+				else {#if txt file matches the current tz post and the text file hasn't been updated in the last hour
+					#write-host "  LatestTZPostID.txt was not edited within the last hour"
+					$fail = $true
+					$FailMessage = "Forum hasn't been updated with Next TZ info :("
+				}
+			}
+			else {
+				$GetNextTZDetails = $True
+			}
+			$lines = $null
+			if ($GetNextTZDetails -eq $True){
+				#Find next TZ and Convert to English.
+				write-host "  Finding next TZ..."
+				$url = ("https://gall.dcinside.com/mgallery/board/view/?id=diablo2resurrected&no") + "=" + $LatestPostID +"&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
+				$geturl = Invoke-WebRequest $url
+				$geturl.ParsedHtml.body.innerhtml | Out-File ($WorkingDirectory + "\TZData.txt")
+				$fileContent = Get-Content -Path ($WorkingDirectory + "\TZData.txt") -Raw
+				$pattern = '&lt;([^&]+)&gt;'
+				$matches = [regex]::Matches($fileContent, $pattern)
+				try {
+					$NextZoneKorean = ($matches.value.replace("&gt;","")).replace("&lt;","")
+					$fail = $false
+				}
+				Catch {
+					$LatestPostID
+					$FailMessage = "Was unable to find TZ details :("
+					$fail = $true
+				}
+			}
+			
+			if ($fail -ne $true) {
+				Write-Host "  Translating Next TZ to English..."
+				$TargetLanguage = "en"
+				$Uri = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$($TargetLanguage)&dt=t&q=$NextZoneKorean"
+				$Response = Invoke-RestMethod -Uri $Uri -Method Get
+				$NextTZTranslation = $Response[0].SyncRoot | foreach { $_[0] }
+
+				# Extract the time component
+				write-host
+				write-host "   Current TZ is: "  -nonewline;write-host $CurrentTZ -ForegroundColor magenta
+				write-host "   Next TZ is:    "  -nonewline;write-host $NextTZTranslation -ForegroundColor magenta
+				write-host
+				write-host "  Information Retrieved at" $TimeDataObtained
+				write-host "  Current TZ pulled from D2runewizard.com"
+				write-host "  Next TZ pulled from dcinside.com (Note: Might not be updated or accurate)"
+				write-host
+				pause
+			}
+		}
+		else {
+			$fail = $true
+			$FailMessage = "Couldn't find TZ posts or retrieve website data."
+		}
+	}
+	if ($fail -eq $true -or $CheckForNextTZ -eq $False){
+		write-host
+		write-host "   Current TZ is: "  -nonewline;write-host $CurrentTZ -ForegroundColor magenta
+		if ($CheckForNextTZ -ne $False){
+			write-host "   Next TZ info unavailable: $FailMessage" -ForegroundColor Red
+		}
+		write-host
+		write-host "  Information Retrieved at" $TimeDataObtained
+		write-host "  Current TZ pulled from $CurrentTZProvider"
+		write-host
+		pause
+	}
+	if (Test-Path -Path($WorkingDirectory + "\TZData.txt")) {
+		Remove-Item  -path ($WorkingDirectory + "\TZData.txt") 
+	}
 }
 
 Function Killhandle {#kudos the info in this post to save me from figuring it out: https://forums.d2jsp.org/topic.php?t=90563264&f=87
@@ -526,10 +741,10 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 Function DisplayActiveAccounts {
 	write-host 
 	if ($Script:ActiveAccountsList.id -ne ""){
-		write-host "ID  Region  Account Label"
+		write-host "  ID  Region  Account Label"
 	}
 	else {
-		write-host "ID  Account Label"
+		write-host "  ID  Account Label"
 	}
 	$pattern = "(?<=- \w+ \()([a-z]+)"#Regex pattern to pull the region characters out of the window title.
 	foreach ($AccountOption in $Script:AccountOptionsCSV){
@@ -541,14 +756,14 @@ Function DisplayActiveAccounts {
 			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $AccountDisplayPreIndent = " "; $AccountDisplayPostIndent = " "}
 			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
 			if ($CurrentRegion -eq "EU"){$CurrentRegion = "EU"; $AccountDisplayPreIndent = " "; $AccountDisplayPostIndent = " "}
-			write-host ($AccountOption.ID + "    "  + $AccountDisplayPreIndent + $CurrentRegion + "   " + $AccountDisplayPostIndent + $AccountOption.accountlabel + " - Account Currently In Use.") -foregroundcolor yellow
+			write-host ("   " + $AccountOption.ID + "   "  + $AccountDisplayPreIndent + $CurrentRegion + "   " + $AccountDisplayPostIndent + $AccountOption.accountlabel + " - Account Currently In Use.") -foregroundcolor yellow
 		}
 		else {
 			if ($Script:ActiveAccountsList.id -ne ""){
-				write-host ($AccountOption.ID + "     -     " + $AccountOption.accountlabel) -foregroundcolor green
+				write-host ("   " + $AccountOption.ID + "    -     " + $AccountOption.accountlabel) -foregroundcolor green
 			}
 			else {
-				write-host ($AccountOption.ID + "   " + $AccountOption.accountlabel) -foregroundcolor green
+				write-host ("   " + $AccountOption.ID + "  " + $AccountOption.accountlabel) -foregroundcolor green
 			}
 		}
 	}
@@ -567,7 +782,7 @@ Function Menu {
 		Write-Host "Region:  " $lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
 	}
 	Else {
-		Write-Host "You have quite a treasure there in that Horadric multibox script"
+		Write-Host ("You have quite a treasure there in that Horadric multibox script v" + $currentversion)
 	}
 
 	Write-Host $BannerLogo -foregroundcolor yellow
@@ -592,7 +807,33 @@ Function Menu {
 			ChooseRegion
 		}
 	}
-	Processing
+	if ($script:OpenAllAccounts -eq $True){
+		write-host
+		write-host " Opening all accounts..."
+		foreach ($ID in $script:AcceptableValues){
+			$Script:AccountChoice = $Script:AccountOptionsCSV | where-object {$_.id -eq $ID}
+			$Script:AccountID = $ID
+			if ($id -eq $script:AcceptableValues[-1]){
+				$script:LastAccount = $true
+			}
+			write-host
+			write-host " Opening Account: $ID" 
+			Processing
+		}
+		$script:LastAccount = $False
+		$script:OpenAllAccounts = $False
+		Menu
+	}
+	Else {
+		Processing
+		if ($script:ParamsUsed -ne $true){
+			Menu
+		}
+		else {
+			write-host "I'm quitting LOL"
+			exit
+		}	
+	}
 }
 Function ChooseAccount {
 	if ($null -ne $script:AccountUsername){ #if parameters have already been set.
@@ -603,8 +844,11 @@ Function ChooseAccount {
 	else {#if no account parameters have been set already		
 		do {
 			if ($Script:AccountID -eq "t"){
-				NextTZ
-
+				TerrorZone
+				$Script:AccountID = "r"
+			}
+			if ($Script:AccountID -eq "d"){
+				Dclone
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
@@ -624,26 +868,27 @@ Function ChooseAccount {
 			}
 			CheckActiveAccounts
 			DisplayActiveAccounts
-			$AcceptableValues = New-Object -TypeName System.Collections.ArrayList
+			$script:AcceptableValues = New-Object -TypeName System.Collections.ArrayList
 			foreach ($AccountOption in $Script:AccountOptionsCSV){
 				if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
-					$AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"	
+					$script:AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"
 				}
 			}
-			$accountoptions = ($AcceptableValues -join  ", ").trim()
+			$accountoptions = ($script:AcceptableValues -join  ", ").trim()
 			do {
 				Write-Host
-				if($accountoptions.length -gt 0){
-					Write-Host "Please select which account to sign into."
-					Write-Host ("Your Options are: " + $accountoptions)
-					$Script:AccountID = Read-host "Alternatively choose 'r' to refresh, 't' for TZ info or 'x' to quit."
+				$script:OpenAllAccounts = $False
+				if ($accountoptions.length -gt 0){
+					Write-Host (" Please select which account to sign into: " + $accountoptions + " or a for all")
+					Write-Host " Alternatively choose from the following menu options:"
+					$Script:AccountID = Read-host " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit"
 				}
 				else {#if there aren't any available options, IE all accounts are open
-					Write-Host "All Accounts are currently open!" -foregroundcolor yellow
-					$Script:AccountID = Read-host "Press 'r' to refresh, 't' for TZ info, or 'x' to quit."
+					Write-Host " All Accounts are currently open!" -foregroundcolor yellow
+					$Script:AccountID = Read-host " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit"
 				}
-				if($Script:AccountID -notin ($AcceptableValues + "x" + "r" +"t") -and $null -ne $Script:AccountID){
-					Write-host "Invalid Input. Please enter one of the options above." -foregroundcolor red
+				if($Script:AccountID -notin ($script:AcceptableValues + "x" + "r" + "t" + "d" + "a") -and $null -ne $Script:AccountID){
+					Write-host " Invalid Input. Please enter one of the options above." -foregroundcolor red
 					$Script:AccountID = $Null
 				}
 			} until ($Null -ne $Script:AccountID)
@@ -657,10 +902,13 @@ Function ChooseAccount {
 				}
 				$Script:AccountChoice = $Script:AccountOptionsCSV |where-object {$_.id -eq $Script:AccountID} #filter out to only include the account we selected.
 			}
-		} until ($Script:AccountID -ne "r" -and $Script:AccountID -ne "t")
+		} until ($Script:AccountID -ne "r" -and $Script:AccountID -ne "t" -and $Script:AccountID -ne "d")
+		if ($Script:AccountID -eq "a"){
+			$script:OpenAllAccounts = $True
+		}
 	}
 	if (($null -ne $script:AccountUsername -and ($null -eq $script:PW -or "" -eq $script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.pw.length -eq 0))){#This is called when params are used but the password wasn't entered.
-		$securedPW = read-host -AsSecureString "Enter the Battle.net password for $script:AccountUsername"
+		$securedPW = read-host -AsSecureString " Enter the Battle.net password for $script:AccountUsername"
 		$bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($securedPW)
 		$script:PW = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
 		$script:pwmanualset = $true
@@ -671,23 +919,23 @@ Function ChooseAccount {
 }
 Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo servers that host your games, which are all over the world :)
 	write-host
-	write-host "Available regions are:"
-	write-host "Option Region Server Address"
-	write-host "------ ------ --------------"
+	write-host " Available regions are:"
+	write-host "  Option  Region  Server Address"
+	write-host "  ------  ------  --------------"
 	foreach ($server in $ServerOptions){
-		if ($server.region.length -eq 2){$regiontablespacing = "  "}
+		if ($server.region.length -eq 2){$regiontablespacing = " "}
 		if ($server.region.length -eq 4){$regiontablespacing = ""}
-		write-host ($server.option + "      " + $server.region + $regiontablespacing + "   " + $server.region_server)
+		write-host ("    " + $server.option + "      " + $regiontablespacing + $server.region + $regiontablespacing + "   " + $server.region_server)
 	}
 	write-host	
 		do {
-			write-host "Please select a region (1, 2 or 3)"
-			$Script:RegionOption = Read-host ("Alternatively select 'c' to cancel or press enter for the default (" + $script:defaultregion + ": " +($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
+			write-host " Please select a region: 1, 2 or 3"
+			$Script:RegionOption = Read-host (" Alternatively select 'c' to cancel or press enter for the default (" + $script:defaultregion + "-" +($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Script:DefaultRegion #default to NA
 			}
 			if($Script:RegionOption -notin $Script:ServerOptions.option + "c"){
-				Write-host "Invalid Input. Please enter one of the options above." -foregroundcolor red
+				Write-host " Invalid Input. Please enter one of the options above." -foregroundcolor red
 				$Script:RegionOption = ""
 			}
 		} until ("" -ne $Script:RegionOption)
@@ -722,7 +970,7 @@ Function Processing {
 
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
-		$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region +" " +$config.CommandLineArguments).tostring()
+		$arguments = (" -username " + $script:acct + " -password " + $script:PW +" -address " + $Script:Region + " " + $config.CommandLineArguments).tostring()
 		if ($config.ForceWindowedMode -eq $true){
 			$arguments = $arguments + " -w"
 		}
@@ -748,7 +996,7 @@ Function Processing {
 			}
 			try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
 				$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
-				write-host ("Custom game settings (settings.json) being used for " + $CurrentLabel) -foregroundcolor green
+				write-host (" Custom game settings (settings" + $Script:AccountID + ".json) being used for " + $CurrentLabel) -foregroundcolor green
 				start-sleep -milliseconds 100
 			}
 			catch {
@@ -762,17 +1010,17 @@ Function Processing {
 		Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
 		start-sleep -milliseconds 1500 #give D2r a bit of a chance to start up before trying to kill handle
 		#Close the 'Check for other instances' handle
-		Write-host "Attempting to close `"Check for other instances`" handle..."
+		Write-host " Attempting to close `"Check for other instances`" handle..."
 		#$handlekilled = $true #debug
 		$output = killhandle | out-string
 		if(($output.contains("DiabloII Check For Other Instances")) -eq $true){
 			$handlekilled = $true
-			write-host "`"Check for Other Instances`" Handle closed." -foregroundcolor green
+			write-host " `"Check for Other Instances`" Handle closed." -foregroundcolor green
 		}
 		else {
-			write-host "`"Check for Other Instances`" Handle was NOT closed." -foregroundcolor red
-			write-host "Who even knows what happened. I sure don't." -foregroundcolor red
-			write-host "You may need to kill this manually via procexp. Good luck hero." -foregroundcolor red
+			write-host " `"Check for Other Instances`" Handle was NOT closed." -foregroundcolor red
+			write-host " Who even knows what happened. I sure don't." -foregroundcolor red
+			write-host " You may need to kill this manually via procexp. Good luck hero." -foregroundcolor red
 			write-host
 			pause
 		}
@@ -788,27 +1036,20 @@ Function Processing {
 		try {
 			cmd.exe /c $command
 			#write-output $command  #debug
-			#write-host "Window Renamed to $rename" -foregroundcolor green
-			write-host "Window Renamed" -foregroundcolor green
+			#write-host " Window Renamed to $rename" -foregroundcolor green
+			write-host " Window Renamed." -foregroundcolor green
 			start-sleep -milliseconds 200
-			write-host "Good luck hero..." -foregroundcolor magenta
+			if($script:LastAccount -eq $True -or $script:OpenAllAccounts -eq $False){
+				write-host
+				write-host "Good luck hero..." -foregroundcolor magenta
+			}
 		}
 		catch {
-			write-host "Couldn't rename window :(" -foregroundcolor red
+			write-host " Couldn't rename window :(" -foregroundcolor red
 			pause
 		}
-		start-sleep -milliseconds 900
+		start-sleep -milliseconds 1000
 		$Script:ScriptHasBeenRun = $true
-		if ($script:ParamsUsed -ne $true){
-			Menu
-		}
-		else {
-			write-host "I'm quitting LOL"
-			exit
-		}
-	}
-	else {
-		Menu
 	}
 }
 cls
