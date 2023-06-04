@@ -2,7 +2,9 @@
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing). 
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, dclones, rushes etc.
-Oh yea, and no more plain text passwords either. Oh and you can check the current and next TZ from this launcher. Cool aye?
+Oh yea, and no more plain text passwords either. Oh and you can check DClone status and the current TZ~~and next TZ~~ from this launcher. Cool aye?
+
+\* Currently looking for another sources for Next TZ as the previous one seems to not be updating anymore. If you have a reliable source or info on how to pull this data please get in touch.
 
 Script Screenshot:<br>
 ![Launcher](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/b16692f4-49f0-4341-9d00-ba5d27cd6f42)<br>
@@ -98,6 +100,9 @@ All other config options below this are strictly optional:<br>
 
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
 **A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
+
+**Q:** How do I update the script?
+**A:** As of 1.5.0, the script has the ability to update itself. To update manually, all you need to do is download the latest release, extract the .zip and copy the new D2Loader.ps1 over to where the old D2Loader.ps1 file is and overwrite it.
 
 **Q:** When Diablo opens it won't allow me to select an online character<br>
 **A:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).
