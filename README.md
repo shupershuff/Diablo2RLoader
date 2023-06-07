@@ -2,7 +2,7 @@
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing). 
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, dclones, rushes etc.
-Oh yea, and no more plain text passwords either. Oh and you can check DClone status and the current TZ~~and next TZ~~ from this launcher. Cool aye?
+Oh yea, and no more plain text passwords either. Oh and you can check DClone status and the current TZ ~~and next TZ~~ from this launcher. Cool aye?
 
 \* Currently looking for another sources for Next TZ as the previous one seems to not be updating anymore. If you have a reliable source or info on how to pull this data please get in touch.
 
@@ -22,7 +22,7 @@ Optionally you can also have the game launch using custom settings.json for each
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
 ## Anything else?
-Why yes! You can also check the current and next Terror Zone by pressing T.
+Why yes! You can also check the current and ~~next Terror Zone~~ by pressing T.
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)
 
 You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes. 
@@ -101,7 +101,7 @@ All other config options below this are strictly optional:<br>
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
 **A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
 
-**Q:** How do I update the script?
+**Q:** How do I update the script?<br>
 **A:** As of 1.5.0, the script has the ability to update itself. To update manually, all you need to do is download the latest release, extract the .zip and copy the new D2Loader.ps1 over to where the old D2Loader.ps1 file is and overwrite it.
 
 **Q:** When Diablo opens it won't allow me to select an online character<br>
@@ -130,18 +130,19 @@ All other config options below this are strictly optional:<br>
 
 Outside of killing this handle and changing the window title, there are absolutely no modifications to the game made by this script, it's simply an improved alternative way to start the application.
 To be clear, this script in no way enhances or assists with actual game play and I would strongly advise against seeking/using any tools.
-The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle. This script is a QOL tool to help consolidate your accounts to one simple launcher to simply open the game.
+The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle (as suggested in several guides). This script is a QOL tool to help consolidate your accounts to one simple launcher to simply open the game with account(s) and region(s) you want.
 
 So the real question is, regardless of this script, is using procexp or another method to kill the "check for other instances" handle against ToS? Stricly speaking yes and this topic has been broached in Blizzard forums many times without an official response either for or against.
-If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances handle'?" which to that I'm confident the answer is no. If I wasn't confident this script wouldn't exist and people wouldn't be using procexp to multibox through traditional methods. Given the widespread use of procexp being used to multibox, this method (and therefore also this script), is considered safe.
+If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances' handle?" which to that I'm confident the answer is no. If I wasn't confident, this script wouldn't exist and people wouldn't be using procexp to multibox through traditional methods. Given the widespread use of procexp being used to multibox, this method (and therefore also this script), is considered safe.
 
 ## Notes about the Window title rename (SetText.exe)
 
-The script will generate the .exe file if it doesn't exist. This is to prevent your browser considering it a dodgy file and stopping the download.
+The script will generate a file called SetTExt.exe if it doesn't exist.
+This is used to rename the Game Windows so that you and the script can tell each instance apart.
 To compile the .exe this requires DotNet4.0. If you don't have it the script will prompt you to download this from Microsoft.
 ~~A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy.~~ A submission has since been sent to Microsoft and submission has been cleared :)
 
-If you have a Anti-Virus product installed and it kicks up a fuss you may need to manually add an exception to the .\SetText\ folder.
+If you have a Anti-Virus product installed and it kicks up a fuss you may need to manually add an exception to the .\SetText\ folder location.
 
 Optional: If you don't trust me and want to build the .exe yourself you can do the following.
 1. Browse to the SetText Folder.
@@ -155,8 +156,7 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-* Configure TZ checker to display accurate as of the forum post date instead of the time the check was performed.
-* Figure out how to make the script run without elevated rights (which will prevent Discord PTT issues).
+* ~~Configure TZ checker to display accurate as of the forum post date instead of the time the check was performed.~~ Find Proper Next TZ source.
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
 * Maybe add a counter for time spent in each account (given Blizzard won't implement this).
 * Maybe a stats screen (by pressing "s" instead of choosing an account) to display above for each account. As a silly addition, stats to include how many "magic" or above quality quotes have been found in the script.
