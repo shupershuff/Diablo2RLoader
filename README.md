@@ -22,11 +22,12 @@ Optionally you can also have the game launch using custom settings.json for each
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
 ## Anything else?
-Why yes! You can also check the current and ~~next Terror Zone~~ by pressing T.
+Why yes! You can also check the current ~~and next Terror Zone~~ by pressing T.<br>
+\* Missing an accurate source or method to identify the Next TZ details. A new Release will be posted _if_ I become aware of another (and more reliable) way to obtain this info. Please get in touch if you can assist.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)
 
 You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes. 
-There's also a 1 in 19,999 to land a High Rune but you'll never see this :)
+There's also a 1 in 19,999 chance to land a High Rune but you'll never see this :)
 
 # Setup Steps
 ## Download
@@ -88,10 +89,12 @@ Default settings within config.xml *should* be ok but can be optionally changed.
 
 All other config options below this are strictly optional:<br>
 - Set your default region if you just want to mash enter instead of choosing the region.
+- Set 'CheckForNextTZ' to True if you want to run a web request to find NextTZ details - This currently doesn't work as the NextTZ source I had sucks.
+- Set 'CommandLineArguments' to any custom game launch arguments you would like to add.
 - Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
-- Set CreateDesktopShortcut to False if you don't want a handy dandy
-- Set ShortcutCustomIconPath to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo).
-- Set ConvertPlainTextPasswords to False if you want your passwords to be ~~stolen~~ in plain text.
+- Set CreateDesktopShortcut to False if you don't want a handy dandy shortcut on your desktop.
+- Set ShortcutCustomIconPath to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
+- Set ConvertPlainTextPasswords to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
 - Set ForceWindowedMode to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed.
 - Set SettingSwitcherEnabled to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the Setting Switcher section above for more info. Disabled by default.
 
@@ -117,10 +120,10 @@ All other config options below this are strictly optional:<br>
 **A:** The script needs to run as admin in order to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
 
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
-**A:** Bad news here sorry, Diablo does not work with 2FA enabled when launching the game from a shortcut with parameters.
+**A:** Bad news here sorry, Diablo does not work with 2FA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.
 
-**Q:** I would like to say Thankyou. How do I do that?<br>
-**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or just a message :)<br>
+**Q:** I would like to say "Thankyou". How do I do that?<br>
+**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message :)<br>
 
 **Q:** I have suggestions and/or issues with, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
@@ -167,9 +170,10 @@ See this site for more information on what this does: https://stackoverflow.com/
 - Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 - Handle tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 - MoonUnit for thoughts around converting plain text passwords to encrypted strings.
-- Google.com
+- ChatGPT for helping with regex patterns.
+- Google.com for everything else.
 
 <br>
 <br>
 
-Tags for Google SEO: Multiboxing, Multiboxes, Shuper, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, windows, battle.net, warriv, 
+Tags for Google SEO: Multiboxing, Multiboxes, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, windows, battle.net, warriv
