@@ -160,6 +160,9 @@ See this site for more information on what this does: https://stackoverflow.com/
 
 # What's Next #
 * ~~Configure TZ checker to display accurate as of the forum post date instead of the time the check was performed.~~ Find Proper Next TZ source.
+* Investigate use of battlenet login tokens (stored in registry) instead of passwords.
+* Investigate the possibility of having menu refresh.
+* Enhance the config feature by enabling you to choose config files (eg load settings.lowgfx.json) instead of it using settings from settings1.json for account1.
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
 * Maybe add a counter for time spent in each account (given Blizzard won't implement this).
 * Maybe a stats screen (by pressing "s" instead of choosing an account) to display above for each account. As a silly addition, stats to include how many "magic" or above quality quotes have been found in the script.
