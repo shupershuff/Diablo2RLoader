@@ -123,7 +123,7 @@ All other config options below this are strictly optional:<br>
 **A:** Bad news here sorry, Diablo does not work with 2FA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.
 
 **Q:** I would like to say "Thankyou". How do I do that?<br>
-**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message :)<br>
+**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks :)<br>
 
 **Q:** I have suggestions and/or issues with, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
@@ -159,14 +159,15 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-* ~~Configure TZ checker to display accurate as of the forum post date instead of the time the check was performed.~~ Find Proper Next TZ source.
-* Investigate use of battlenet login tokens (stored in registry) instead of passwords.
-* Investigate the possibility of having menu refresh.
-* Enhance the config feature by enabling you to choose config files (eg load settings.lowgfx.json) instead of it using settings from settings1.json for account1.
+* ~~Configure TZ checker to display accurate as of the forum post date instead of the time the check was performed.~~ Find Proper Next TZ source. -> another source found, have requested a datasource this script can use.
+* Investigate use of battlenet login tokens (stored in registry) instead of passwords. This is unlikely.
+* Investigate the possibility of having menu auto refresh. This is unlikely.
+* Enhance the config feature by enabling you to choose config files (eg load settings.lowgfx.json) instead of it using settings from settings1.json for account1. This is likely.
+* Maybe add a batch open option "b" for crazed users who have more than 8 accounts. IE each account has a batch number(s) associated with it in accounts.csv and in the menu you can choose a batch of accounts to open. As a person with 3 accounts this is a very low priority feature and hasn't been requested by anyone yet.
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
 * Maybe add a counter for time spent in each account (given Blizzard won't implement this).
-* Maybe a stats screen (by pressing "s" instead of choosing an account) to display above for each account. As a silly addition, stats to include how many "magic" or above quality quotes have been found in the script.
-* Perhaps make a GUI *if* there's enough interest.
+* Maybe a stats screen (by pressing "i" instead of choosing an account) to display above for each account. As a silly addition, stats to include how many "magic" or above quality quotes have been found in the script.
+* Perhaps make a GUI *if* there's enough interest. Probably not though as there would be a lot of brain activity involved. Pay my mortgage and we'll perhaps maybe talk... probably.
 
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
@@ -179,4 +180,4 @@ See this site for more information on what this does: https://stackoverflow.com/
 <br>
 <br>
 
-Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-launcher, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, process explorer, procexp, windows, battle.net, warriv
+Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, process explorer, procexp, windows, battle.net, warriv
