@@ -16,28 +16,23 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
  
-Notes since 1.4.1 (next version edits):
-- Can now open all accounts at once using "a"
-- Added Custom Command line arguments for players who use mods (eg mosaic reduce gfx mods). Config file will autoupdate.
-- Adjusted TZ checker to pull current TZ from https://d2rapi.fly.dev/.
-- Adjusted TZ checker to drastically reduce the wait time for info to be obtained and processed (was 30 seconds, now about 10 seconds).
-- Only run Next TZ checker if there's been a new TZ post within the hour.
-- Added Dclone Checker (option D in the menu).
-- Minor formatting changes.
-- Can now update script automatically without having to browse to GitHub and download latest release.
-- Fixed Try/Catch statement for missing config file.
-- Added config option for CheckForNextTZ. Set to False to avoid delays looking for online updates for next TZ.
+Notes since 1.5.0 (next version edits):
+- 
+Next TZ source updated and working. Enable 'CheckForNextTZ' in your config.xml today to enable this!
+Menu now no longer requires you to press enter to submit options.
+Main Menu automatically refreshes every 30 seconds
+Fixed being able to choose All when all accounts are already open.
 
-1.5.0 notes:
-Unfortunately, the site used to pull Next TZ data seems dead.
-Currently looking for alternative locations or methods to pull this data from game client directly.
-Please get in touch if you can assist in this matter.
+Credits to never147 for menu input and refresh improvements, TheGodOfPumpkin for TZ source and https://ocr.space for free their free OCR API.
 
-Omitted changes - Slightly Improved search criteria for TZ checker to weed out the script reading spam posts (Couldn't figure out and appears forum is dead anyway)
+1.7.0 to do list
+to do launch parameters for -all, region and settings.
+to do add settings menu option "s" to toggle manual game setting selection per account
+to do fix anything that I broke in 1.6.0 :D
 #>
 
 param($AccountUsername,$PW,$region) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.5.0"
+$CurrentVersion = "1.6.0"
 
 ###########################################################################################################################################
 # Script itself
@@ -559,126 +554,27 @@ function TerrorZone {
 	#Find Current TZ from D2RuneWizard
 	Write-Host
 	Write-Host "  Finding Current TZ Name..."
-	#$QLC = "zouaqcSTudL"
-	#$tokreg = ("QLC" + $qlc + 1 +"fnbttzP")
-	#$D2RWref = ""
-	#for ($i = $tokreg.Length - 1; $i -ge 0; $i--) {
-	#	$D2RWref += $tokreg[$i]
-	#}
-	#$headers = @{
-	#	"D2R-Contact" = "placeholderemail@email.com"
-	#	"D2R-Platform" = "GitHub"
-	#	"D2R-Repo" = "https://github.com/shupershuff/Diablo2RLoader"
-	#}
-	#$uri = "https://d2runewizard.com/api/terror-zone?token=Pzttbnf1LduTScqauozCLQ"
-	#$D2RWTZResponse = Invoke-RestMethod -Uri $uri -Method GET -header $headers
-	#$CurrentTZ = $D2RWTZResponse.terrorzone.zone
-	#$CurrentTZProvider = "D2runewizard.com"
-	#Alternative Website to get current API, possibly more reliable, might replace in the future.
 	$FlyURI = "https://d2rapi.fly.dev/" #Get TZ from d2rapi.fly.dev
 	$D2FlyTZResponse = Invoke-WebRequest -Uri $FlyURI -Method GET -header $headers
 	$CurrentTZ = ($D2FlyTZResponse | Select-String -Pattern '(?<=<\/a> - )(.*?)(?=<br>)' -AllMatches | ForEach-Object { $_.Matches.Value })[0]	
 	$CurrentTZProvider = "d2rapi.fly.dev"
 	
+	
 	if ($CheckForNextTZ -ne $False){
-		#Find URL of latest forum post indicating Next TZ
-		Write-Host "  Finding TZ Update Posts...."
-		$url = "https://gall.dcinside.com/mgallery/board/lists/?id=diablo2resurrected&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
-		$geturl = Invoke-WebRequest $url
-		$geturl.ParsedHtml.body.innerhtml | Out-File ($WorkingDirectory + "\TZData.txt") -Encoding ascii  #create temp file to store forum html to search.
-
-		$reader = New-Object System.IO.StreamReader($WorkingDirectory + "\TZData.txt")
-		$IDs = New-Object -TypeName System.Collections.ArrayList
-		$lines = @()
-		if ($reader -ne $null) {
-			while (!$reader.EndOfStream) {
-				$line = $reader.ReadLine()
-				if ($line.Contains('<a href="/mgallery/board/view/?id=diablo2resurrected&amp;no=')) {
-					$lines += $line
-				}
-			}
-			$reader.close()
-			$ForumURLPattern = 'no=\d+'
-			foreach ($line in $lines){
-				$id = [regex]::Match($line, $ForumURLPattern).Value.replace("no=","")
-				$PostID = New-Object -TypeName psobject
-				$PostID | Add-Member -MemberType NoteProperty -Name ID -Value $ID
-				[VOID]$IDs.Add($PostID)
-			}
-			$LatestPostID = $ids.id[0]
-			$LatestTZPostIDFile = ($WorkingDirectory + "\LatestTZPostID.txt")
-			if (-not (Test-Path -Path $LatestTZPostIDFile)) {
-				#write-host "  LatestTZPostIDFile doesn't exist, creating..." 
-				$LatestPostID | Out-File -FilePath $LatestTZPostIDFile
-			}
-			$content = (Get-Content -Path $LatestTZPostIDFile -Raw).trim()
-
-			if ($content -ne $LatestPostID){#only update text file if the values are different.
-				$LatestPostID | Out-File -FilePath $LatestTZPostIDFile
-				$content = Get-Content -Path $LatestTZPostIDFile -Raw
-			}
-			$LatestTZPostIDFileInfo = get-item -path $LatestTZPostIDFile
-			#$MinutePercentage = ($LatestTZPostIDFileInfo.lastwritetime.minute / 60).tostring().replace("0","")
-			#$isFileEditedRecently = ($LatestTZPostIDFileInfo.LastWriteTime -ge (Get-Date).AddHours(("-0"+ $MinutePercentage)))
-			$startOfHour = Get-Date -Hour (Get-Date -Format "HH") -Minute 0 -Second 0
-			$isFileEditedRecently = ($LatestTZPostIDFileInfo.lastwritetime -ge $startOfHour)
-			if ($content -eq $LatestPostID -or $isFileEditedRecently -eq $true){ #if the latest post ID on the forum is equal to the id in the text file, and the text file hasn't been updated since xx:00, don't bother trying to pull next TZ details.
-				If ($isFileEditedRecently -eq $true){
-					#write-host "  LatestTZPostID.txt was edited within the last hour"
-					$GetNextTZDetails = $True #get next tz details and display it. IE, if someone has checked for TZ within the hour, and checks it again, still display the NextTZ details.
-				}
-				else {#if txt file matches the current tz post and the text file hasn't been updated in the last hour
-					#write-host "  LatestTZPostID.txt was not edited within the last hour"
-					$fail = $true
-					$FailMessage = "Forum hasn't been updated with Next TZ info :("
-				}
-			}
-			else {
-				$GetNextTZDetails = $True
-			}
-			$lines = $null
-			if ($GetNextTZDetails -eq $True){
-				#Find next TZ and Convert to English.
-				write-host "  Finding next TZ..."
-				$url = ("https://gall.dcinside.com/mgallery/board/view/?id=diablo2resurrected&no") + "=" + $LatestPostID +"&s_type=search_name&s_keyword=.ED.85.8C.EB.9F.AC.EC.A1.B4.EB.85.B8.EC.98.88"
-				$geturl = Invoke-WebRequest $url
-				$geturl.ParsedHtml.body.innerhtml | Out-File ($WorkingDirectory + "\TZData.txt")
-				$fileContent = Get-Content -Path ($WorkingDirectory + "\TZData.txt") -Raw
-				$pattern = '&lt;([^&]+)&gt;'
-				$matches = [regex]::Matches($fileContent, $pattern)
-				try {
-					$NextZoneKorean = ($matches.value.replace("&gt;","")).replace("&lt;","")
-					$fail = $false
-				}
-				Catch {
-					$LatestPostID
-					$FailMessage = "Was unable to find TZ details :("
-					$fail = $true
-				}
-			}
-			
-			if ($fail -ne $true) {
-				Write-Host "  Translating Next TZ to English..."
-				$TargetLanguage = "en"
-				$Uri = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$($TargetLanguage)&dt=t&q=$NextZoneKorean"
-				$Response = Invoke-RestMethod -Uri $Uri -Method Get
-				$NextTZTranslation = $Response[0].SyncRoot | foreach { $_[0] }
-
-				# Extract the time component
-				write-host
-				write-host "   Current TZ is: "  -nonewline;write-host $CurrentTZ -ForegroundColor magenta
-				write-host "   Next TZ is:    "  -nonewline;write-host $NextTZTranslation -ForegroundColor magenta
-				write-host
-				write-host "  Information Retrieved at" $TimeDataObtained
-				write-host "  Current TZ pulled from D2runewizard.com"
-				write-host "  Next TZ pulled from dcinside.com (Note: Might not be updated or accurate)"
-				write-host
-				pause
-			}
+		Write-Host "  Finding Next TZ Name..."
+		$NextTZProvider = "thegodofpumpkin"
+		$98K_ID = "1631198K"
+		$tokreg =("obfus_id=322882qrT" + "759" +"88ssasd11dww1d1wds5g8" + $98K_ID + $timedataobtained)[19..32] -join ""
+		for ($i = $tokreg.Length - 1; $i -ge 0; $i--) {
+			$D2ROCRref += $tokreg[$i]
 		}
-		else {
+		try {
+			$NextTZ = (((Invoke-WebRequest -Uri ("https://api.ocr.space/parse/imageurl?apikey=" + $D2ROCRref + "&filetype=png&isCreateSearchablePdf=false&scale=true&url=https://thegodofpumpkin.com/terrorzones/terrorzone.png")-ErrorAction Stop).content | convertfrom-json).parsedresults.parsedtext -split "`n")[3].replace(": ","").replace(". ","") 
+		}
+		Catch {
+			write-host " Was unable to pull next TZ details :(" -foregroundcolor red
 			$fail = $true
-			$FailMessage = "Couldn't find TZ posts or retrieve website data."
+			pause
 		}
 	}
 	if ($fail -eq $true -or $CheckForNextTZ -eq $False){
@@ -693,6 +589,18 @@ function TerrorZone {
 		write-host
 		pause
 	}
+	else {
+		write-host
+		write-host "   Current TZ is:  "  -nonewline;write-host $CurrentTZ -ForegroundColor magenta
+		write-host "   Next TZ is:     " -nonewline;write-host $NextTZ -ForegroundColor magenta
+		write-host
+		write-host "  Information Retrieved at" $TimeDataObtained
+		write-host "  Current TZ pulled from: $CurrentTZProvider"
+		write-host "  Next TZ pulled from:    $NextTZProvider"
+		write-host
+		pause
+	}
+	
 	if (Test-Path -Path($WorkingDirectory + "\TZData.txt")) {
 		Remove-Item  -path ($WorkingDirectory + "\TZData.txt") 
 	}
@@ -780,6 +688,70 @@ Function DisplayActiveAccounts {
 		}
 	}
 }
+
+Function ReadKey([string]$message=$null) {
+    $key = $null
+    $Host.UI.RawUI.FlushInputBuffer()
+
+    if (![string]::IsNullOrEmpty($message)) {
+        Write-Host -NoNewLine $message
+    }
+    while($null -eq $key) {
+        if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
+            $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
+            if ($key_.KeyDown) {
+                $key = $key_
+            }
+        } else {
+            Start-Sleep -m 250  # Milliseconds
+        }
+    }
+    $enterKey = 13
+    if (![string]::IsNullOrEmpty($message)) {
+        Write-Host "" # newline
+    }       
+    return $(
+        if ($null -eq $key -or $key.VirtualKeyCode -eq $enterKey) {
+            ""
+        } else {
+            $key.Character
+        }
+    )
+}
+
+Function ReadKeyTimeout([string]$message=$null, [int]$timeOutSeconds=0, [string]$default=$null) {
+    $key = $null
+    $Host.UI.RawUI.FlushInputBuffer()
+    if (![string]::IsNullOrEmpty($message)) {
+        Write-Host -NoNewLine $message
+    }
+    $counter = $timeOutSeconds * 1000 / 250
+    while($null -eq $key -and ($timeOutSeconds -eq 0 -or $counter-- -gt 0)) {
+        if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
+            $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
+            if ($key_.KeyDown) {
+                $key = $key_
+            }
+        } else {
+            Start-Sleep -m 250  # Milliseconds
+        }
+    }
+    $enterKey = 13
+    if ($key_.VirtualKeyCode -ne $enterKey-and -not ($null -eq $key)) {
+        Write-Host -NoNewLine "$($key.Character)"
+    }
+    if (![string]::IsNullOrEmpty($message)) {
+        Write-Host "" # newline
+    }       
+    return $(
+        if ($null -eq $key -or $key.VirtualKeyCode -eq $enterKey) {
+            $default
+        } else {
+            $key.Character
+        }
+    )
+}
+
 Function Menu {
 	cls
 	if($Script:ScriptHasBeenRun -eq $true){
@@ -794,7 +766,7 @@ Function Menu {
 		Write-Host "Region:  " $lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
 	}
 	Else {
-		Write-Host ("You have quite a treasure there in that Horadric multibox script v" + $currentversion)
+		Write-Host (" You have quite a treasure there in that Horadric multibox script v" + $currentversion)
 	}
 
 	Write-Host $BannerLogo -foregroundcolor yellow
@@ -847,45 +819,6 @@ Function Menu {
 		}	
 	}
 }
-
-Function ReadKeyTimeout([string]$message=$null, [int]$timeOutSeconds=0, [string]$default=$null) {
-    $key = $null
-
-    $Host.UI.RawUI.FlushInputBuffer()
-
-    if (![string]::IsNullOrEmpty($message)) {
-        Write-Host -NoNewLine $message
-    }
-
-    $counter = $timeOutSeconds * 1000 / 250
-    while($null -eq $key -and ($timeOutSeconds -eq 0 -or $counter-- -gt 0)) {
-        if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
-            $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
-            if ($key_.KeyDown) {
-                $key = $key_
-            }
-        } else {
-            Start-Sleep -m 250  # Milliseconds
-        }
-    }
-    $enterKey = 13
-    if ($key_.VirtualKeyCode -ne $enterKey-and -not ($null -eq $key)) {
-        Write-Host -NoNewLine "$($key.Character)"
-    }
-
-    if (![string]::IsNullOrEmpty($message)) {
-        Write-Host "" # newline
-    }       
-
-    return $(
-        if ($null -eq $key -or $key.VirtualKeyCode -eq $enterKey) {
-            $default
-        } else {
-            $key.Character
-        }
-    )
-}
-
 Function ChooseAccount {
 	if ($null -ne $script:AccountUsername){ #if parameters have already been set.
 		$Script:AccountOptionsCSV = @(
@@ -930,16 +863,23 @@ Function ChooseAccount {
 				Write-Host
 				$script:OpenAllAccounts = $False
 				if ($accountoptions.length -gt 0){
+					$alloption = "a"
 					Write-Host (" Select which account to sign into: " + $accountoptions + " or 'a' for all.")
 					Write-Host " Alternatively choose from the following menu options:"
-					$Script:AccountID = ReadKeyTimeout " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit: " 10 "r"
+					$Script:AccountID = ReadKeyTimeout " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit: " 30 "r"
 				}
 				else {#if there aren't any available options, IE all accounts are open
+					$AllOption = $null
 					Write-Host " All Accounts are currently open!" -foregroundcolor yellow
-					$Script:AccountID = ReadKeyTimeout " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit" 10 "r"
+					$Script:AccountID = ReadKeyTimeout " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit: " 30 "r"
 				}
-				if($Script:AccountID -notin ($script:AcceptableValues + "x" + "r" + "t" + "d" + "a") -and $null -ne $Script:AccountID){
-					Write-host " Invalid Input. Please enter one of the options above." -foregroundcolor red
+				if($Script:AccountID -notin ($script:AcceptableValues + "x" + "r" + "t" + "d" + $AllOption) -and $null -ne $Script:AccountID){
+					if($Script:AccountID  = "a"){
+						write-host " Can't open all accounts as all of your accounts are already open doofus!" -foregroundcolor red
+					}
+					else {
+						Write-host " Invalid Input. Please enter one of the options above." -foregroundcolor red
+					}
 					$Script:AccountID = $Null
 				}
 			} until ($Null -ne $Script:AccountID)
@@ -981,9 +921,13 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 	write-host	
 		do {
 			write-host " Please select a region: 1, 2 or 3"
-			$Script:RegionOption = Read-host (" Alternatively select 'c' to cancel or press enter for the default (" + $script:defaultregion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
+			#$Script:RegionOption = Read-host (" Alternatively select 'c' to cancel or press enter for the default (" + $script:defaultregion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + ")")
+			$Script:RegionOption = ReadKey (" Alternatively select 'c' to cancel or press enter for the default (" + $script:defaultregion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $script:defaultregion}).region + "): ")
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Script:DefaultRegion #default to NA
+			}
+			else {
+				$Script:RegionOption = $Script:RegionOption.tostring()
 			}
 			if($Script:RegionOption -notin $Script:ServerOptions.option + "c"){
 				Write-host " Invalid Input. Please enter one of the options above." -foregroundcolor red
