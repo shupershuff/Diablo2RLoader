@@ -2,7 +2,7 @@
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing).<br>
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, dclones, rushes etc.<br>
-Oh yea, and no more plain text passwords either. Oh and you can check DClone status and the current TZ and next TZ from this launcher. Cool aye?
+Oh yea, and no more plain text passwords either. Oh and you can check DClone status, the current TZ AND the next TZ from this launcher. Cool aye?
 
 Script Screenshot:<br>
 ![Launcher](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/b16692f4-49f0-4341-9d00-ba5d27cd6f42)<br>
