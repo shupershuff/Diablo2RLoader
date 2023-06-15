@@ -2,9 +2,7 @@
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing). 
 Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, dclones, rushes etc.
-Oh yea, and no more plain text passwords either. Oh and you can check DClone status and the current TZ ~~and next TZ~~ from this launcher. Cool aye?
-
-\* Currently looking for another sources for Next TZ as the previous one seems to not be updating anymore. If you have a reliable source or info on how to pull this data please get in touch.
+Oh yea, and no more plain text passwords either. Oh and you can check DClone status and the current TZ and next TZ from this launcher. Cool aye?
 
 Script Screenshot:<br>
 ![Launcher](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/b16692f4-49f0-4341-9d00-ba5d27cd6f42)<br>
@@ -22,8 +20,7 @@ Optionally you can also have the game launch using custom settings.json for each
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
 ## Anything else?
-Why yes! You can also check the current ~~and next Terror Zone~~ by pressing T.<br>
-\* Missing an accurate source or method to identify the Next TZ details. A new Release will be posted _if_ I become aware of another (and more reliable) way to obtain this info. Please get in touch if you can assist.<br>
+Why yes! You can also check the current and next Terror Zone by pressing T.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)
 
 You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes. 
@@ -89,7 +86,7 @@ Default settings within config.xml *should* be ok but can be optionally changed.
 
 All other config options below this are strictly optional:<br>
 - Set your default region if you just want to mash enter instead of choosing the region.
-- Set 'CheckForNextTZ' to True if you want to run a web request to find NextTZ details - This currently doesn't work as the NextTZ source I had sucks.
+- Set 'CheckForNextTZ' to True if you want to run a web request to find NextTZ details
 - Set 'CommandLineArguments' to any custom game launch arguments you would like to add.
 - Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
 - Set CreateDesktopShortcut to False if you don't want a handy dandy shortcut on your desktop.
@@ -159,9 +156,7 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-* ~~Configure TZ checker to display accurate as of the forum post date instead of the time the check was performed.~~ Find Proper Next TZ source. -> another source found, have requested a datasource this script can use.
 * Investigate use of battlenet login tokens (stored in registry) instead of passwords. This is unlikely.
-* Investigate the possibility of having menu auto refresh. This is unlikely.
 * Enhance the config feature by enabling you to choose config files (eg load settings.lowgfx.json) instead of it using settings from settings1.json for account1. This is likely.
 * Maybe add a batch open option "b" for crazed users who have more than 8 accounts. IE each account has a batch number(s) associated with it in accounts.csv and in the menu you can choose a batch of accounts to open. As a person with 3 accounts this is a very low priority feature and hasn't been requested by anyone yet.
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
@@ -174,6 +169,9 @@ See this site for more information on what this does: https://stackoverflow.com/
 - Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 - Handle tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 - MoonUnit for thoughts around converting plain text passwords to encrypted strings.
+- never147 for contributing improvements for menu refresh and inputs.
+- TheGodOfPumpkin for Next TZ source
+- https://ocr.space/OCRAPI for their free OCR API
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
 
