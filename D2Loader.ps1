@@ -847,6 +847,45 @@ Function Menu {
 		}	
 	}
 }
+
+Function ReadKeyTimeout([string]$message=$null, [int]$timeOutSeconds=0, [string]$default=$null) {
+    $key = $null
+
+    $Host.UI.RawUI.FlushInputBuffer()
+
+    if (![string]::IsNullOrEmpty($message)) {
+        Write-Host -NoNewLine $message
+    }
+
+    $counter = $timeOutSeconds * 1000 / 250
+    while($null -eq $key -and ($timeOutSeconds -eq 0 -or $counter-- -gt 0)) {
+        if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
+            $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
+            if ($key_.KeyDown) {
+                $key = $key_
+            }
+        } else {
+            Start-Sleep -m 250  # Milliseconds
+        }
+    }
+    $enterKey = 13
+    if ($key_.VirtualKeyCode -ne $enterKey-and -not ($null -eq $key)) {
+        Write-Host -NoNewLine "$($key.Character)"
+    }
+
+    if (![string]::IsNullOrEmpty($message)) {
+        Write-Host "" # newline
+    }       
+
+    return $(
+        if ($null -eq $key -or $key.VirtualKeyCode -eq $enterKey) {
+            $default
+        } else {
+            $key.Character
+        }
+    )
+}
+
 Function ChooseAccount {
 	if ($null -ne $script:AccountUsername){ #if parameters have already been set.
 		$Script:AccountOptionsCSV = @(
@@ -893,11 +932,11 @@ Function ChooseAccount {
 				if ($accountoptions.length -gt 0){
 					Write-Host (" Select which account to sign into: " + $accountoptions + " or 'a' for all.")
 					Write-Host " Alternatively choose from the following menu options:"
-					$Script:AccountID = Read-host " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit"
+					$Script:AccountID = ReadKeyTimeout " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit: " 10 "r"
 				}
 				else {#if there aren't any available options, IE all accounts are open
 					Write-Host " All Accounts are currently open!" -foregroundcolor yellow
-					$Script:AccountID = Read-host " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit"
+					$Script:AccountID = ReadKeyTimeout " 'r' to refresh, 't' for TZ info, 'd' for Dclone status or 'x' to quit" 10 "r"
 				}
 				if($Script:AccountID -notin ($script:AcceptableValues + "x" + "r" + "t" + "d" + "a") -and $null -ne $Script:AccountID){
 					Write-host " Invalid Input. Please enter one of the options above." -foregroundcolor red
