@@ -20,25 +20,26 @@ Optionally you can also have the game launch using custom settings.json for each
 Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
 
 ## Anything else?
-Why yes! You can also check the current and next Terror Zone by pressing T.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)
+Why yes! You can also check the current and next Terror Zone by pressing 't'.<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
+You can also check the current dclone status by pressing 'd'.
 
 You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes. 
 There's also a 1 in 19,999 chance to land a High Rune but you'll never see this :)
 
 # Setup Steps
-## Download
+## 1. Download
 1. Download the latest [release](https://github.com/shupershuff/Diablo2RLoader/releases) this and extract the zip file to a folder of your choosing.
 2. Right click on D2loader.ps1 and open properties.
 3. Check the "Unblock" box and click apply.<br>
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
 
-## Setup Handle viewer
+## 2. Setup Handle viewer
 1. Download handle viewer from https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 2. Extract the executable files (specifically handle64.exe) to the .\Handle\ folder
 
-## Setup Your Accounts
+## 3. Setup Your Accounts
 1. Open Accounts.csv in a text editor or excel.
 2. Add number for each account starting from 1.
 3. Add your account sign in address
@@ -47,7 +48,7 @@ There's also a 1 in 19,999 chance to land a High Rune but you'll never see this 
 
 If opening in Excel you add this info in each column. Otherwise open and edit in notepad.
 
-## Run the script manually for the first time
+## 4. Run the script manually for the first time
 1. Browse to the folder, right click on D2Loader.ps1 and choose run.
 2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
    ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
@@ -61,7 +62,7 @@ If opening in Excel you add this info in each column. Otherwise open and edit in
 
 If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
 
-## Settings Switcher (Optional)
+## 5. Settings Switcher (Optional)
 Do you want your primary account to launch with decent graphics settings with your other accounts to be set to poo tier settings? This is for you! This feature is disabled by default, as it will cause confusing behaviour for users who haven't read and understood this first.<br>
 
 What this feature does is create copies Settings.json (found in the "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected" folder) for each account you have.<br>
@@ -79,7 +80,7 @@ NOTE: Any changes you make to non-character options in game (eg graphics, audio,
 7. Rename to Settings1.json
 8. Launch the game and proceed find all of the high runes. All of them.
 
-## Script Config (Mostly Optional)
+## 6. Script Config (Mostly Optional)
 
 Default settings within config.xml *should* be ok but can be optionally changed.
 - **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
@@ -114,7 +115,7 @@ All other config options below this are strictly optional:<br>
 **A:** Yes, there are a couple ways to do this, see here: https://silicophilic.com/add-program-to-uac-exception/#Method_2_Run_Programs_With_Admin_Privileges_Without_UAC_Prompt
 
 **Q:** Why does the script need to run as admin?<br>
-**A:** The script needs to run as admin in order to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
+**A:** The script needs to run as admin in order to kill the "Check for Other instances" process handle and to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
 
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
 **A:** Bad news here sorry, Diablo does not work with 2FA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.
