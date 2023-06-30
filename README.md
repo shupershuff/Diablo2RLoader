@@ -118,7 +118,7 @@ All other config options below this are strictly optional:<br>
 **A:** The script needs to run as admin in order to kill the "Check for Other instances" process handle and to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
 
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
-**A:** Bad news here sorry, Diablo does not work with 2FA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.
+**A:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.
 
 **Q:** I would like to say "Thankyou". How do I do that?<br>
 **A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks :)<br>
