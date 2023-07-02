@@ -1,11 +1,27 @@
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
-This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc).<br>
-Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, DClones, rushes etc.<br>
-Oh yea, and no more plain text passwords either. Oh and you can check DClone status, the current TZ AND the next TZ from this launcher. Cool aye?
+<br>
+This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account. 
+This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
+This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.
+
+Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?
+<br>
+<br>
+Using this script means you don't have to do any of this awful stuff to multibox:<br>
+- Set up shortcuts on your desktop for each account with parameters (including storing your password in plain text)
+- Or the Worst but somehow popular method of opening the game from the battlenet client with multiple game installs)
+- Manually using ProcExp to kill the "Check for other instances" handle, or manually run a script for handle.exe to do the same thing.
+- Run any dodgy executables where you don't know what's actually running.
+ 	- This script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool
+ 	- This script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389) and the hash of the built .exe has been whitelisted by Microsoft.
+	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see at what it's doing.
+
+This is a labour of love for a game I love for what I feel is a pretty good gaming community.<br>
+This Readme is a bit wordy sorry, I've tried to capture all the information that anyone might ever ask for.<br>
 
 Script Screenshot:<br>
-![Launcher](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/b16692f4-49f0-4341-9d00-ba5d27cd6f42)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/271020e8-ab65-4c16-9c2c-faea31547ae6)<br>
 What your windows will look like:<br>
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
 
@@ -15,18 +31,20 @@ It will achieve this by importing account details from a CSV that you populate a
 	Note: Plain text passwords entered into the CSV will be convered into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave the PW field in the CSV blank and manually type in when running the script.<br>
 Once the game has initialised, the window will be renamed so it's easier to tell which account and region each game is using.<br>
 This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.<br>
-Optionally you can also have the game launch using custom settings.json for each account in case you want different graphics/audio/game settings for each account you have.
+Optionally you can also have the game launch using custom settings.json for each account in case you want different graphics/audio/game settings for each account you have.<br>
+<br>
+This script in no way enhances or changes gameplay.
 
 ## Other Features
-**Open all accounts at once**<br>
+**Open All accounts at once**<br>
 Time is precious so work smarter not harder by opening all your accounts at once to maximise your free time to actually play the game instead of clicking through menus.<br>
 **Batch Open Accounts**<br>
 Rather than open all accounts, you can open a batch of accounts. This feature is designed for you creatures that have several accounts but only want to launch a subset of these, for example only launch the 3 accounts you primarily play from.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0f98dc8e-319a-43b8-b860-c84cb9d6dd60)<br>
 **Launch Each account with specific game settings**<br>
 These features were made in mind for multiboxing where you may have different screen sizes and want your secondary accounts to have lower graphics settings:<br>
-Auto Settings Switcher (SettingSwitcherEnabled): If enabled you can essentially have it so all accounts have their own game settings to load from. Game settings are loaded from settings<_ID_>.json instead of settings.json<br>
-Manual Settings Switcher (ManualSettingSwitcherEnabled): Alternatively, if you want to specify which game settings you want to load from, you can choose the settings file each account should use when launching. Once enabled in config, this can be toggled on and off using 's' in the menu.<br>
+_Auto Settings Switcher_: If enabled you can essentially have it so all accounts have their own game settings to load from. Game settings are loaded from settings<_ID_>.json instead of settings.json.<br>
+_Manual Settings Switcher_: Alternatively, if you want to specify which game settings you want to load from, you can choose the settings file each account should use when launching. Once enabled in config, this can be toggled on and off using 's' in the menu.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/3533250d-8558-41a9-911f-5adcb5b6360d)<br>
 You can enable both of these features at the same time. See [Setup Steps](#setup-steps) below.<br>
 **Terror Zone Details**<br>
@@ -36,11 +54,12 @@ You can also check the current and next Terror Zone by pressing 't'.<br>
 You can also check the current DClone status by pressing 'd'.<br>
 **Be an Entertainer in Baals Comedy Club**<br>
 If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
-That way instead of providing any real value in terms of damage you can provide entertainment value instead.<br>
+That way instead of providing any real value in terms of damage, you can provide entertainment value instead.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ba83409-eeba-4ae6-ba1e-b68d03e850e3)<br>
 **Launch Parameters**<br>
-You can run the script with launch parameters instead. This is ideal if you want to create a desktop shortcut to open a set of accounts or if you're a super nerd and you want to launch the accounts from a scheduled task or from Home Assistant so that your game is ready to go when you get home :)<br>
-Available launch parameters are:<br>
+You can run the script using launch parameters instead.<br>
+This is ideal if you want to create a desktop shortcut to open a set of accounts, or if you're a super nerd and you want to launch the accounts from a scheduled task or from Home Assistant so that your game is ready to go when you get home from work :)<br>
+Available launch parameters and values to use are as per the table below:<br>
 | parameter  | value example(s) | Notes |
 | ------------- | ------------- | ------------- |
 | -account  | username@emailaddress.com  | -AccountUsername also works as a parameter. Can't be used with -all or -batch |
@@ -62,21 +81,46 @@ There is a way to improve your script magic find...
 3. Check the "Unblock" box and click apply.<br>
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
-
 ## 2. Setup Handle viewer
 1. Download handle viewer from https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 2. Extract the executable files (specifically handle64.exe) to the .\Handle\ folder
 
 ## 3. Setup Your Accounts
-1. Open Accounts.csv in a text editor or excel.
+1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
 2. Add number for each account starting from 1.
-3. Add your account sign in address
+3. Add your account sign in address.
 4. Add your account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
+	- If you're using a text editor to edit the CSV AND your password has a comma in it, ensure your password is surrounded by quotes eg "fjl3Ng2<,03h%mn"
 5. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames.
+6. If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
+	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
+ 	- Don't forget to enable the Batch feature in the config file.
+7. Yeah you should probably save it. That's CTRL + S. It helps :)
 
 If opening in Excel you add this info in each column. Otherwise open and edit in notepad.
+## 4. Script Config (Mostly Optional)
 
-## 4. Run the script manually for the first time
+Default settings within config.xml *should* be ok but can be optionally changed. Recommend checking out the features here.
+Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ etc.
+- **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
+
+All other config options below this are strictly optional:<br>
+- Set your default region if you just want to mash enter instead of choosing the region.
+- Set 'EnableBatchFeature' to True if you want the ability to launch accounts in batches. You must also define the batches in your accounts.csv file.
+- Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False.
+- Set 'CheckForNextTZ' to True if you want to enable the web request to find NextTZ details.
+- Set 'CommandLineArguments' to any custom game launch arguments you would like to add.
+- Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
+- Set CreateDesktopShortcut to False if you don't want a handy dandy shortcut on your desktop.
+- Set ShortcutCustomIconPath to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
+- Set ConvertPlainTextPasswords to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
+- Set ForceWindowedMode to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings.
+- Set SettingSwitcherEnabled to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section above for more info. Disabled by default.
+- Set ManualSettingSwitcherEnabled to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section above for more info. Disabled by default.
+
+Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
+
+## 5. Run the script manually for the first time
 1. Browse to the folder, right click on D2Loader.ps1 and choose run.
 2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
    ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
@@ -90,7 +134,7 @@ If opening in Excel you add this info in each column. Otherwise open and edit in
 
 If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
 
-## 5. Settings Switcher (Optional)
+## 6. Auto Settings Switcher (Optional but recommended)
 Do you want your primary account to launch with decent graphics settings with your other accounts to be set to poo tier settings? This is for you! This feature is disabled by default, as it will cause confusing behaviour for users who haven't read and understood this first.<br>
 
 What this feature does is create copies Settings.json (found in the "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected" folder) for each account you have.<br>
@@ -99,30 +143,24 @@ NOTE: Any changes you make to non-character options in game (eg graphics, audio,
 
 **Quick Guide to updating Game settings** for a particular account with this auto switcher.<br>
 *For these instructions, let's assume we're trying to edit the config for account 1*
-1. Launch the Game (via the Loader or via Bnet client, doesn't matter, the account you log into doesn't matter either).
-2. Make the required graphics/audio/game changes via the menu.
-3. Close the game.
-4. Browse to "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected"
-5. If there's already a file called Settings1.json, delete it (1 being the account ID in accounts.csv).
-6. Copy the Settings.json file and paste into the same folder.
-7. Rename to Settings1.json
-8. Launch the game and proceed find all of the high runes. All of them.
+1. Set 'SettingSwitcherEnabled' to True in your config file.
+2. Launch the Game (via the Loader or via Bnet client, doesn't matter, the account you log into doesn't matter either).
+3. Make the required graphics/audio/game changes via the menu.
+4. Close the game.
+5. Browse to "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected"
+6. If there's already a file called Settings1.json, delete it (1 being the account ID in accounts.csv).
+7. Copy the Settings.json file and paste into the same folder.
+8. Rename to Settings1.json
+9. Launch the game and proceed find all of the high runes. All of them.
 
-## 6. Script Config (Mostly Optional)
+## 7. Manual Settings Switcher (Optional)
+Do you want to manually choose which settings to use when launching the game? This is for you! This feature is disabled by default, as this needs to be setup first and understood this first.<br>
+<br>
+Setup is exactly the same as the Auto Settings Switcher, except for step 8 as you need to name the settings file settings._name_.json where name is whatever you want it called (eg settings.1440pHigh.json or settings.PotatoGraphics.json)<br>
+- Note: If you name the file settings_name_.json it will not work. The name should be inside two fullstops "."<br>
 
-Default settings within config.xml *should* be ok but can be optionally changed.
-- **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
+Don't forget to enable this feature in the [config](#7-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
 
-All other config options below this are strictly optional:<br>
-- Set your default region if you just want to mash enter instead of choosing the region.
-- Set 'CheckForNextTZ' to True if you want to run a web request to find NextTZ details
-- Set 'CommandLineArguments' to any custom game launch arguments you would like to add.
-- Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
-- Set CreateDesktopShortcut to False if you don't want a handy dandy shortcut on your desktop.
-- Set ShortcutCustomIconPath to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
-- Set ConvertPlainTextPasswords to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
-- Set ForceWindowedMode to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed.
-- Set SettingSwitcherEnabled to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the Setting Switcher section above for more info. Disabled by default.
 
 # Notes #
 ## FAQ / Common Issues
@@ -151,7 +189,7 @@ All other config options below this are strictly optional:<br>
 **Q:** I would like to say "Thankyou". How do I do that?<br>
 **A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks :)<br>
 
-**Q:** I have suggestions and/or issues with, where do I post these?<br>
+**Q:** I have suggestions and/or issues with this, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
 
 **Q:** Is this Script against ToS?<br>
@@ -159,10 +197,10 @@ All other config options below this are strictly optional:<br>
 
 Outside of killing this handle and changing the window title, there are absolutely no modifications to the game made by this script, it's simply an improved alternative way to start the application.
 To be clear, this script in no way enhances or assists with actual game play and I would strongly advise against seeking/using any tools.
-The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle (as suggested in several guides). This script is a QOL tool to help consolidate your accounts to one simple launcher to simply open the game with account(s) and region(s) you want.
+The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle (as suggested in several guides). This script is a QoL tool to help consolidate your accounts to one simple launcher to simply open the game with account(s) and region(s) you want.
 
 So the real question is, regardless of this script, is using procexp or another method to kill the "check for other instances" handle against ToS? Stricly speaking yes and this topic has been broached in Blizzard forums many times without an official response either for or against.
-If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances' handle?" which to that I'm confident the answer is no. If I wasn't confident, this script wouldn't exist and people wouldn't be using procexp to multibox through traditional methods. Given the widespread use of procexp being used to multibox, this method (and therefore also this script), is considered safe.
+If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances' handle?" which to that I'm confident the answer is no. If I wasn't confident, this script wouldn't exist and people wouldn't be using procexp/handle.exe to multibox through traditional methods. Given the widespread use of procexp/handle being used to multibox, this method (and therefore also this script), is considered safe.
 
 ## Notes about the Window title rename (SetText.exe)
 
@@ -171,7 +209,7 @@ This is used to rename the Game Windows so that you and the script can tell each
 To compile the .exe this requires DotNet4.0. If you don't have it the script will prompt you to download this from Microsoft.
 ~~A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy.~~ A submission has since been sent to Microsoft and submission has been cleared :)
 
-If you have a Anti-Virus product installed and it kicks up a fuss you may need to manually add an exception to the .\SetText\ folder location.
+If you have a 3rd Party Anti-Virus product installed and it kicks up a fuss, you may need to manually add an exception to the .\SetText\ folder location.
 
 Optional: If you don't trust me and want to build the .exe yourself you can do the following.
 1. Browse to the SetText Folder.
@@ -185,13 +223,17 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-* Investigate use of battlenet login tokens (stored in registry) instead of passwords. This is unlikely.
-* Enhance the config feature by enabling you to choose config files (eg load settings.lowgfx.json) instead of it using settings from settings1.json for account1. This is likely.
-* Maybe add a batch open option "b" for crazed users who have more than 8 accounts. IE each account has a batch number(s) associated with it in accounts.csv and in the menu you can choose a batch of accounts to open. As a person with 3 accounts this is a very low priority feature and hasn't been requested by anyone yet.
+* Investigate use of battlenet login tokens (stored in registry) instead of passwords as other loaders have done. This is unlikely as I probably can't figure it out.
 * Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
 * Maybe add a counter for time spent in each account (given Blizzard won't implement this).
 * Maybe a stats screen (by pressing "i" instead of choosing an account) to display above for each account. As a silly addition, stats to include how many "magic" or above quality quotes have been found in the script.
 * Perhaps make a GUI *if* there's enough interest. Probably not though as there would be a lot of brain activity involved. Pay my mortgage and we'll perhaps maybe talk... probably.
+
+# Usage and Limitations #
+Happy for you to make any modifications this script for your own needs providing:
+ - Any variants of this script are never sold.
+ - Any variants of this script published online should always be open source.
+ - Any variants of this script are never modifed to enable or assist in any game altering or malicious behaviour including (but not limited to): Bannable Mods, Cheats, Exploits, Phishing
 
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
@@ -203,8 +245,7 @@ See this site for more information on what this does: https://stackoverflow.com/
 - https://ocr.space/OCRAPI for their free OCR API
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
-
 <br>
 <br>
 
-Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox
+Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
