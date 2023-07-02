@@ -1,7 +1,7 @@
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
-This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing).<br>
-Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, dclones, rushes etc.<br>
+This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc).<br>
+Instead of setting up shortcuts on your desktop for each account (or worse, opening the game from the battlenet client with multiple game installs) and then manually using ProcExp to kill the "Check for other instances" handle, run this one script instead and keep it open to easily switch realms for trades, DClones, rushes etc.<br>
 Oh yea, and no more plain text passwords either. Oh and you can check DClone status, the current TZ AND the next TZ from this launcher. Cool aye?
 
 Script Screenshot:<br>
@@ -9,23 +9,51 @@ Script Screenshot:<br>
 What your windows will look like:<br>
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
 
-## But what does it do?
+## Exactly what does it do?
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
-It will achieve this by importing account details from a CSV that you populate and essentially launches the game the same way you would with a shortcut by passing account, password and region arguments to D2r.exe.<br>
+It will achieve this by importing account details from a CSV that you populate and essentially launches the game the same way you would with a shortcut: by passing account, password and region arguments to D2r.exe.<br>
 	Note: Plain text passwords entered into the CSV will be convered into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave the PW field in the CSV blank and manually type in when running the script.<br>
-Once the game has initialised, the window will be renamed so it's easier to tell which game is which.<br>
+Once the game has initialised, the window will be renamed so it's easier to tell which account and region each game is using.<br>
 This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.<br>
 Optionally you can also have the game launch using custom settings.json for each account in case you want different graphics/audio/game settings for each account you have.
 
-Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: -account username@emailaddress.com -pw MyBNetAccountPassword -region na.actual.battle.net
+Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: 
 
-## Anything else?
-Why yes! You can also check the current and next Terror Zone by pressing 't'.<br>
+## Other Features
+**Open all accounts at once**<br>
+Time is precious so work smarter not harder by opening all your accounts at once to maximise your free time to actually play the game instead of clicking through menus.<br>
+**Batch Open Accounts**<br>
+Rather than open all accounts, you can open a batch of accounts. This feature is designed for you creatures that have several accounts but only want to launch a subset of these, for example only launch the 3 accounts you primarily play from.<br>
+**Launch Each account with specific game settings**<br>
+These features were made in mind for multiboxing where you may have different screen sizes and want your secondary accounts to have lower graphics settings:<br>
+Auto Settings Switcher (SettingSwitcherEnabled): If enabled you can essentially have it so all accounts have their own game settings to load from. Game settings are loaded from settings<_ID_>.json instead of settings.json<br>
+Manual Settings Switcher (ManualSettingSwitcherEnabled): Alternatively, if you want to specify which game settings you want to load from, you can choose the settings file each account should use when launching. Once enabled in config, this can be toggled on and off using 's' in the menu.<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/3533250d-8558-41a9-911f-5adcb5b6360d)
+You can enable both of these features at the same time. See setup details below.<br>
+**Terror Zone Details**<br>
+You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
-You can also check the current dclone status by pressing 'd'.
+**Check DClone Status**<br>
+You can also check the current DClone status by pressing 'd'.<br>
+**Be an Entertainer in Baals Comedy Club**<br>
+If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
+Instead of providing any real value in the Throne Room you can provide entertainment value instead.<br>
+**Launch Parameters**<br>
+You can run the script with launch parameters instead. This is ideal if you want to create a desktop shortcut to open a set of accounts or if you're a super nerd and you want to launch the accounts from a scheduled task or from Home Assistant so that your game is ready to go when you get home :)<br>
+Available launch parameters are:<br>
+| parameter  | value example(s) | Notes |
+| ------------- | ------------- | ------------- |
+| -account  | username@emailaddress.com  | -AccountUsername also works as a parameter. Can't be used with -all or -batch |
+| -pw  | YourBNetAccountPassword  | Can't be used with -all or -batch |
+| -region | na.actual.battle.net or 1/2/3 | you can use 1, 2 or 3 as values to select NA, EU or KR |
+| -all | True  | Recommend using -region with this parameter |
+| -batch |  | Recommend using -region with this parameter |
+| -manualsettingswitcher | True | Use this if you want to manually choose which settings file to load with each account. Recommend not using this but instead enabling SettingSwitcherEnabled in your config file so that it automatically loads from settings<_ID_>.json |
 
-You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes. 
+**Magic Find in the script**<br>
+You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes.
 There's also a 1 in 19,999 chance to land a High Rune but you'll never see this :)
+There is a way to improve your script magic find...
 
 # Setup Steps
 ## 1. Download
