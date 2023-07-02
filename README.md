@@ -28,7 +28,7 @@ These features were made in mind for multiboxing where you may have different sc
 Auto Settings Switcher (SettingSwitcherEnabled): If enabled you can essentially have it so all accounts have their own game settings to load from. Game settings are loaded from settings<_ID_>.json instead of settings.json<br>
 Manual Settings Switcher (ManualSettingSwitcherEnabled): Alternatively, if you want to specify which game settings you want to load from, you can choose the settings file each account should use when launching. Once enabled in config, this can be toggled on and off using 's' in the menu.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/3533250d-8558-41a9-911f-5adcb5b6360d)<br>
-You can enable both of these features at the same time. See [Setup Steps](#-setup-steps) below.<br>
+You can enable both of these features at the same time. See [Setup Steps](#setup-steps) below.<br>
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
