@@ -9,9 +9,9 @@ Oh yeah and you can check DClone status, the Current TZ AND the next TZ from thi
 <br>
 <br>
 Using this script means you don't have to do any of this awful stuff to multibox:<br>
-- Set up shortcuts on your desktop for each account with parameters (including storing your password in plain text)
-- Or the Worst but somehow popular method of opening the game from the battlenet client with multiple game installs)
-- Manually using ProcExp to kill the "Check for other instances" handle, or manually run a script for handle.exe to do the same thing.
+- Set up shortcuts on your desktop for each account with parameters (including storing your password in plain text).
+- Use the worst (but somehow most popular) method of opening the game from the battlenet client each time with multiple game installs.
+- Manually using ProcExp to kill the "Check for other instances" handle, or manually running a script for handle.exe to do the same thing.
 - Run any dodgy executables where you don't know what's actually running.
  	- This script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool
  	- This script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389) and the hash of the built .exe has been whitelisted by Microsoft.
@@ -39,7 +39,7 @@ This script in no way enhances or changes gameplay.
 **Open All accounts at once**<br>
 Time is precious so work smarter not harder by opening all your accounts at once to maximise your free time to actually play the game instead of clicking through menus.<br>
 **Batch Open Accounts**<br>
-Rather than open all accounts, you can open a batch of accounts. This feature is designed for you creatures that have several accounts but only want to launch a subset of these, for example only launch the 3 accounts you primarily play from.<br>
+Rather than open all accounts, you can open a group of accounts. This feature is designed for you creatures that have several accounts but only want to launch a subset of these, for example only launch the 3 accounts you primarily play from.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0f98dc8e-319a-43b8-b860-c84cb9d6dd60)<br>
 **Launch Each account with specific game settings**<br>
 These features were made in mind for multiboxing where you may have different screen sizes and want your secondary accounts to have lower graphics settings:<br>
