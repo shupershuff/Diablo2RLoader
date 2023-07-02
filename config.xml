@@ -15,7 +15,7 @@
 	Choose False if Next TZ data is unreliable and you want faster updates for current TZ.-->
 	<CheckForNextTZ>True</CheckForNextTZ>
 	
-	<!--Enable the ability to open batches of accounts. EG if you have 5 accounts but only regularly use 3 of them that you want to open up all at once.
+	<!--Enable the ability to open a group of accounts. EG if you have 5 accounts but only regularly use 3 of them that you want to open up all at once.
 	Requires accounts.csv to be updated. See readme for more details.-->
 	<EnableBatchFeature>False</EnableBatchFeature>
 	
