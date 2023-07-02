@@ -1,6 +1,5 @@
 <!--D2Loader Config-->
 <D2loaderconfig>
-
 	<!--Default Gamepath. The below is the default install path, change this if you've installed somewhere different.
 		Note, if using multiple game installs (to keep client specific config persistent for each account), ensure these are referenced in the CustomGamePath field in accounts.csv.
 		Otherwise you can use a single install instead by linking the path below.-->
@@ -8,18 +7,25 @@
 
 	<!--default region, 1 for NA, 2 for EU, 3 for Asia.-->
 	<DefaultRegion>1</DefaultRegion>
-	
+
+	<!--Disable the functionality of being able to open all accounts at once. This is for any crazy people who have a lot of accounts and want to prevent accidentally opening all at once.-->
+	<DisableOpenAllAccountsOption>False</DisableOpenAllAccountsOption>
+
 	<!--Choose whether or not TZ checker should look online for Next TZ updates.
 	Choose False if Next TZ data is unreliable and you want faster updates for current TZ.-->
-	<CheckForNextTZ>false</CheckForNextTZ>
+	<CheckForNextTZ>True</CheckForNextTZ>
+	
+	<!--Enable the ability to open batches of accounts. EG if you have 5 accounts but only regularly use 3 of them that you want to open up all at once.
+	Requires accounts.csv to be updated. See readme for more details.-->
+	<EnableBatchFeature>False</EnableBatchFeature>
 	
 	<!--Optionally add any command line arguments that you'd like the game to start with-->
 	<CommandLineArguments></CommandLineArguments>
-	
+
 	<!--Whether script should only prompt you once for region-->
 	<AskForRegionOnceOnly>False</AskForRegionOnceOnly>
 
-	<!--Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to $false.-->
+	<!--Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to false.-->
 	<CreateDesktopShortcut>True</CreateDesktopShortcut>
 	
 	<!--If you have a custom .ico you want to use, put the path of it here.-->
@@ -34,6 +40,12 @@
 	<!--This enables the script to match a config file (settings.json) to the account you are launching. 
 	Eg if using account 1, this is achieved by overwriting settings.json with settings1.json.
 	Due to this, if enabled, settings1.json,settins2.json etc will not be updated if you update your game settings.
-	As such	you will need to manually update your settings.json config file, see readme for more details. -->
-	<SettingSwitcherEnabled>false</SettingSwitcherEnabled>
+	As such	you will need to manually update your settings.json config file, See readme for more details. -->
+	<SettingSwitcherEnabled>False</SettingSwitcherEnabled>
+
+	<!--Can be used standalone or in conjunction with the standard setting switcher above.
+	This enables the menu option to enter 's' and manually pick between settings config files. Use this if you want to select Awesome or Poo graphics settings for an account.
+	Any setting file with a number after it will not be an available option (eg settings1.json will not be an option).
+	To make settings option, you can load from, call the file settings.<name>.json eg(settings.Awesome Graphics.json) which will appear as "Awesome Graphics" in the menu.-->
+	<ManualSettingSwitcherEnabled>False</ManualSettingSwitcherEnabled>
 </D2loaderconfig>
