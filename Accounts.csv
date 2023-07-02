@@ -1,3 +1,5 @@
-ID,acct,AccountLabel,PW,PWIsSecureString
-1,YourBNetEmailAddress,FriendlyDisplayname,YourBNetPassword,LeaveBlank
-2,example@address.com,BigJoeBloggs,ExamplePassw0rd!,
+ID,Acct,AccountLabel,Batches,PW,PWIsSecureString
+1,YourBNetEmailAddress,FriendlyDisplayname,,YourBNetPassword,<LeaveBlank>
+2,example1@address.com,BigJoeBloggs,"1",ExamplePassw0rd!,
+3,example2@address.com,JosephineBloggs,"1,2",SecurePassw0rd!,
+4,example3@address.com,JohnDoe,"1,2",MonopolyGuy420,
