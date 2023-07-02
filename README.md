@@ -17,27 +17,27 @@ Once the game has initialised, the window will be renamed so it's easier to tell
 This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.<br>
 Optionally you can also have the game launch using custom settings.json for each account in case you want different graphics/audio/game settings for each account you have.
 
-Note: If for some unknown reason you prefer to, you can call the script with account, password & region parameters: 
-
 ## Other Features
 **Open all accounts at once**<br>
 Time is precious so work smarter not harder by opening all your accounts at once to maximise your free time to actually play the game instead of clicking through menus.<br>
 **Batch Open Accounts**<br>
 Rather than open all accounts, you can open a batch of accounts. This feature is designed for you creatures that have several accounts but only want to launch a subset of these, for example only launch the 3 accounts you primarily play from.<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0f98dc8e-319a-43b8-b860-c84cb9d6dd60)<br>
 **Launch Each account with specific game settings**<br>
 These features were made in mind for multiboxing where you may have different screen sizes and want your secondary accounts to have lower graphics settings:<br>
 Auto Settings Switcher (SettingSwitcherEnabled): If enabled you can essentially have it so all accounts have their own game settings to load from. Game settings are loaded from settings<_ID_>.json instead of settings.json<br>
 Manual Settings Switcher (ManualSettingSwitcherEnabled): Alternatively, if you want to specify which game settings you want to load from, you can choose the settings file each account should use when launching. Once enabled in config, this can be toggled on and off using 's' in the menu.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/3533250d-8558-41a9-911f-5adcb5b6360d)
-You can enable both of these features at the same time. See setup details below.<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/3533250d-8558-41a9-911f-5adcb5b6360d)<br>
+You can enable both of these features at the same time. See [Setup Steps](#-setup-steps) below.<br>
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
 **Check DClone Status**<br>
 You can also check the current DClone status by pressing 'd'.<br>
 **Be an Entertainer in Baals Comedy Club**<br>
-If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
-Instead of providing any real value in the Throne Room you can provide entertainment value instead.<br>
+If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
+That way instead of providing any real value in terms of damage you can provide entertainment value instead.<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ba83409-eeba-4ae6-ba1e-b68d03e850e3)<br>
 **Launch Parameters**<br>
 You can run the script with launch parameters instead. This is ideal if you want to create a desktop shortcut to open a set of accounts or if you're a super nerd and you want to launch the accounts from a scheduled task or from Home Assistant so that your game is ready to go when you get home :)<br>
 Available launch parameters are:<br>
