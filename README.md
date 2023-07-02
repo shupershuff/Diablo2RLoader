@@ -159,7 +159,7 @@ Do you want to manually choose which settings to use when launching the game? Th
 Setup is exactly the same as the Auto Settings Switcher, except for step 8 as you need to name the settings file settings._name_.json where name is whatever you want it called (eg settings.1440pHigh.json or settings.PotatoGraphics.json)<br>
 - Note: If you name the file settings_name_.json it will not work. The name should be inside two fullstops "."<br>
 
-Don't forget to enable this feature in the [config](#7-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
+Don't forget to enable this feature in the [config](#4-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
 
 
 # Notes #
