@@ -33,7 +33,7 @@ Once the game has initialised, the window will be renamed so it's easier to tell
 This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.<br>
 Optionally you can also have the game launch using custom settings.json for each account in case you want different graphics/audio/game settings for each account you have.<br>
 <br>
-This script in no way enhances or changes gameplay.
+**`* This script in no way enhances or changes gameplay. *`**
 
 ## Other Features
 **Open All accounts at once**<br>
@@ -52,6 +52,7 @@ You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
 **Check DClone Status**<br>
 You can also check the current DClone status by pressing 'd'.<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/f6f2c934-7fce-47db-a052-97e42874d9be)<br>
 **Be an Entertainer in Baals Comedy Club**<br>
 If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
 That way instead of providing any real value in terms of damage, you can provide entertainment value instead.<br>
@@ -60,19 +61,22 @@ That way instead of providing any real value in terms of damage, you can provide
 You can run the script using launch parameters instead.<br>
 This is ideal if you want to create a desktop shortcut to open a set of accounts, or if you're a super nerd and you want to launch the accounts from a scheduled task or from Home Assistant so that your game is ready to go when you get home from work :)<br>
 Available launch parameters and values to use are as per the table below:<br>
-| parameter  | value example(s) | Notes |
-| ------------- | ------------- | ------------- |
-| -account  | username@emailaddress.com  | -AccountUsername also works as a parameter. Can't be used with -all or -batch |
-| -pw  | YourBNetAccountPassword  | Can't be used with -all or -batch |
-| -region | na.actual.battle.net or 1/2/3 | you can use 1, 2 or 3 as values to select NA, EU or KR |
-| -all | True  | Recommend using -region with this parameter |
-| -batch |  | Recommend using -region with this parameter |
-| -manualsettingswitcher | True | Use this if you want to manually choose which settings file to load with each account. Recommend not using this but instead enabling SettingSwitcherEnabled in your config file so that it automatically loads from settings<_ID_>.json |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parameter&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | value example(s) | Purpose | Notes |
+| ---------------------- | ------------------------------------------- | ------------------------------------- | ------------- |
+| -account               | username@emailaddress.com                   | Specify Signin Address to pass through to the script | -AccountUsername also works as a parameter. Can't be used with -all or -batch |
+| -pw                    | YourBNetAccountPassword                     | Specify Password to pass through to the script | Can't be used with -all or -batch |
+| -region                | na.actual.battle.net <br> 1/2/3<br>NA/EU/AS | Used to specify the connection region | Specify either the full server name, use the realm initials (NA/EU/AS) or use 1, 2 or 3 as values to select NA, EU or KR<br> Note that -region KR doesn't work but will be included in next update. |
+| -all                   | True                                        | Opens all accounts                    | Recommend using -region with this parameter. |
+| -batch                 | 1                                           | Opens a batch of accounts at once     | Recommend using -region with this parameter |
+| -manualsettingswitcher | True                                        | Use this if you want to manually choose which settings file to load with each account. | Recommend not using this but instead enabling SettingSwitcherEnabled in your config file so that it automatically loads from settings<_ID_>.json |
+
+To make a shortcut to open a set of accounts, copy the D2RLoader Shortcut, rename it to whatever suits, open the properties and add paramters to the target eg -batch 1 -region na
 
 **Magic Find in the script**<br>
 You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes.
-There's also a 1 in 19,999 chance to land a High Rune but you'll never see this :)
-There is a way to improve your script magic find...
+There's also a 1 in 19,999 chance to land a High Rune but you'll never see this :)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/710a8709-dc13-4f7f-bdd6-28d9552e6373)<br>
+There is a way to improve your script MaGic Find...
 
 # Setup Steps
 ## 1. Download
@@ -97,7 +101,13 @@ There is a way to improve your script magic find...
  	- Don't forget to enable the Batch feature in the config file.
 7. Yeah you should probably save it. That's CTRL + S. It helps :)
 
-If opening in Excel you add this info in each column. Otherwise open and edit in notepad.
+**Account CSV BEFORE running script:**<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0e3c26c5-8c71-431c-8bf7-06bde4c36c91)<br>
+**What it will look like AFTER running the script (in a later step):**<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ca6ed47-d5b7-486d-8bf2-a1fcfba2a612)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/d5453bf8-0af4-43ac-af5b-b16d31590c26)
+
+
 ## 4. Script Config (Mostly Optional)
 
 Default settings within config.xml *should* be ok but can be optionally changed. Recommend checking out the features here.
