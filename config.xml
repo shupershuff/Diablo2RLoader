@@ -3,7 +3,7 @@
 	<!--Default Gamepath. The below is the default install path, change this if you've installed somewhere different.
 		Note, if using multiple game installs (to keep client specific config persistent for each account), ensure these are referenced in the CustomGamePath field in accounts.csv.
 		Otherwise you can use a single install instead by linking the path below.-->
-	<GamePath>C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected</GamePath>
+	<GamePath>C:\Program Files (x86)\Diablo II Resurrected</GamePath>
 
 	<!--default region, 1 for NA, 2 for EU, 3 for Asia.-->
 	<DefaultRegion>1</DefaultRegion>
