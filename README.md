@@ -99,7 +99,8 @@ There is a way to improve your script MaGic Find...
 6. If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
 	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
  	- Don't forget to enable the Batch feature in the config file.
-7. Yeah you should probably save it. That's CTRL + S. It helps :)
+7. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
+8. Yeah and you should probably save it. That's CTRL + S. It helps :)
 
 **Account CSV BEFORE running script:**<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0e3c26c5-8c71-431c-8bf7-06bde4c36c91)<br>
@@ -119,7 +120,6 @@ All other config options below this are strictly optional:<br>
 - Set 'EnableBatchFeature' to True if you want the ability to launch accounts in batches. You must also define the batches in your accounts.csv file.
 - Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False.
 - Set 'CheckForNextTZ' to True if you want to enable the web request to find NextTZ details.
-- Set 'CommandLineArguments' to any custom game launch arguments you would like to add.
 - Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
 - Set CreateDesktopShortcut to False if you don't want a handy dandy shortcut on your desktop.
 - Set ShortcutCustomIconPath to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
