@@ -16,9 +16,6 @@
 	<!--Enable the ability to open a group of accounts. EG if you have 5 accounts but only regularly use 3 of them that you want to open up all at once.
 	Requires accounts.csv to be updated. See readme for more details.-->
 	<EnableBatchFeature>False</EnableBatchFeature>
-	
-	<!--Optionally add any command line arguments that you'd like the game to start with-->
-	<CommandLineArguments></CommandLineArguments>
 
 	<!--Whether script should only prompt you once for region-->
 	<AskForRegionOnceOnly>False</AskForRegionOnceOnly>
@@ -46,4 +43,7 @@
 	Any setting file with a number after it will not be an available option (eg settings1.json will not be an option).
 	To make settings option, you can load from, call the file settings.<name>.json eg(settings.Awesome Graphics.json) which will appear as "Awesome Graphics" in the menu.-->
 	<ManualSettingSwitcherEnabled>False</ManualSettingSwitcherEnabled>
+	
+	<!--This allows you to roughly track how long you've used each account while using this script. Choose False if you want to disable this.-->
+	<TrackAccountUseTime>True</TrackAccountUseTime>
 </D2loaderconfig>
