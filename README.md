@@ -65,7 +65,7 @@ Available launch parameters and values to use are as per the table below:<br>
 | ---------------------- | ------------------------------------------- | ------------------------------------- | ------------- |
 | -account               | username@emailaddress.com                   | Specify Signin Address to pass through to the script | -AccountUsername also works as a parameter. Can't be used with -all or -batch |
 | -pw                    | YourBNetAccountPassword                     | Specify Password to pass through to the script | Can't be used with -all or -batch |
-| -region                | na.actual.battle.net <br> 1/2/3<br>NA/EU/AS | Used to specify the connection region | Specify either the full server name, use the realm initials (NA/EU/AS) or use 1, 2 or 3 as values to select NA, EU or KR<br> Note that -region KR doesn't work but will be included in next update. |
+| -region                | na.actual.battle.net <br> 1/2/3<br>NA/EU/AS/KR | Used to specify the connection region | Specify either the full server name, use the realm initials (NA/EU/AS/KR) or use 1, 2 or 3 as values to select NA, EU or KR |
 | -all                   | True                                        | Opens all accounts                    | Recommend using -region with this parameter. |
 | -batch                 | 1                                           | Opens a batch of accounts at once     | Recommend using -region with this parameter |
 | -manualsettingswitcher | True                                        | Use this if you want to manually choose which settings file to load with each account. | Recommend not using this but instead enabling SettingSwitcherEnabled in your config file so that it automatically loads from settings<_ID_>.json |
