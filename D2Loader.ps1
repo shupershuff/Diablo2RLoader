@@ -18,35 +18,26 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
  
-Changes since 1.6.0 (next version edits):
-Added Batch feature for opening groups of accounts. Needs to be enabled in config and a column added to accounts.csv. See Readme for usage.
-Added Coloured text to highlight menu options & selections.
-Added Joke API integration. Press J to be served a random joke to share when doing runs in Baals Comedy Club.
-Added an Underwhelming Easter egG.
-Added validation for Boolean values in config.xml (proactive error handling you might say!)
-Added more quotes and removed a couple D3 quotes that somehow snuck in.
-Added Manual settings menu option "s" to toggle manual game setting selection per account. 
-Added settings<ID>.json as a "Default" option in the manual setting switcher
-Added Launch Parameters for -All, -Batch and -ManualSettingSwitcher so game can be launched by shortcuts/task scheduler/home assistant or whatever. See Readme for usage.
-Added/Fixed up script comments.
-Changed Update Notifications to be formatted much nicer/easier to read for future updates.
-Using Engine2 for OCR for more accurate OCR readings for Next TZ.
-Used Regex filtering across the OCR string for better Next TZ accuracy.
-Add Error handling for when OCR fails to read.
-Improved TZ formatting for longer TZ strings.
-Added randomized pool of keys for TZ OCR to reduce chance of hourly OCR free request limit being reached.
-Slight tidy up of menu and menu code.
-Too many minor script tweaks & fixes to recall or mention.
+Changes since 1.7.0 (next version edits):
+Moved customconfig into accounts.csv for nohd mod users. Script will auto remove this from config.xml and add a column in accounts.csv and assign the value that was previously in the config file.
+Minor changes to some text outputs.
+Added "KR" as a region parameter option.
+Removed incorrect description in config.xml for gamgepath. Script will automatically fix the description.
+Removed a couple of script statements that weren't adding any value.
+Added a wee bit more reliability for the TZ checker. If it fails to read image after 11 seconds it will try another engine.
+Account Usage Statistics (time account has been active) feature.
+Fixed username and password Parameters not passing through to game client properly when being launched from parameters.
 
 1.8.0 to do list
-Account Usage Statistics (time launched and time active)
+
+fix up update part of the script, was disabled for testing
 Script MF Statistics
-Fix whatever I broke or poorly implemented in 1.7.0 :)
+Fix whatever I broke or poorly implemented in 1.8.0 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.7.0"
-
+$CurrentVersion = "1.7.9"
+$MenuRefreshRate = 30 #How often the script refreshes in seconds.
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -97,7 +88,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
 $X = [char]0x1b #escape character for ANSI text colors
 $ProgressPreference = "SilentlyContinue"
 $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
-
+$Script:StartTime = Get-Date
 Function ReadKey([string]$message=$Null) {
     $key = $Null
     $Host.UI.RawUI.FlushInputBuffer()
@@ -174,7 +165,6 @@ try {
 		Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
 		Write-Host
 		$ReleaseInfo.body -split "`n" | ForEach-Object {
-		#$Release -split "`n" | ForEach-Object {
 			$_ = " " + $_
 			if ($_[1] -eq "-") {#for any line starting with a dash
 				 $DashFormat = ($_ -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
@@ -224,8 +214,9 @@ try {
 	}
 }
 Catch {
+	Write-Host
 	Write-Host " Couldn't check for updates. GitHub API limit may have been reached..." -foregroundcolor Yellow
-	Start-Sleep -milliseconds 2500
+	Start-Sleep -milliseconds 2750
 }
 
 #Import Config XML
@@ -242,21 +233,33 @@ Catch {
 	Pause
 	exit
 }
-
-if ($Script:Config.CommandLineArguments -eq $Null){
-	Write-Host
-	Write-Host " Config option 'CommandLineArguments' missing from config.xml" -foregroundcolor Yellow
-	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
-	Write-Host " This is an optional config option to add custom arguments when launching D2" -foregroundcolor Yellow
-	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
-	Write-Host
+#Perform some validation on config.xml. Helps avoid errors for people who may be on older versions of the script and are updating. Will look to remove all of this in a future update.
+if (Select-String -path $Script:WorkingDirectory\Config.xml -pattern "multiple game installs"){#Sort out an incorrect description text that will have been in folks config.xml for some time. This description was never valid and was from when the setting switcher feature was being developed and tested.
+	write-host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
-	$Pattern = "</DefaultRegion>"
-	$Replacement = "</DefaultRegion>`n`n`t<!--Optionally add any command line arguments that you'd like the game to start with-->`n`t<CommandLineArguments></CommandLineArguments>" #add option to config file if it doesn't exist.
-	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$Pattern = ";;`t`tNote, if using multiple game installs \(to keep client specific config persistent for each account\), ensure these are referenced in the CustomGamePath field in accounts.csv."
+	$Pattern += ";;`t`tOtherwise you can use a single install instead by linking the path below.-->;;"
+	$NewXML = [string]::join(";;",($XML.Split("`r`n")))
+	$NewXML = $NewXML -replace $Pattern, "-->;;"
+	$NewXML = $NewXML -replace ";;","`r`n"
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	write-host " Corrected the description for GamePath in config.xml." -foregroundcolor Green
 	Start-Sleep -milliseconds 1500
-	Pause
+}
+if ($Script:Config.CommandLineArguments -ne $Null){
+	Write-Host
+	Write-Host " Config option 'CommandLineArguments' is being moved to accounts.csv" -foregroundcolor Yellow
+	Write-Host " This is to enable different CMD arguments per account." -foregroundcolor Yellow
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = ";;\t<!--Optionally add any command line arguments that you'd like the game to start with-->;;\t<CommandLineArguments>.*?</CommandLineArguments>;;"
+	$NewXML = [string]::join(";;",($XML.Split("`r`n")))
+	$NewXML = $NewXML -replace $Pattern, ""
+	$NewXML = $NewXML -replace ";;","`r`n"
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	$AddCMDArgsToCSV = $True
+	$OriginalCommandLineArguments = $Script:Config.CommandLineArguments
+	Write-Host " CommandLineArguments has been removed from config.xml" -foregroundcolor green
+	Start-Sleep -milliseconds 1500
 }
 
 if ($Script:Config.CheckForNextTZ -eq $Null){
@@ -283,7 +286,6 @@ if ($Script:Config.ManualSettingSwitcherEnabled -eq $Null){#not to be confused w
 	Write-Host " This is an optional config option to allow you to manually select which " -foregroundcolor Yellow
 	Write-Host " config file you want to use for each account when launching." -foregroundcolor Yellow
 	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
-	Write-Host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 	$Pattern = "</SettingSwitcherEnabled>"
 	$Replacement = "</SettingSwitcherEnabled>`n`n`t<!--Can be used standalone or in conjunction with the standard setting switcher above.`n`t"
@@ -291,6 +293,24 @@ if ($Script:Config.ManualSettingSwitcherEnabled -eq $Null){#not to be confused w
 	$Replacement +=	"Any setting file with a number after it will not be an available option (eg settings1.json will not be an option).`n`t"
 	$Replacement +=	"To make settings option, you can load from, call the file settings.<name>.json eg(settings.Awesome Graphics.json) which will appear as `"Awesome Graphics`" in the menu.-->`n`t"
 	$Replacement +=	"<ManualSettingSwitcherEnabled>False</ManualSettingSwitcherEnabled>" #add option to config file if it doesn't exist.
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	Pause
+}
+
+if ($Script:Config.TrackAccountUseTime -eq $Null){
+	Write-Host
+	Write-Host " Config option 'TrackAccountUseTime' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This is an optional config option to track time played per account." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = "</ManualSettingSwitcherEnabled>"
+	$Replacement = "</ManualSettingSwitcherEnabled>`n`n`t<!--This allows you to roughly track how long you've used each account while using this script. "
+	$Replacement += "Choose False if you want to disable this.-->`n`t<TrackAccountUseTime>True</TrackAccountUseTime>" #add option to config file if it doesn't exist.
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 	Start-Sleep -milliseconds 1500
@@ -345,7 +365,6 @@ $AvailableConfigs = #add to this if adding features.
 "GamePath",
 "DefaultRegion",
 "CheckForNextTZ",
-"CommandLineArguments",
 "ShortcutCustomIconPath"
 
 $BooleanConfigs = 
@@ -491,10 +510,30 @@ if ($Script:AccountOptionsCSV -ne $Null){
 		Pause
 		exit
 	}
-	if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#if batch column doesn't exist, add it
+	if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.7.0. If batch column doesn't exist, add it
 		# Column does not exist, so add it to the CSV data
 		$Script:AccountOptionsCSV | ForEach-Object {
 			$_ | Add-Member -NotePropertyName "Batches" -NotePropertyValue $null
+		}
+		# Export the updated CSV data back to the file
+		$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+	}
+	if (-not ($Script:AccountOptionsCSV | Get-Member -Name "CustomLaunchArguments" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If CustomLaunchArguments column doesn't exist, add it
+		# Column does not exist, so add it to the CSV data
+		$Script:AccountOptionsCSV | ForEach-Object {
+			$_ | Add-Member -NotePropertyName "CustomLaunchArguments" -NotePropertyValue $OriginalCommandLineArguments
+		}
+		# Export the updated CSV data back to the file
+		$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+		Write-Host " Added CustomLaunchArguments column to accounts.csv." -foregroundcolor green
+		Write-Host
+		Start-Sleep -milliseconds 1200
+		pause
+	}
+	if (-not ($Script:AccountOptionsCSV | Get-Member -Name "TimeActive" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If TimeActive column doesn't exist, add it
+		# Column does not exist, so add it to the CSV data
+		$Script:AccountOptionsCSV | ForEach-Object {
+			$_ | Add-Member -NotePropertyName "TimeActive" -NotePropertyValue $null
 		}
 		# Export the updated CSV data back to the file
 		$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
@@ -509,19 +548,19 @@ if ($Script:AccountOptionsCSV -ne $Null){
 				$Entry.PW = ConvertTo-SecureString -String $Entry.PW -AsPlainText -Force
 				$Entry.PW = $Entry.PW | ConvertFrom-SecureString
 				$Entry.PWisSecureString = "Yes"
-				Write-Host ("Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
+				Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
 				Start-Sleep -milliseconds 100
 				$Entry
 				$CSVupdated = $true
 			}
 			if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
 				Write-Host
-				Write-Host ("The account " + $Entry.AccountLabel + " doesn't yet have a password defined.") -foregroundcolor yellow
+				Write-Host (" The account " + $Entry.AccountLabel + " doesn't yet have a password defined.") -foregroundcolor yellow
 				Write-Host
-				$Entry.PW = read-host -AsSecureString "Enter the Battle.net password for"$Entry.AccountLabel
+				$Entry.PW = read-host -AsSecureString " Enter the Battle.net password for"$Entry.AccountLabel
 				$Entry.PW = $Entry.PW | ConvertFrom-SecureString
 				$Entry.PWisSecureString = "Yes"
-				Write-Host ("Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
+				Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
 				Start-Sleep -milliseconds 100
 				$Entry
 				$CSVupdated = $true
@@ -530,13 +569,13 @@ if ($Script:AccountOptionsCSV -ne $Null){
 		if ($CSVupdated -eq $true){
 			Try {
 				$NewCSV | Export-CSV "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #update CSV file
-				Write-Host "Accounts.csv updated: Passwords have been secured." -foregroundcolor green
+				Write-Host " Accounts.csv updated: Passwords have been secured." -foregroundcolor green
 				Start-Sleep -milliseconds 4000
 			}
 			Catch {
 				Write-Host
-				Write-Host "Couldn't update Accounts.csv, probably because the file is open and locked." -foregroundcolor red
-				Write-Host "Please close accounts.csv and run the script again!" -foregroundcolor red
+				Write-Host " Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
+				Write-Host " Please close accounts.csv and run the script again!" -foregroundcolor red
 				Write-Host
 				Pause
 				Exit
@@ -864,7 +903,35 @@ Function DClone {
 	#$D2RWDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} | sort server
 	Pause
 }
+Function OCRCheckerWithTimeout {#Used to timeout OCR requests that take too long so that another attempt can be made with a different OCR engine.
+	param (
+		[ScriptBlock] $ScriptBlock,
+		[int] $TimeoutSeconds
+	)
+	$Script:OCRSuccess = $null
+	$job = Start-Job -ScriptBlock $ScriptBlock
+	$timer = [Diagnostics.Stopwatch]::StartNew()
 
+	while ($job.State -eq "Running" -and $timer.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+		Start-Sleep -Milliseconds 10
+	}
+	if ($job.State -eq "Running") {
+		Stop-Job -Job $job
+		Write-Host "  Command timed out." $Engine -foregroundcolor red
+		$Script:OCRSuccess = $False
+	}
+	elseif ($job.State -eq "Completed") {
+		$result = Receive-Job -Job $job
+		$Script:OCRSuccess = $True
+		#Write-Host "  Command completed successfully."
+		$result
+	}
+	else {
+		$Script:OCRSuccess = $False
+		Write-Host " OCR failure or error, couldn't read next TZ details." -foregroundcolor red
+	}
+	Remove-Job -Job $job
+}
 Function TerrorZone {
 	# Get the current time data was pulled
 	$TimeDataObtained = (Get-Date -Format 'h:mmtt')
@@ -891,26 +958,40 @@ Function TerrorZone {
 			"75988156278288K"
 		)
 		$tokreg = $75988Pool | Get-Random
+		$script:D2ROCRref = $null
 		for ($i = $tokreg.Length - 1; $i -ge 0; $i--) {
-			$D2ROCRref += $tokreg[$i]
+			$script:D2ROCRref += $tokreg[$i]
 		}
-		try {
-			$NextTZOCR = (((Invoke-WebRequest -Uri ("https://api.ocr.space/parse/imageurl?apikey=" + $D2ROCRref + "&filetype=png&isCreateSearchablePdf=false&OCREngine=2&scale=true&url=https://thegodofpumpkin.com/terrorzones/terrorzone.png")-ErrorAction Stop).content | convertfrom-json).parsedresults.parsedtext ).replace("`n","")
-			$NextTZ = [regex]::Match($NextTZOCR, "(?<=Next TerrorZone(?:\s)?(?:\(s\))?(?:\s)?(?:\.|::) ).*").Value
-			if ($NextTZ -eq ""){#if next tz variable is empty due to OCR not working.
-				Write-Host " OCR failure, couldn't read next TZ details :(" -foregroundcolor red
-				$fail = $true
-			}
+		$Script:OCRAttempts = 0
+		do { ## Try each OCR engine until success. I've noticed that OCR.Space engines sometimes go down causing the script not being able to detect current TZ. This gives it a bit more reliability, albeit at the cost of time for each additional attempt.
+			$Script:OCRAttempts ++
+			$NextTZOCR = OCRCheckerWithTimeout -ScriptBlock {
+				$global:Engine = (2,1,3)[$using:OCRAttempts-1]	 #try engines in order of the best quality: Engine 2, then 1 then 3.
+				#write-host "  Attempt:" $using:OCRAttempts -foregroundcolor Yellow #debug
+				#write-host "  Using engine:" $Engine -foregroundcolor Yellow #debug
+				(((Invoke-WebRequest -Uri ("https://api.ocr.space/parse/imageurl?apikey=" + $Using:D2ROCRref + "&filetype=png&isCreateSearchablePdf=false&OCREngine=" + $Engine + "&scale=true&url=https://thegodofpumpkin.com/terrorzones/terrorzone.png") -ErrorAction Stop).Content | ConvertFrom-Json).ParsedResults.ParsedText)
+			} -TimeoutSeconds 11 #allow up to 11 seconds per request. Standard requests are around 3 seconds but as it's a free service it can sometimes be slow. Most of the time when it takes longer than 10 seconds to retrieve OCR it fails. Default timeout from OCR.Space (when an engine is down) is actually 30 seconds before an error is thrown.
+		} until ($true -eq $Script:OCRSuccess -or ($Script:OCRAttempts -eq 3 -and $OCRSuccess -eq $false))
+		if ($Script:OCRAttempts -eq 1){#For Engine 2
+			$NextTZ = [regex]::Match($NextTZOCR.Replace("`n", ""), "(?<=Next TerrorZone(?:\s)?(?:\(s\))?(?:\s)?(?:\.|::) ).*").Value #Regex for engine 2
+		} Elseif ($Script:OCRAttempts -eq 2){#For Engine 1
+			$NextTZ = ($NextTZOCR.trim() -split "`n")[-1].replace("Next TerrorZone(s)","").replace(".","").replace(":","").trim()  #Regex for engine 1
+		} Else {#For Engine 3
+			$NextTZ = $nexttzocr -replace "\r?\n", " " -replace "(?s).*Next TerrorZone\Ss\S\s","" #Regex for engine 3
 		}
-		Catch {
-			Write-Host "  Was unable to pull next TZ details :(" -foregroundcolor red
-			$fail = $true
+		if ($OCRSuccess -eq $False){
+			$FailMessage = "Was unable to pull next TZ details :("
+		}
+		if ($NextTZ -eq ""){#if next tz variable is empty due to OCR not working.
+			$FailMessage = "OCR failure, couldn't read next TZ details :("
+			$OCRSuccess -eq $False
 		}
 	}
-	if ($fail -eq $true -or $CheckForNextTZ -eq $False){
+	if ($Script:OCRSuccess -eq $False -or $CheckForNextTZ -eq $False){
 		Write-Host
-		Write-Host "   Current TZ is: "  -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ") -ForegroundColor magenta #print next tz. The regex code helps format the string into an indented new line for longer TZ's.
+		Write-Host "   Current TZ is: "  -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta #print next tz. The regex code helps format the string into an indented new line for longer TZ's.
 		if ($CheckForNextTZ -ne $False){
+			$FailMessage += "`n                             Attempts made: $Script:OCRAttempts`n                             Token used:      $tokreg"
 			Write-Host "   Next TZ info unavailable: $FailMessage" -ForegroundColor Red
 		}
 		Write-Host
@@ -990,20 +1071,21 @@ Function DisplayActiveAccounts {
 		}
 	}
 	if ($Script:ActiveAccountsList.id -ne ""){#if batch feature is enabled add a column to display batch number(s)
+		if ($Script:Config.TrackAccountUseTime -eq $true){
+			$PlayTimeHeader = "Hours Played   "
+		}
 		if ($Script:EnableBatchFeature -eq $true){
-			Write-Host ("  ID   Region   Account Label   " +  $AccountHeaderIndent + "Batch(es)")
+			$BatchesHeader = (""+ $AccountHeaderIndent + "Batch(es)")
 		}
-		else {#write normal banner
-			Write-Host "  ID   Region   Account Label"
-		}
+		Write-Host ("  ID   Region   " + $PlayTimeHeader + "Account Label   " + $BatchesHeader) #Header
 	}
 	else {
 		Write-Host "  ID   Account Label"
 	}
 	$Pattern = "(?<=- \w+ \()([a-z]+)"#Regex pattern to pull the region characters out of the window title.
 	foreach ($AccountOption in $Script:AccountOptionsCSV){
-		$AccountDisplayPostIndent = ""
-		$AccountDisplayPreIndent = ""
+		$RegionDisplayPostIndent = ""
+		$RegionDisplayPreIndent = ""
 		if ($AccountOption.ID.length -ge 2){#keep table formatting looking lovely if some crazy user has 10+ accounts.
 			$IDIndent = ""
 		}
@@ -1020,21 +1102,29 @@ Function DisplayActiveAccounts {
 				$AccountIndent = $AccountIndent + " "
 			}
 		}
-		if ($AccountOption.id -in $Script:ActiveAccountsList.id){
+		if ($Script:Config.TrackAccountUseTime -eq $true){
+			try {
+				$AcctPlayTime = (" " + ("{0:N2}" -f [TimeSpan]::Parse($AccountOption.TimeActive).totalhours) + "     ").replace(",","") #Convert timeactive string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours.
+			}
+			catch {#if account hasn't been opened yet.
+				$AcctPlayTime = " 0     "
+			}
+			if ($AcctPlayTime.length -lt 15){#formatting. Depending on the amount of characters for this variable push it out until it's 15 chars long.
+				while ($AcctPlayTime.length -lt 15){
+					$AcctPlayTime = " " + $AcctPlayTime
+				}
+			}
+		}
+		if ($AccountOption.id -in $Script:ActiveAccountsList.id){#if account is currently active
 			$Windowname = (Get-Process | Where {$_.processname -eq "D2r" -and $_.MainWindowTitle -match ($AccountOption.id + " - Diablo II: Resurrected -")} | Select-Object MainWindowTitle).mainwindowtitle #Check active game instances to see which accounts are active. As this is based on checking window titles, this will only work for accounts opened from the script
 			$CurrentRegion = [regex]::Match($WindowName, $Pattern).value #Check which region aka realm the active account is connected to.
-			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $AccountDisplayPreIndent = " "; $AccountDisplayPostIndent = " "}
+			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
 			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
-			if ($CurrentRegion -eq "EU"){$CurrentRegion = "EU"; $AccountDisplayPreIndent = " "; $AccountDisplayPostIndent = " "}
-			Write-Host ("   " + $AccountOption.ID + "    "  + $AccountDisplayPreIndent + $CurrentRegion + "    " + $AccountDisplayPostIndent + $AccountOption.accountlabel + " - Account Currently In Use.") -foregroundcolor yellow
+			if ($CurrentRegion -eq "EU"){$CurrentRegion = "EU"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
+			Write-Host ("   " + $AccountOption.ID + "    "  + $RegionDisplayPreIndent + $CurrentRegion + $RegionDisplayPostIndent + "    " + $AcctPlayTime  + $AccountOption.accountlabel + " - Account Active.") -foregroundcolor yellow
 		}
-		else {
-			if ($Script:ActiveAccountsList.id -ne ""){
-				Write-Host ("  " + $IDIndent + $AccountOption.ID + "      -     " + $AccountOption.accountlabel + "  " + $AccountIndent + $Batches) -foregroundcolor green
-			}
-			else {
-				Write-Host ("  " + $IDIndent + $AccountOption.ID + "    " + $AccountOption.accountlabel + "  " + $AccountIndent + $Batches) -foregroundcolor green
-			}
+		else {#if account isn't currently active
+			Write-Host ("  " + $IDIndent + $AccountOption.ID + "      -     " + $AcctPlayTime + $AccountOption.accountlabel + "  " + $AccountIndent + $Batches) -foregroundcolor green
 		}
 	}
 }
@@ -1055,7 +1145,6 @@ Function Menu {
 	Else {
 		Write-Host (" You have quite a treasure there in that Horadric multibox script v" + $Currentversion)
 	}
-
 	Write-Host $BannerLogo -foregroundcolor yellow
 	QuoteRoll
 	if ($Batch -eq $Null -and $Script:OpenAllAccounts -ne $True){#go through normal account selection screen if script hasn't been launched with parameters that already determine this.
@@ -1071,7 +1160,6 @@ Function Menu {
 			}
 		}
 	}
-
 	if ($Batch -ne $Null -or $Script:OpenBatches -eq $true){
 		$Script:AcceptableBatchIDs = $Null #reset value
 		foreach ($ID in $Script:AccountOptionsCSV){
@@ -1144,7 +1232,7 @@ Function Menu {
 		Else {#if region parameter has been set already.
 			if ($Script:region -eq "NA" -or $Script:region -eq "us" -or $Script:region -eq 1){$Script:region = "us.actual.battle.net"}
 			if ($Script:region -eq "EU" -or $Script:region -eq 2){$Script:region = "eu.actual.battle.net"}
-			if ($Script:region -eq "Asia" -or $Script:region -eq "As" -or $Script:region -eq 3){$Script:region = "kr.actual.battle.net"}
+			if ($Script:region -eq "Asia" -or $Script:region -eq "As" -or $Script:region -eq "KR" -or $Script:region -eq 3){$Script:region = "kr.actual.battle.net"}
 			if ($Script:region -ne "us.actual.battle.net" -and $Script:region -ne "eu.actual.battle.net" -and $Script:region -ne "kr.actual.battle.net"){
 				Write-Host " Region not valid. Please choose region" -foregroundcolor red
 				ChooseRegion
@@ -1299,6 +1387,39 @@ Function ChooseAccount {
 			}
 			CheckActiveAccounts
 			DisplayActiveAccounts
+			if ($Script:Config.TrackAccountUseTime -eq $True){
+				$OpenD2LoaderInstances = Get-WmiObject -Class Win32_Process | Where-Object { $_.name -eq "powershell.exe" -and $_.commandline -match "d2loader.ps1"} | select name,processid,creationdate | sort creationdate
+				if ($OpenD2LoaderInstances.length -gt 1){#If there's more than 1 D2loader.ps1 script open, close until there's only 1 open to prevent the time played accumulating too quickly.
+					Stop-Process -id $OpenD2LoaderInstances[0].processid -force #Closes oldest running d2loader script
+				}
+				$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv"
+				foreach ($AccountID in $Script:ActiveAccountsList.id |sort){ #$Script:ActiveAccountsList.id
+					$AdditionalTimeSpan = New-TimeSpan -Start $Script:StartTime -End (Get-Date) #work out elapsed time to add to accounts.csv				
+					$AccountToUpdate = $Script:AccountOptionsCSV | Where-Object {$_.ID -eq $accountID}
+					if ($AccountToUpdate) {
+						try {
+							$AccountToUpdate.TimeActive = [TimeSpan]::Parse($AccountToUpdate.TimeActive) + $AdditionalTimeSpan
+						}
+						Catch {
+							$AccountToUpdate.TimeActive = $AdditionalTimeSpan
+						}
+					}
+					try {
+						$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #update accounts.csv with the new time played.
+					}
+					Catch {
+						$WriteError = $true 
+					}
+				}
+				$Script:StartTime = Get-Date #restart timer.
+				if ($True -eq $WriteError){
+					Write-host
+					Write-host "  Couldn't update accounts.csv with playtime info." -ForegroundColor Red
+					Write-host "  It's likely locked for editing, please ensure you close this file." -ForegroundColor Red
+					start-sleep -milliseconds 2500
+					$WriteError = $False
+				}
+			}
 			$Script:AcceptableValues = New-Object -TypeName System.Collections.ArrayList
 			foreach ($AccountOption in $Script:AccountOptionsCSV){
 				if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
@@ -1357,9 +1478,9 @@ Function ChooseAccount {
 					$BatchOption = $Null
 					Write-Host " All Accounts are currently open!" -foregroundcolor yellow
 				}
-				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, '$X[38;2;255;165;000;22mt$X[0m' for TZ info, '$X[38;2;255;165;000;22md$X[0m' for DClone status, '$X[38;2;255;165;000;22mj$X[0m' for jokes"
+				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, '$X[38;2;255;165;000;22mt$X[0m' for TZ info, '$X[38;2;255;165;000;22md$X[0m' for DClone status, '$X[38;2;255;165;000;22mj$X[0m' for jokes,"
 				Write-Host "  $ManualSettingSwitcherMenuText or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
-				$Script:AccountID = ReadKeyTimeout "" 30 "r" #30 represents the refresh rate of the menu in seconds. if no button is pressed, send "r" for refresh.
+				$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
 				if ($Script:AccountID -notin ($Script:AcceptableValues + "x" + "r" + "t" + "d" + "g" + "j" + $ManualSettingSwitcherOption + $AllOption + $BatchOption) -and $Null -ne $Script:AccountID){
 					if ($Script:AccountID -eq "a" -and $Script:Config.DisableOpenAllAccountsOption -ne $true){
 						Write-Host " Can't open all accounts as all of your accounts are already open doofus!" -foregroundcolor red
@@ -1409,7 +1530,6 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 	Write-Host	
 		do {
 			Write-Host " Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
-			#$Script:RegionOption = Read-host (" Alternatively select 'c' to cancel or press enter for the default (" + $Script:defaultregion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Script:defaultregion}).region + ")")
 			Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel or press enter for the default (" + $Script:defaultregion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Script:defaultregion}).region + "): ") -nonewline
 			$Script:RegionOption = ReadKey
 			Write-Host
@@ -1435,7 +1555,7 @@ Function Processing {
 		if (($Script:PW -eq "" -or $Script:PW -eq $Null) -and $Script:PWmanualset -eq 0){
 			$Script:PW = $Script:AccountChoice.PW.tostring()
 		}
-		if ($Script:ParamsUsed -ne $true -and $ConvertPlainTextPasswords -ne $false){
+		if (($ConvertPlainTextPasswords -ne $false -and $Script:ParamsUsed -ne $true) -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){#Convert password if it's enabled in config and script is being run normally *OR* Convert password if script is being run from paramters using either -all batch or -all (but not if -username is used instead)
 			$Script:acct = $Script:AccountChoice.acct.tostring()
 			$EncryptedPassword = $PW | ConvertTo-SecureString
 			$PWobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedPassword)
@@ -1456,7 +1576,9 @@ Function Processing {
 
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
-		$arguments = (" -username " + $Script:acct + " -password " + $Script:PW +" -address " + $Script:Region + " " + $Config.CommandLineArguments).tostring()
+		#if ($Script:AccountID-eq "1" -or $Script:AccountID -eq "2" -or $Script:AccountID -eq "3"){$ModArguments = "-mod nohd"}
+		#$arguments = (" -username " + $Script:acct + " -password " + $Script:PW +" -address " + $Script:Region + " " + $Config.CommandLineArguments + " " + $modarguments).tostring()
+		$arguments = (" -username " + $Script:acct + " -password " + $Script:PW +" -address " + $Script:Region + " " + $Script:AccountChoice.CustomLaunchArguments).tostring()
 		if ($Config.ForceWindowedMode -eq $true){#starting with forced window mode sucks, but someone asked for it.
 			$arguments = $arguments + " -w"
 		}
@@ -1608,7 +1730,6 @@ Function Processing {
 			try {
 				cmd.exe /c $Command
 				#write-output $Command  #debug
-				#Write-Host " Window Renamed to $rename" -foregroundcolor green
 				Write-Host " Window Renamed." -foregroundcolor green
 				Start-Sleep -milliseconds 250
 				if ($Script:LastAccount -eq $True -or ($Script:OpenAllAccounts -ne $True -and $Script:OpenBatches -ne $True)){
