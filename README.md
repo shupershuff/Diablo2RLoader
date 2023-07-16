@@ -21,7 +21,8 @@ This is a labour of love, for a game I love, for what I feel is a pretty good ga
 This Readme is a bit wordy sorry, I've tried to capture all the information that anyone might ever ask for.<br>
 
 Script Screenshot:<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/271020e8-ab65-4c16-9c2c-faea31547ae6)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/fc116915-76af-4970-9b0e-0d7f913e591e)
+<br>
 What your windows will look like:<br>
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
 
@@ -47,6 +48,10 @@ _Auto Settings Switcher_: If enabled you can essentially have it so all accounts
 _Manual Settings Switcher_: Alternatively, if you want to specify which game settings you want to load from, you can choose the settings file each account should use when launching. Once enabled in config, this can be toggled on and off using 's' in the menu.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/3533250d-8558-41a9-911f-5adcb5b6360d)<br>
 You can enable both of these features at the same time. See [Setup Steps](#setup-steps) below.<br>
+**Track your playtime for each account COMING IN 1.8.0**<br>
+It was too technically difficult for Blizzard to track time played for D2r within their Battlenet Client so you can use my janky one instead.<br>
+Time per account can be seen on the menu. Total time the script has ran for can be seen in stats.txt in the folder where the script lives.
+Now you can look back on your D2r playtime and think back on all of the productive things you should've done, but didn't.<br>
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
