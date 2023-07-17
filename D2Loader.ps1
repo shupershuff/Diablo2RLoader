@@ -703,10 +703,6 @@ Function Inventory {
 	Write-Host;	write-host
 	Write-Host "         Stay a while and listen! Here's your D2r Loader info." -foregroundcolor yellow
 	write-host;	write-host
-	#write-host "  Note: D2r Playtime is based on the time the script has been running whilst"
-	#write-host "  D2r is running. In other words, if you use this script when you're playing"
-	#write-host "  the game, it will give you a reasonable idea of the total time you've"
-	#write-host "  spent receiving disappointing drops from Mephisto :)"
 	write-host "  $X[38;2;255;255;255;4mNote:$X[0m D2r Playtime is based on the time the script has been running"
 	write-host "  whilst D2r is running. In other words, if you use this script when you're"
 	write-host "  playing the game, it will give you a reasonable idea of the total time"
@@ -755,17 +751,12 @@ Function Inventory {
 				}
 				write-host ($Indent + "|") -nonewline
 				write-host
-				#write-host (($Line -replace '\[.*?22m', '' -replace '\[0m','').Length + $Indent.length +" ") -nonewline -foregroundcolor red
-				#write-host ($Line -replace '\[.*?22m', '' -replace '\[0m','').Length -nonewline -foregroundcolor green
-				#write-host $Line.Length  -foregroundcolor green
 			}
 			else {
 				while (($Line.Length + $Dash.length) -lt ($LongestLine)){
 					$Dash = $Dash + "-"
 				}
 				write-host $Dash -nonewline
-				#write-host $Line.Length -nonewline -foregroundcolor green
-				#write-host ($Line.Length + $Dash.length) -nonewline
 				write-host
 			}
 		}
@@ -978,7 +969,6 @@ Function DClone {
 	$LadderStatus = $D2RWDCloneResponse.servers | where-object {$_.Server -match "^ladder"} | select server,progress | sort server
 	$NonLadderStatus = $D2RWDCloneResponse.servers | where-object {$_.Server -match "nonladder"} | select server,progress | sort server
 	$CurrentStatus = $D2RWDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} | sort server
-
 	$DCloneLadderTable = New-Object -TypeName System.Collections.ArrayList
 	$DCloneNonLadderTable = New-Object -TypeName System.Collections.ArrayList
 	foreach ($Status in $CurrentStatus){
@@ -1536,7 +1526,6 @@ Function ChooseAccount {
 				if ($OpenD2LoaderInstances.length -gt 1){#If there's more than 1 D2loader.ps1 script open, close until there's only 1 open to prevent the time played accumulating too quickly.
 					Stop-Process -id $OpenD2LoaderInstances[0].processid -force #Closes oldest running d2loader script
 				}
-
 				if($Script:ActiveAccountsList.id.length -ne 0){#if there are active accounts open add to total script time
 					#Add time for each account that's open
 					$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv"
@@ -1739,7 +1728,6 @@ Function Processing {
 		Catch {
 			$Script:AccountFriendlyName = $Script:AccountUsername
 		}	
-
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
 		$arguments = (" -username " + $Script:acct + " -password " + $Script:PW +" -address " + $Script:Region + " " + $Script:AccountChoice.CustomLaunchArguments).tostring()
@@ -1747,7 +1735,6 @@ Function Processing {
 			$arguments = $arguments + " -w"
 		}
 		$Script:PW = $Null
-		
 		#Switch Settings file to load D2r from.
 		if ($Config.SettingSwitcherEnabled -eq $True -and $Script:AskForSettings -ne $True){#if user has enabled the auto settings switcher.
 			$SettingsProfilePath = ("C:\Users\" + $Env:UserName + "\Saved Games\Diablo II Resurrected\")
