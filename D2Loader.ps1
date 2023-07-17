@@ -22,7 +22,7 @@ Changes since 1.7.0 (next version edits):
 Moved customconfig into accounts.csv for nohd mod users. Script will auto remove this from config.xml and add a column in accounts.csv and assign the value that was previously in the config file.
 Minor changes to some text outputs.
 Added "KR" as a region parameter option.
-Removed incorrect description in config.xml for gamgepath. Script will automatically fix the description.
+Removed incorrect description in config.xml for gamepath. Script will automatically fix the description.
 Removed a couple of script statements that weren't adding any value.
 Added a wee bit more reliability for the TZ checker. If it fails to read image after 11 seconds it will try another OCR engine.
 Account Usage Statistics (time account has been active) feature. Recorded to accounts.csv.
