@@ -48,10 +48,13 @@ _Auto Settings Switcher_: If enabled you can essentially have it so all accounts
 _Manual Settings Switcher_: Alternatively, if you want to specify which game settings you want to load from, you can choose the settings file each account should use when launching. Once enabled in config, this can be toggled on and off using 's' in the menu.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/3533250d-8558-41a9-911f-5adcb5b6360d)<br>
 You can enable both of these features at the same time. See [Setup Steps](#setup-steps) below.<br>
-**Track your playtime for each account COMING IN 1.8.0**<br>
+**Statistics - Track your playtime**<br>
 It was too technically difficult for Blizzard to track time played for D2r within their Battlenet Client so you can use my janky one instead.<br>
-Time per account can be seen on the menu. Total time the script has ran for can be seen in stats.txt in the folder where the script lives.
+Time per account can be seen from the main menu. Total time the script has ran for can be seen by going into the info screen ('i').
 Now you can look back on your D2r playtime and think back on all of the productive things you should've done, but didn't.<br>
+
+Other misc stats and info can be seen on the info screen.
+
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
@@ -105,7 +108,8 @@ There is a way to improve your script MaGic Find...
 	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
  	- Don't forget to enable the Batch feature in the config file.
 7. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
-8. Yeah and you should probably save it. That's CTRL + S. It helps :)
+8. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
+9. Yeah and you should probably save it. That's CTRL + S. It helps :)
 
 **Account CSV BEFORE running script:**<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0e3c26c5-8c71-431c-8bf7-06bde4c36c91)<br>
@@ -118,20 +122,21 @@ There is a way to improve your script MaGic Find...
 
 Default settings within config.xml *should* be ok but can be optionally changed. Recommend checking out the features here.
 Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ etc.
-- **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
+- **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
 
 All other config options below this are strictly optional:<br>
-- Set your default region if you just want to mash enter instead of choosing the region.
-- Set 'EnableBatchFeature' to True if you want the ability to launch accounts in batches. You must also define the batches in your accounts.csv file.
-- Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False.
-- Set 'CheckForNextTZ' to True if you want to enable the web request to find NextTZ details.
-- Set 'AskForRegionOnceOnly' to True if you only want to choose the region once.
-- Set CreateDesktopShortcut to False if you don't want a handy dandy shortcut on your desktop.
-- Set ShortcutCustomIconPath to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
-- Set ConvertPlainTextPasswords to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
-- Set ForceWindowedMode to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings.
-- Set SettingSwitcherEnabled to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section above for more info. Disabled by default.
-- Set ManualSettingSwitcherEnabled to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section above for more info. Disabled by default.
+- Set your default region if you just want to mash enter instead of choosing the region. Default is 1 for NA.
+- Set 'EnableBatchFeature' to True if you want the ability to launch accounts in batches. You must also define the batches in your accounts.csv file. Disabled by default.
+- Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False. Disabled by default.
+- Set 'CheckForNextTZ' to True if you want to enable the web request to find NextTZ details. Enabled by default.
+- Set 'AskForRegionOnceOnly' to True if you only want to choose the region once. Disabled by default.
+- Set 'CreateDesktopShortcut' to False if you don't want a handy dandy shortcut on your desktop. Enabled by default.
+- Set 'ShortcutCustomIconPath' to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
+- Set 'ConvertPlainTextPasswords' to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
+- Set 'ForceWindowedMode' to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings. Disabled by default.
+- Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section above for more info. Disabled by default.
+- Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section above for more info. Disabled by default.
+- Set 'TrackAccountUseTime' to False if you don't want accounts.csv or stats.csv to be autoupdated with playtime. Other Stats are still tracked in stats.csv. Mainly added this option in the unlikely case there are any issues with accounts.csv getting corrupted. Enabled by default.
 
 Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
 
@@ -176,7 +181,6 @@ Setup is exactly the same as the Auto Settings Switcher, except for step 8 as yo
 
 Don't forget to enable this feature in the [config](#4-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
 
-
 # Notes #
 ## FAQ / Common Issues
 
@@ -184,7 +188,7 @@ Don't forget to enable this feature in the [config](#4-script-config-mostly-opti
 **A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
 
 **Q:** How do I update the script?<br>
-**A:** As of 1.5.0, the script has the ability to update itself. To update manually, all you need to do is download the latest release, extract the .zip and copy the new D2Loader.ps1 over to where the old D2Loader.ps1 file is and overwrite it.
+**A:** As of 1.5.0, the script has the ability to update itself. I will also include steps in the script to update config.xml, accounts.csv and stats.csv if new fields are added. For users on older versions, to update manually, all you need to do is download the latest release, extract the .zip and copy the new D2Loader.ps1 over to where the old D2Loader.ps1 file is and overwrite it. If this script shows a warning "Couldn't check for updates. GitHub API limit may have been reached...", it's most likely due to me testing things and exceeding GitHubs API limit, ignore and try again later.
 
 **Q:** When Diablo opens it won't allow me to select an online character<br>
 **A:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).
@@ -219,7 +223,7 @@ If you're reading this your real question is actually "Will I get banned for mul
 
 ## Notes about the Window title rename (SetText.exe)
 
-The script will generate a file called SetTExt.exe if it doesn't exist.
+The script will generate a file called SetText.exe if it doesn't exist.
 This is used to rename the Game Windows so that you and the script can tell each instance apart.
 To compile the .exe this requires DotNet4.0. If you don't have it the script will prompt you to download this from Microsoft.
 ~~A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy.~~ A submission has since been sent to Microsoft and submission has been cleared :)
@@ -238,10 +242,9 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
+* Fixing anything I broke in the last release.
+* Adding whatever features you fools ask for.
 * Investigate use of battlenet login tokens (stored in registry) instead of passwords as other loaders have done. This is unlikely as I probably can't figure it out.
-* Maybe add a counter for how many times you've launched each account and save this as a column in accounts.csv.
-* Maybe add a counter for time spent in each account (given Blizzard won't implement this).
-* Maybe a stats screen (by pressing "i" instead of choosing an account) to display above for each account. As a silly addition, stats to include how many "magic" or above quality quotes have been found in the script.
 * Perhaps make a GUI *if* there's enough interest. Probably not though as there would be a lot of brain activity involved. Pay my mortgage and we'll perhaps maybe talk... probably.
 
 # Usage and Limitations #
