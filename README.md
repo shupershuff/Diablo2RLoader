@@ -53,7 +53,7 @@ It was too technically difficult for Blizzard to track time played for D2r withi
 Time per account can be seen from the main menu. Total time the script has ran for can be seen by going into the info screen ('i').
 Now you can look back on your D2r playtime and think back on all of the productive things you should've done, but didn't.<br>
 
-Other misc stats and info can be seen on the info screen.
+Other misc stats and info can be seen on the info screen. Statistics are recorded locally to stats.csv and accounts.csv in your script folder.
 
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
