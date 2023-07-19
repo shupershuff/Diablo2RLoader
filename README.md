@@ -265,5 +265,4 @@ Happy for you to make any modifications this script for your own needs providing
 - Google.com for everything else.
 <br>
 <br>
-
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
