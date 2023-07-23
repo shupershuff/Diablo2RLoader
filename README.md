@@ -21,8 +21,7 @@ This is a labour of love, for a game I love, for what I feel is a pretty good ga
 This Readme is a bit wordy sorry, I've tried to capture all the information that anyone might ever ask for.<br>
 
 Script Screenshot:<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/fc116915-76af-4970-9b0e-0d7f913e591e)
-<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50dfcb19-8ef1-4e6f-8cde-35c1f92cbec6)<br>
 What your windows will look like:<br>
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
 
@@ -54,6 +53,7 @@ Time per account can be seen from the main menu. Total time the script has ran f
 Now you can look back on your D2r playtime and think back on all of the productive things you should've done, but didn't.<br>
 
 Other misc stats and info can be seen on the info screen. Statistics are recorded locally to stats.csv and accounts.csv in your script folder.
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/ad4a386a-e1f7-4955-aefe-eeed632a9e95)
 
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
