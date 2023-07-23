@@ -27,7 +27,7 @@ Fixed Session/Account timers not properly resetting when no games are open causi
 Fixed Batch menu text showing " or" when there's only one option.
 Update Checker notifies if multiple releases have come out since current version.
 Update Checker has now one API call instead of two.
-Update Checker won't check for updates each time, instead only checks once every 12 hours to reduce API calls.
+Update Checker won't check for updates each time, instead only checks once every 8 hours to reduce API calls.
 Better error handling for user errors in accounts.csv
 Create Backups of CSV's on launch as a restore point in case an event (eg BSOD) corrupts the files.
 Users can now rename script without it breaking.
@@ -198,8 +198,8 @@ if (-not ($CurrentStats | Get-Member -Name "LastUpdateCheck" -MemberType NotePro
 	}
 }
 
-#Only Check for updates if updates haven't been checked in last 12 hours. Reduces API requests.
-if ([DateTime]::ParseExact($CurrentStats.LastUpdateCheck, "dd/MM/yyyy h:mm:ss tt", $null) -lt (Get-Date).addhours(-12).datetime){# Compare current date and time to LastUpdateCheck date & time.
+#Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
+if ([DateTime]::ParseExact($CurrentStats.LastUpdateCheck, "dd/MM/yyyy h:mm:ss tt", $null) -lt (Get-Date).addhours(-8).datetime){# Compare current date and time to LastUpdateCheck date & time.
 	try {
 		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
 		$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
