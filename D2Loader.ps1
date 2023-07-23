@@ -7,7 +7,7 @@ Happy for you to make any modifications this script for your own needs providing
 - Any variants of this script are never modifed to enable or assist in any game altering or malicious behaviour including (but not limited to): Bannable Mods, Cheats, Exploits, Phishing
 Purpose:
 	Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle."
-	Script will import account details from CSV. Alternatively you can run script parameters (see Github readme): - AccountUsername, -PW, -Region, -All, -Batch, -ManualSettingSwitcher
+	Script will import account details from CSV. Alternatively you can run script parameters (see Github readme): -AccountUsername, -PW, -Region, -All, -Batch, -ManualSettingSwitcher
 Instructions: See GitHub readme https://github.com/shupershuff/Diablo2RLoader
 
 Notes:
@@ -18,27 +18,32 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
  
-Changes since 1.7.0 (next version edits):
-Moved customconfig into accounts.csv for nohd mod users. Script will auto remove this from config.xml and add a column in accounts.csv and assign the value that was previously in the config file.
-Minor changes to some text outputs.
-Added "KR" as a region parameter option.
-Removed incorrect description in config.xml for gamepath. Script will automatically fix the description.
-Removed a couple of script statements that weren't adding any value.
-Added a wee bit more reliability for the TZ checker. If it fails to read image after 11 seconds it will try another OCR engine.
-Account Usage Statistics (time account has been active) feature. Recorded to accounts.csv.
-Script time (Game time irrespective of the account) recorded to stats.csv
-Script times launched and MF stats recorded to stats.csv
-Fixed username and password Parameters not passing through to game client properly when being launched from parameters.
-Made all pause & exit screens consistent, now you can hit any key (instead of enter) to continue.
-Added script info screen (option 'i')
+Changes since 1.8.0 (next version edits):
+Adjusted 'Current session' so it only counts up if a game is running.
+Adjust time displays to show <hours>:<minutes> instead <hours>.<% of an hour>
+Fixed Batch menu not accepting valid inputs when only one batch is configured.
+Fixed Script not closing when running -batch parameter.
+Fixed Session/Account timers not properly resetting when no games are open causing incorrect calculation of session/account times.
+Fixed Batch menu text showing " or" when there's only one option.
+Update Checker notifies if multiple releases have come out since current version.
+Update Checker has now one API call instead of two.
+Update Checker won't check for updates each time, instead only checks once every 12 hours to reduce API calls.
+Better error handling for user errors in accounts.csv
+Create Backups of CSV's on launch as a restore point in case an event (eg BSOD) corrupts the files.
+Users can now rename script without it breaking.
+Other minor edits.
 
-1.8.0 to do list
-Possibly add Current and Next TZ status for Single player folk, but ONLY if it's an easy addition with an easy source.
-Fix whatever I broke or poorly implemented in 1.8.0 :)
+1.8.2-1.9.0 to do list
+Find more accurate dclone tracker - Replacement Source likely to be https://diablo2.io/dclone_api.php. maybe add config option for $D2CloneTracker to choose between diablo2.io & D2runewizard.com.
+DClone status output tidy up.
+To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
+Unlikely - Possibly add Current and Next TZ status for Single player folk, but ONLY if it's an easy addition with an easy source.
+Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windows. Investigate how this could be done. Would need an agent to detect key combos, Possibly via AutoIT or Autohotkey. Likely not possible within powershell and requires a separate project.
+Fix whatever I broke or poorly implemented in 1.8.1 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.8.0"
+$CurrentVersion = "1.8.1"
 
 ###########################################################################################################################################
 # Script itself
@@ -92,9 +97,11 @@ $Script:X = [char]0x1b #escape character for ANSI text colors
 $ProgressPreference = "SilentlyContinue"
 $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\')) #Set Current Directory path.
 $Script:StartTime = Get-Date #Used for elapsed time. Is reset when script refreshes.
-$Session = $Script:StartTime #Static variable
 $Script:MOO = "%%%"
+$D2CloneTrackerSource = "D2runewizard.com" # Future option for "diablo2.io"
 $MenuRefreshRate = 30 #How often the script refreshes in seconds.
+$Script:ScriptFileName = Split-Path $MyInvocation.MyCommand.Path -Leaf #find the filename of the script in case a user renames it.
+$Script:SessionTimer = 0 #set initial session timer to avoid errors in info menu.
 
 Function ReadKey([string]$message=$Null,[bool]$NoOutput) {#used to receive user input
     $key = $Null
@@ -171,69 +178,96 @@ Function PressTheAnyKeyToExit {
 	readkey -NoOutput $True | out-null
 	Exit
 }
-#Check for updates
-try {
-	$tagList = Invoke-RestMethod "https://api.github.com/repos/Shupershuff/Diablo2RLoader/tags" -ErrorAction Stop
-	if ([version[]]$taglist.Name.Trim('v') -gt $Script:CurrentVersion) {
-		$ReleaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases/latest"
-		Write-Host
-		Write-Host " Update available! See Github for latest version and info:" -foregroundcolor Yellow
-		Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
-		Write-Host
-		$ReleaseInfo.body -split "`n" | ForEach-Object {
-			$_ = " " + $_
-			if ($_[1] -eq "-") {#for any line starting with a dash
-				 $DashFormat = ($_ -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
-				 $DashFormat -split "`n" | ForEach-Object {
-					if ($_[1] -eq "-") {#for any line starting with a dash
-						$_
-					}
-					else {
-						($_ -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
-					}
-				}
-			}
-			else {
-				($_ -replace "(.{1,75})(\s+|$)", "`$1`n ").trimend()
-			}
-		}
-		Write-Host
-		Write-Host
-		Do {
-			Write-Host " Would you like to update? $X[38;2;255;165;000;22mY$X[0m/$X[38;2;255;165;000;22mN$X[0m: " -nonewline
-			$ShouldUpdate = ReadKey
-			if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes" -or $ShouldUpdate -eq "n" -or $ShouldUpdate -eq "no"){
-				$UpdateResponseValid = $True
-			} Else {
-				Write-Host
-				Write-Host " Invalid response. Choose $X[38;2;255;165;000;22mY$X[0m $X[38;2;231;072;086;22mor$X[0m $X[38;2;255;165;000;22mN$X[0m." -ForegroundColor red
-				Write-Host
-			}
-		} Until ($UpdateResponseValid -eq $True)
-		if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes"){#if user wants to update script, download .zip of latest release, extract to temporary folder and replace old D2Loader.ps1 with new D2Loader.ps1
-			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
-			$ZipURL = $ReleaseInfo.zipball_url #get zip download URL	
-			$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
-			Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
-			$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
-			Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
-			$FolderPath = Get-ChildItem -Path $ExtractPath -Directory -Filter "shupershuff*" | Select-Object -ExpandProperty FullName
-			($FolderPath + "\D2Loader.ps1")
-			($Script:WorkingDirectory + "D2Loaders.ps1")
-			Copy-Item -Path ($FolderPath + "\D2Loader.ps1") -Destination ($Script:WorkingDirectory + "\D2Loader.ps1")
-			Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force #delete update temporary folder
-			Write-Host " Updated :)" -foregroundcolor green
-			Start-Sleep -milliseconds 850
-			& ($Script:WorkingDirectory + "\D2Loader.ps1")	
-			exit
-		}
-		$ReleaseInfo = $Null
+
+# Check for updates
+if ((Test-Path -Path "$Script:WorkingDirectory\Stats.csv") -ne $true){#Create Stats CSV if it doesn't exist
+	$CreateStatCSV = {} | Select "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
+}
+
+$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv" #Get current stats csv details
+if ($CurrentStats -eq $null){
+	write-host
+	write-host " Stats.csv is corrupted or empty." -foregroundcolor red
+	write-host " Replace with data from stats.backup.csv or delete stats.csv" -foregroundcolor red
+	write-host
+	PressTheAnyKeyToExit
+}
+if (-not ($CurrentStats | Get-Member -Name "LastUpdateCheck" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.1. If LastUpdateCheck column doesn't exist, add it to the CSV data
+	$CurrentStats | ForEach-Object {
+		$_ | Add-Member -NotePropertyName "LastUpdateCheck" -NotePropertyValue "28/06/2000 12:00:00 pm"
 	}
 }
-Catch {
-	Write-Host
-	Write-Host " Couldn't check for updates. GitHub API limit may have been reached..." -foregroundcolor Yellow
-	Start-Sleep -milliseconds 2750
+
+#Only Check for updates if updates haven't been checked in last 12 hours. Reduces API requests.
+if ([DateTime]::ParseExact($CurrentStats.LastUpdateCheck, "dd/MM/yyyy h:mm:ss tt", $null) -lt (Get-Date).addhours(-12).datetime){# Compare current date and time to LastUpdateCheck date & time.
+	try {
+		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
+		$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
+		if ([version[]]$ReleaseInfo.Name.Trim('v') -gt $Script:CurrentVersion) {
+			Write-Host
+			Write-Host " Update available! See Github for latest version and info" -foregroundcolor Yellow -nonewline
+			if ([version[]]$CurrentVersion -in ($Releases.Name.Trim('v') | sort -desc)[2..$releases.count]){
+				Write-Host ".`n There have been several releases since your version." -foregroundcolor Yellow
+				Write-Host " Checkout Github releases for fixes/features added. " -foregroundcolor Yellow
+				Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/$X[0m"
+			} Else {
+				Write-Host ":`n $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
+			}
+			Write-Host
+			$ReleaseInfo.body -split "`n" | ForEach-Object {
+				$_ = " " + $_
+				if ($_[1] -eq "-") {#for any line starting with a dash
+					 $DashFormat = ($_ -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
+					 $DashFormat -split "`n" | ForEach-Object {
+						if ($_[1] -eq "-") {#for any line starting with a dash
+							$_
+						}
+						else {
+							($_ -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
+						}
+					}
+				}
+				else {
+					($_ -replace "(.{1,75})(\s+|$)", "`$1`n ").trimend()
+				}
+			}
+			Write-Host; Write-Host
+			Do {
+				Write-Host " Would you like to update? $X[38;2;255;165;000;22mY$X[0m/$X[38;2;255;165;000;22mN$X[0m: " -nonewline
+				$ShouldUpdate = ReadKey
+				if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes" -or $ShouldUpdate -eq "n" -or $ShouldUpdate -eq "no"){
+					$UpdateResponseValid = $True
+				} Else {
+					Write-Host
+					Write-Host " Invalid response. Choose $X[38;2;255;165;000;22mY$X[0m $X[38;2;231;072;086;22mor$X[0m $X[38;2;255;165;000;22mN$X[0m." -ForegroundColor red
+					Write-Host
+				}
+			} Until ($UpdateResponseValid -eq $True)
+			if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes"){#if user wants to update script, download .zip of latest release, extract to temporary folder and replace old D2Loader.ps1 with new D2Loader.ps1
+				Write-Host " Updating... :)" -foregroundcolor green
+				New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
+				$ZipURL = $ReleaseInfo.zipball_url #get zip download URL	
+				$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
+				Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
+				$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
+				Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
+				$FolderPath = Get-ChildItem -Path $ExtractPath -Directory -Filter "shupershuff*" | Select-Object -ExpandProperty FullName
+				Copy-Item -Path ($FolderPath + "\D2Loader.ps1") -Destination ($Script:WorkingDirectory + "\" + $Script:ScriptFileName) #using $Script:ScriptFileName allows the user to rename the file if they want
+				Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force #delete update temporary folder
+				Write-Host " Updated :)" -foregroundcolor green
+				Start-Sleep -milliseconds 850
+				& ($Script:WorkingDirectory + "\" + $Script:ScriptFileName)	
+				exit
+			}
+		}	
+		$CurrentStats.LastUpdateCheck = get-date
+		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update stats.csv with the new time played.		
+	}
+	Catch {
+		Write-Host
+		Write-Host " Couldn't check for updates. GitHub API limit may have been reached..." -foregroundcolor Yellow
+		Start-Sleep -milliseconds 2750
+	}
 }
 
 #Import Config XML
@@ -592,9 +626,13 @@ Function ImportCSV {
 			}
 		}
 	}
-	#Create Stats CSV if it doesn't exist
-	if ((Test-Path -Path "$Script:WorkingDirectory\Stats.csv") -ne $true){
-		$CreateStatCSV = {} | Select "TotalGameTime","TimesLaunched","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
+	else {#Error out and exit if there's a problem with the csv.
+		write-host
+		write-host " There's an issue with accounts.csv." -foregroundcolor red
+		write-host " Please ensure that this is filled out correctly and rerun the script." -foregroundcolor red
+		write-host " Alternatively, rebuild CSV from scratch or restore from accounts.backup.csv" -foregroundcolor red
+		write-host
+		PressTheAnyKeyToExit
 	}
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"
 	([int]$CurrentStats.TimesLaunched) ++
@@ -605,6 +643,10 @@ Function ImportCSV {
 	Catch {
 		Write-host "  Couldn't update stats.csv" -foregroundcolor yellow
 	}
+	#Make Backup of CSV. 
+	 # Added this in as I had BSOD on my PC and noticed that this caused the files to get corrupted.
+	Copy-Item -Path ($Script:WorkingDirectory + "\stats.csv") -Destination ($Script:WorkingDirectory + "\stats.backup.csv")
+	Copy-Item -Path ($Script:WorkingDirectory + "\accounts.csv") -Destination ($Script:WorkingDirectory + "\accounts.backup.csv")
 }
 
 #Set Region Array
@@ -712,12 +754,12 @@ Function Inventory {
 		$QualityArraySum += $_.Probability
 	}
 	$NormalProbability = ($QualityArray | where-object {$_.type -eq "Normal"} | Select Probability).probability
-
 	write-host;	write-host
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"	
 	$Line1 = "                    --------------------------------"
-	$Line2 = ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m    " + ("{0:N2}" -f [TimeSpan]::Parse($CurrentStats.TotalGameTime).totalhours).replace(",",""))
-	$Line3 = ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m " + ("{0:N2}" -f [TimeSpan]::Parse($(get-date) - $Session).totalhours).replace(",",""))
+	#F*ck me these next two lines and the 'hours played' took forever to figure out. Convert time string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours. Finally convert <Hours>.<Percentage Of an Hour> to <Hours>:<Minutes>
+	$Line2 = ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m    " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($CurrentStats.TotalGameTime).totalhours).replace(",","")),"^\d+").value + ":" + "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0 )  )
+	$Line3 = ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($Script:SessionTimer).totalhours).replace(",","")),"^\d+").value + ":" +        "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0 )  )
 	$Line4 = ("                   |  $X[38;2;255;255;255;22mScript Launch Counter:$X[0m   " + $CurrentStats.TimesLaunched)
 	$Line5 = "                    --------------------------------"
 	$Line6 = ("                   |  $X[38;2;255;165;000;22mHR's$X[0m Found:              " + $(if ($CurrentStats.HighRunesFound -eq "") {"0"} else {$CurrentStats.HighRunesFound}))
@@ -883,7 +925,7 @@ Function BannerLogo {
 	}
 }
 Function JokeMaster {
-	#If you're not going to leech and provide any damage value in the Throne Room then at least provide entertainment value right?
+	#If you're going to leech and not provide any damage value in the Throne Room then at least provide entertainment value right?
 	Write-Host "  Copy these mediocre jokes into the game while doing Baal Comedy Club runs`r`n  to mislead everyone into believing you have a personality:"
 	Write-Host
 	$JokeProviderRoll = get-random -min 1 -max 3 #Randomly roll for a joke provider
@@ -1014,7 +1056,7 @@ Function DClone {
 			Write-Host " #                                  |                                     #"
 			Write-Host " ##########################################################################"
 			Write-Host
-			Write-Host "   DClone Status provided D2runewizard.com"
+			Write-Host "   DClone Status provided $D2CloneTrackerSource"
 			Write-Host
 		}
 	}
@@ -1222,8 +1264,8 @@ Function DisplayActiveAccounts {
 			}
 		}
 		if ($Script:Config.TrackAccountUseTime -eq $true){
-			try {
-				$AcctPlayTime = (" " + ("{0:N2}" -f [TimeSpan]::Parse($AccountOption.TimeActive).totalhours) + "   ").replace(",","") #Convert timeactive string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours.
+			try {				
+				$AcctPlayTime = (" " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($AccountOption.TimeActive).totalhours).replace(",","")),"^\d+").value + ":" + "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0) + "   ") # F*ck me this took forever to figure out. Convert timeactive string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours. Finally convert <Hours>.<Percentage Of an Hour> to <Hours>:<Minutes>
 			}
 			catch {#if account hasn't been opened yet.
 				$AcctPlayTime = "   0   "
@@ -1279,15 +1321,15 @@ Function Menu {
 			}
 		}
 	}
-	if ($Batch -ne $Null -or $Script:OpenBatches -eq $true){
+	if ($Batch -ne $Null -or $Script:OpenBatches -eq $true){#if batch has been passed through parameter or if batch wass been selected from the menu.
 		$Script:AcceptableBatchIDs = $Null #reset value
 		foreach ($ID in $Script:AccountOptionsCSV){
 			if ($ID.id -in $Script:AcceptableValues){#Find batch values to choose from based on accounts that aren't already open.
-				$AcceptableBatchValues = $AcceptableBatchValues + ($ID.batches).split(',')
-				$Script:AcceptableBatchIDs = $Script:AcceptableBatchIDs + ($ID.id).split(',')
+				$AcceptableBatchValues = $AcceptableBatchValues + ($ID.batches).split(',') #collate acceptable options of batch ID's
+				$Script:AcceptableBatchIDs = $Script:AcceptableBatchIDs + ($ID.id).split(',') #collate acceptable options of account ID's
 			}
 		}
-		$AcceptableBatchValues = ($AcceptableBatchValues | where-object {$_ -ne ""} | Select-Object -Unique | Sort) #Unique list of available batches that can be opened
+		$AcceptableBatchValues = @($AcceptableBatchValues | where-object {$_ -ne ""} | Select-Object -Unique | Sort) #Unique list of available batches that can be opened. @ converts this from a PSObject into an array which fixes the issue of -notin not working on PSobjects with only 1 item.
 		do {
 			if ($Batch -ne $Null -and $Batch -notin $AcceptableBatchValues){#if batch specified in the parameter isn't valid
 				$Script:BatchToOpen = $Batch
@@ -1297,6 +1339,8 @@ Function Menu {
 				Write-Host " Batch specified in Parameter is either incorrect or all accounts in that" -foregroundcolor Yellow
 				Write-Host " batch are already open. Adjust your parameter or manually specify below." -foregroundcolor Yellow
 				Write-Host
+				start-sleep -milliseconds 5000
+				exit
 			}
 			if ($Batch -ne $Null -and $Batch -in $AcceptableBatchValues){
 				$Script:BatchToOpen = $Batch
@@ -1309,20 +1353,23 @@ Function Menu {
 						if ($Value -ne $AcceptableBatchValues[-2]){Write-Host ", " -nonewline}
 					}
 					else {
-						Write-Host " or $X[38;2;255;165;000;22m$Value$X[0m"
+						if ($AcceptableBatchValues.count -gt 1){
+							Write-Host " or " -nonewline
+						}
+						Write-Host "$X[38;2;255;165;000;22m$Value$X[0m"
 					}
 				}
 				if ($Batch -eq $Null){
 					Write-Host " Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 				}
 				$Script:BatchToOpen = readkey
-				Write-Host
-				Write-Host
+				Write-Host;	Write-Host
 			}
-			if ($BatchToOpen -notin $AcceptableBatchValues + "c"){
+			if ($Script:BatchToOpen -notin $AcceptableBatchValues + "c"){
 				Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
 				Write-Host
 				$Script:BatchToOpen = ""
+				PressTheAnyKey
 			}
 		} until ($Script:BatchToOpen -in $AcceptableBatchValues + "c")
 		if ($BatchToOpen -ne "c"){
@@ -1338,10 +1385,9 @@ Function Menu {
 		}
 	}
 	if ($Script:ParamsUsed -eq $false -and ($Script:RegionOption.length -ne 0 -or $Script:Region.length -ne 0)){
-		if ($Script:AskForRegionOnceOnly -ne $true){
+		if ($Script:AskForRegionOnceOnly -ne $true){#reset region
 			$Script:Region = ""
 			$Script:RegionOption = ""
-			#Write-Host "region reset" -foregroundcolor yellow #debug
 		}
 	}
 	if ($Script:BatchToOpen -ne "c"){#get next region unless the cancel option has been specified.
@@ -1522,15 +1568,18 @@ Function ChooseAccount {
 			CheckActiveAccounts
 			DisplayActiveAccounts
 			if ($Script:Config.TrackAccountUseTime -eq $True){
-				$OpenD2LoaderInstances = Get-WmiObject -Class Win32_Process | Where-Object { $_.name -eq "powershell.exe" -and $_.commandline -match "d2loader.ps1"} | select name,processid,creationdate | sort creationdate
+				$OpenD2LoaderInstances = Get-WmiObject -Class Win32_Process | Where-Object { $_.name -eq "powershell.exe" -and $_.commandline -match $Script:ScriptFileName} | select name,processid,creationdate | sort creationdate -descending
 				if ($OpenD2LoaderInstances.length -gt 1){#If there's more than 1 D2loader.ps1 script open, close until there's only 1 open to prevent the time played accumulating too quickly.
-					Stop-Process -id $OpenD2LoaderInstances[0].processid -force #Closes oldest running d2loader script
+					foreach ($Process in $OpenD2LoaderInstances[1..($OpenD2LoaderInstances.count -1)]){
+						$Process.processid
+						Stop-Process -id $Process.processid -force #Closes oldest running d2loader script
+					}
 				}
 				if($Script:ActiveAccountsList.id.length -ne 0){#if there are active accounts open add to total script time
 					#Add time for each account that's open
 					$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv"
-					foreach ($AccountID in $Script:ActiveAccountsList.id |sort){ #$Script:ActiveAccountsList.id
-						$AdditionalTimeSpan = New-TimeSpan -Start $Script:StartTime -End (Get-Date) #work out elapsed time to add to accounts.csv				
+					$AdditionalTimeSpan = New-TimeSpan -Start $Script:StartTime -End (Get-Date) #work out elapsed time to add to accounts.csv	
+					foreach ($AccountID in $Script:ActiveAccountsList.id |sort){ #$Script:ActiveAccountsList.id				
 						$AccountToUpdate = $Script:AccountOptionsCSV | Where-Object {$_.ID -eq $accountID}
 						if ($AccountToUpdate) {
 							try {#get current time from csv and add to it
@@ -1547,6 +1596,7 @@ Function ChooseAccount {
 							$WriteAcctCSVError = $True
 						}
 					}
+					$Script:SessionTimer = $Script:SessionTimer + $AdditionalTimeSpan #track current session time but only if a game is running
 					if ($WriteAcctCSVError -eq $true){
 						Write-host
 						Write-host "  Couldn't update accounts.csv with playtime info." -ForegroundColor Red
@@ -1572,8 +1622,11 @@ Function ChooseAccount {
 						Write-host "  It's likely locked for editing, please ensure you close this file." -ForegroundColor Red
 						start-sleep -milliseconds 1500
 					}
-					$Script:StartTime = Get-Date #restart timer.
 				}
+				$Script:StartTime = Get-Date #restart timer for session time and account time.
+			}
+			Else {
+				$Script:StartTime = Get-Date #restart timer for session time only
 			}
 			$Script:AcceptableValues = New-Object -TypeName System.Collections.ArrayList
 			foreach ($AccountOption in $Script:AccountOptionsCSV){
@@ -1649,7 +1702,7 @@ Function ChooseAccount {
 			if ($Null -ne $Script:AccountID){
 				if ($Script:AccountID -eq "x"){
 					Write-Host
-					Write-Host "Good day to you partner :)" -foregroundcolor yellow
+					Write-Host " Good day to you partner :)" -foregroundcolor yellow
 					Start-Sleep -milliseconds 486
 					Exit
 				}
