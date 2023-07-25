@@ -15,7 +15,7 @@ Using this script means you don't have to do any of this awful stuff to multibox
 - Run any dodgy executables where you don't know what's actually running.
  	- This script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool
  	- This script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389) and the hash of the built .exe has been whitelisted by Microsoft.
-	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see at what it's doing.
+	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
 This is a labour of love, for a game I love, for what I feel is a pretty good gaming community :)<br>
 This Readme is a bit wordy sorry, I've tried to capture all the information that anyone might ever ask for.<br>
