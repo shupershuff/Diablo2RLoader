@@ -18,22 +18,12 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
  
-Changes since 1.8.0 (next version edits):
-Adjusted 'Current session' so it only counts up if a game is running.
-Adjust time displays to show <hours>:<minutes> instead <hours>.<% of an hour>
-Fixed Batch menu not accepting valid inputs when only one batch is configured.
-Fixed Script not closing when running -batch parameter.
-Fixed Session/Account timers not properly resetting when no games are open causing incorrect calculation of session/account times.
-Fixed Batch menu text showing " or" when there's only one option.
-Update Checker notifies if multiple releases have come out since current version.
-Update Checker has now one API call instead of two.
-Update Checker won't check for updates each time, instead only checks once every 8 hours to reduce API calls.
-Better error handling for user errors in accounts.csv
-Create Backups of CSV's on launch as a restore point in case an event (eg BSOD) corrupts the files.
-Users can now rename script without it breaking.
-Other minor edits.
+Changes since 1.8.1 (next version edits):
+Fixed an oversight from the previous release where a missing value in stats.csv causes errors to occur for new users who have downloaded the script fresh.
+Minor Formatting changes
+Added a couple of comments.
 
-1.8.2-1.9.0 to do list
+1.8.3-1.9.0 to do list
 Find more accurate dclone tracker - Replacement Source likely to be https://diablo2.io/dclone_api.php. maybe add config option for $D2CloneTracker to choose between diablo2.io & D2runewizard.com.
 DClone status output tidy up.
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
@@ -42,8 +32,8 @@ Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windo
 Fix whatever I broke or poorly implemented in 1.8.1 :)
 #>
 
-param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture paramters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.8.1"
+param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
+$CurrentVersion = "1.8.2"
 
 ###########################################################################################################################################
 # Script itself
@@ -168,12 +158,12 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
         }
     )
 }
-Function PressTheAnyKey {
+Function PressTheAnyKey {#Used instead of Pause so folk can hit any key to continue
 	write-host "  Press any key to continue..." -nonewline
 	readkey -NoOutput $True | out-null
 	write-host
 }
-Function PressTheAnyKeyToExit {
+Function PressTheAnyKeyToExit {#Used instead of Pause so folk can hit any key to exit
 	write-host "  Press Any key to exit..." -nonewline
 	readkey -NoOutput $True | out-null
 	Exit
@@ -182,6 +172,7 @@ Function PressTheAnyKeyToExit {
 # Check for updates
 if ((Test-Path -Path "$Script:WorkingDirectory\Stats.csv") -ne $true){#Create Stats CSV if it doesn't exist
 	$CreateStatCSV = {} | Select "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
+	write-host " Stats.csv created!"
 }
 
 $CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv" #Get current stats csv details
@@ -196,6 +187,10 @@ if (-not ($CurrentStats | Get-Member -Name "LastUpdateCheck" -MemberType NotePro
 	$CurrentStats | ForEach-Object {
 		$_ | Add-Member -NotePropertyName "LastUpdateCheck" -NotePropertyValue "28/06/2000 12:00:00 pm"
 	}
+}
+elseif ($CurrentStats.LastUpdateCheck -eq "") {# If script has just been freshly downloaded.
+	$CurrentStats.LastUpdateCheck = "28/06/2000 12:00:00 pm"
+	$CurrentStats | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
 }
 
 #Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
@@ -438,7 +433,7 @@ if ($Script:Config.CheckForNextTZ -ne $true -and $Script:Config.CheckForNextTZ -
 
 $ConfigXMLlist = ($Config | Get-Member | Where-Object {$_.membertype -eq "Property" -and $_.name -notlike "#comment"}).name
 Write-Host
-foreach ($Option in $AvailableConfigs){
+foreach ($Option in $AvailableConfigs){#Config validation
 	if ($Option -notin $ConfigXMLlist){
 		Write-Host "Config.xml file is missing a config option for $Option." -foregroundcolor yellow
 		Start-Sleep 1
@@ -740,7 +735,7 @@ function quoteroll {#stupid thing to draw a random quote but also draw a random 
 	}
 }
 
-Function Inventory {
+Function Inventory {#Info screen
 	cls
 	Write-Host;	write-host
 	Write-Host "         Stay a while and listen! Here's your D2r Loader info." -foregroundcolor yellow
@@ -782,7 +777,7 @@ Function Inventory {
 			$LongestLine = ($Line -replace '\[.*?22m', '' -replace '\[0m','').Length
 		}
 	}
-	Foreach ($Line in $Lines){
+	Foreach ($Line in $Lines){#Formatting nonsense to indent things nicely
 		$Indent = ""
 		$Dash = ""
 		write-host $Line -nonewline
@@ -808,7 +803,8 @@ Function Inventory {
 	}
 	write-host; write-host; write-host
 	write-host ("  Chance to find $X[38;2;65;105;225;22mMagic$X[0m or better: " + [math]::Round((($QualityArraySum - $NormalProbability + 1) * (1/$QualityArraySum) * 100),2) + "%" )
-	write-host "  Script Install Path: `"$Script:WorkingDirectory`""
+	write-host "  Script Install Path: " -nonewline
+	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.	
 	write-host
 	write-host "  Script Version: v$CurrentVersion"
 	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/tag/v$CurrentVersion"
@@ -928,8 +924,10 @@ Function JokeMaster {
 	#If you're going to leech and not provide any damage value in the Throne Room then at least provide entertainment value right?
 	Write-Host "  Copy these mediocre jokes into the game while doing Baal Comedy Club runs`r`n  to mislead everyone into believing you have a personality:"
 	Write-Host
+	$attempt = 0
 	$JokeProviderRoll = get-random -min 1 -max 3 #Randomly roll for a joke provider
 	do {
+		$attempt ++
 		if ($JokeProviderRoll -eq 1){
 			if ((Get-Date).Month -eq 12 -or ((Get-Date).Month -eq 10 -and (Get-Date).Day -ge 24 -and (Get-Date).Day -le 31)) {#If December or A week leading up to Halloween.
 				if ((Get-Date).Month -eq 12){ #If December
@@ -995,19 +993,19 @@ Function JokeMaster {
 				Write-Host "  Couldn't Reach official-joke-api.appspot.com :( Trying alternate provider..." -foregroundcolor Red
 			}
 		}
-	} until ($JokeObtained -eq $true)
+	} until ($JokeObtained -eq $true -or $attempt -eq 3)
 	Write-Host;	Write-Host "  Joke courtesy of $JokeProvider"
 	Write-Host;	Write-Host
 	PressTheAnyKey
 }
-Function DClone {
+Function DClone {# Display DClone Status.
 	$headers = @{
 		"D2R-Contact" = "placeholderemail@email.com"
 		"D2R-Platform" = "GitHub"
 		"D2R-Repo" = "https://github.com/shupershuff/Diablo2RLoader"
 	}
 	$uri = "https://d2runewizard.com/api/diablo-clone-progress/all?token=Pzttbnf1LduTScqauozCLQ"
-	$D2RWDCloneResponse = Invoke-RestMethod -Uri $uri -Method GET -header $headers
+	$D2RWDCloneResponse = Invoke-RestMethod -Uri $uri -Method GET -header $headers #Pull DClone status from provider.
 	$LadderStatus = $D2RWDCloneResponse.servers | where-object {$_.Server -match "^ladder"} | select server,progress | sort server
 	$NonLadderStatus = $D2RWDCloneResponse.servers | where-object {$_.Server -match "nonladder"} | select server,progress | sort server
 	$CurrentStatus = $D2RWDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} | sort server
@@ -1041,12 +1039,12 @@ Function DClone {
 		}
 		if ($Count -eq 3){Write-Host " #----------------------------------|-------------------------------------#"}
 		$LadderServer = ($DCloneLadderTable.LadderServer[$Count]).tostring()
-		do {
+		do { # formatting nonsense.
 			$LadderServer = ($LadderServer + " ")
 		}
 		until ($LadderServer.length -ge 26)
 		$NonLadderServer = ($DCloneNonLadderTable.NonLadderServer[$Count]).tostring()
-		do {
+		do { # formatting nonsense.
 			$NonLadderServer = ($NonLadderServer + " ")
 		}
 		until ($NonLadderServer.length -ge 29)
@@ -1148,7 +1146,7 @@ Function TerrorZone {
 			$OCRSuccess -eq $False
 		}
 	}
-	if ($Script:OCRSuccess -eq $False -or $CheckForNextTZ -eq $False){
+	if ($Script:OCRSuccess -eq $False -or $CheckForNextTZ -eq $False){# Messages if things are unsuccessful pulling Next TZ
 		Write-Host
 		Write-Host "   Current TZ is: "  -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta #print next tz. The regex code helps format the string into an indented new line for longer TZ's.
 		if ($CheckForNextTZ -ne $False){
@@ -1161,7 +1159,7 @@ Function TerrorZone {
 		Write-Host
 		PressTheAnyKey
 	}
-	else {
+	else {# Messages if things are succesful pulling Next TZ
 		Write-Host
 		Write-Host "   Current TZ is:  " -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
 		Write-Host "   Next TZ is:     " -nonewline;Write-Host ($NextTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
