@@ -17,7 +17,7 @@ Using this script means you DON'T have to do any of this awful stuff to multibox
  	- Note that this script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
 	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
-Note that this script DOES NOT alter the game, automate key presses or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game.
+Note that this script DOES NOT alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game.
 If you want to use additional scripts, programs or mods to achieve any of the above, then that's at your own risk.<br>
 
 This is a labour of love, for a game I love, for what I feel is a pretty good gaming community :)<br>
