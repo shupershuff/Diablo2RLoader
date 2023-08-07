@@ -3,18 +3,18 @@ Greetings Stranger! I'm not surprised to see your kind here.<br>
 <br>
 This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account. 
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
-This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.
+This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
-Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?
+Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?<br>
 <br>
-<br>
-Using this script means you don't have to do any of this awful stuff to multibox:<br>
+Using this script means you DON'T have to do any of this awful stuff to multibox:<br>
 - Set up shortcuts on your desktop for each account with parameters (including storing your password in plain text).
 - Use the worst (but somehow most popular) method of opening the game from the battlenet client each time with multiple game installs.
 - Manually using ProcExp to kill the "Check for other instances" handle, or manually running a script for handle.exe to do the same thing.
+- Use Virtual Machines's, multiple computers or multiple user accounts.
 - Run any dodgy executables where you don't know what's actually running.
- 	- This script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool
- 	- This script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389) and the hash of the built .exe has been whitelisted by Microsoft.
+ 	- Note that this script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool.
+ 	- Note that this script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
 	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
 This is a labour of love, for a game I love, for what I feel is a pretty good gaming community :)<br>
@@ -27,8 +27,8 @@ What your windows will look like:<br>
 
 ## Exactly what does it do?
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
-It will achieve this by importing account details from a CSV that you populate and essentially launches the game the same way you would with a shortcut: by passing account, password and region arguments to D2r.exe.<br>
-	Note: Plain text passwords entered into the CSV will be convered into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave the PW field in the CSV blank and manually type in when running the script.<br>
+It will achieve this by importing account details from a CSV that you populate and essentially launches the game the same way you would with a shortcut: by passing account, password and region parameters to D2r.exe.<br>
+	Note: Plain text passwords entered into the CSV will be converted into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave the PW field in the CSV blank and manually type in when running the script.<br>
 Once the game has initialised, the window will be renamed so it's easier to tell which account and region each game is using.<br>
 This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.<br>
 Optionally you can also have the game launch using custom settings.json for each account in case you want different graphics/audio/game settings for each account you have.<br>
@@ -242,6 +242,8 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
+At this point I've implemented everything that I wanted to, so I don't have any more planned features to add to the tool.<br>
+If there's something you want to see added or improved then let me know. Future updates may include:
 * Fixing anything I broke in the last release.
 * Adding whatever features you fools ask for.
 * Investigate use of battlenet login tokens (stored in registry) instead of passwords as other loaders have done. This is unlikely as I probably can't figure it out.
