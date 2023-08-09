@@ -18,10 +18,8 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
  
-Changes since 1.8.1 (next version edits):
-Fixed an oversight from the previous release where a missing value in stats.csv causes errors to occur for new users who have downloaded the script fresh.
-Minor Formatting changes
-Added a couple of comments.
+Changes since 1.8.2 (next version edits):
+Fix issue where updater doesn't work on first of the month. My bad. Some folks will have to manually update from 1.8.2 from whatever new version there is.
 
 1.8.3-1.9.0 to do list
 Find more accurate dclone tracker - Replacement Source likely to be https://diablo2.io/dclone_api.php. maybe add config option for $D2CloneTracker to choose between diablo2.io & D2runewizard.com.
@@ -33,7 +31,7 @@ Fix whatever I broke or poorly implemented in 1.8.1 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.8.2"
+$CurrentVersion = "1.8.3"
 
 ###########################################################################################################################################
 # Script itself
@@ -192,6 +190,10 @@ elseif ($CurrentStats.LastUpdateCheck -eq "") {# If script has just been freshly
 	$CurrentStats.LastUpdateCheck = "28/06/2000 12:00:00 pm"
 	$CurrentStats | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
 }
+
+if ($CurrentStats.LastUpdateCheck.IndexOf("/") -eq 1){# If date (day) is only a single digit.
+	$CurrentStats.LastUpdateCheck = "0" + $CurrentStats.LastUpdateCheck
+}	
 
 #Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
 if ([DateTime]::ParseExact($CurrentStats.LastUpdateCheck, "dd/MM/yyyy h:mm:ss tt", $null) -lt (Get-Date).addhours(-8).datetime){# Compare current date and time to LastUpdateCheck date & time.
