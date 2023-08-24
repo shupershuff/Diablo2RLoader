@@ -81,13 +81,13 @@ Available launch parameters and values to use are as per the table below:<br>
 | -batch                 | 1                                           | Opens a batch of accounts at once     | Recommend using -region with this parameter |
 | -manualsettingswitcher | True                                        | Use this if you want to manually choose which settings file to load with each account. | Recommend not using this but instead enabling SettingSwitcherEnabled in your config file so that it automatically loads from settings<_ID_>.json |
 
-To make a shortcut to open a set of accounts, copy the D2RLoader Shortcut, rename it to whatever suits, open the properties and add paramters to the target eg -batch 1 -region na
+To make a shortcut to open a set of accounts, copy the D2RLoader Shortcut, rename it to whatever suits, open the properties and add parameters to the target eg -batch 1 -region na
 
 **Magic Find in the script**<br>
 You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes.
 There's also a 1 in 19,999 chance to land a High Rune but you'll never see this :)<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/710a8709-dc13-4f7f-bdd6-28d9552e6373)<br>
-There is a way to improve your script MaGic Find...
+There are ways to improve your script MaGic Find...
 
 # Setup Steps
 ## 1. Download
