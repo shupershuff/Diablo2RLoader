@@ -1,3 +1,12 @@
+**Notice about Update Issue for v1.8.1 and v1.8.2**<br>
+In these two releases there was an issue that didn't present itself until the script was run on a day of the month that's a single digit.<br>
+This means if you ran the script any time between 1st through to the 9th of August 2023, then the update checker will have broken :(<br>
+If you're impacted, then you will notice an error message (in red) briefly show when launching the script and/or notice your script version is stuck on v1.8.1 or v1.8.2.<br>
+There are two easy fixes for this:<br>
+- Fix 1: Open stats.csv and delete the value for LastUpdateCheck (eg change "3/08/2023 8:32:06 pm" to "").
+- Fix 2: Download the latest release and copy the D2Loader.ps1 file from the latest release to where your script sits to overwrite it.
+---
+
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 <br>
@@ -8,10 +17,10 @@ This will also enable you easily switch realms for trades, DClones, rushes etc f
 Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?<br>
 <br>
 Using this script means you DON'T have to do any of this awful stuff to multibox:<br>
+- Use the worst (but somehow most popular) method of opening the game from the battlenet client each time with multiple game installs taking up heaps of disk space.
 - Set up shortcuts on your desktop for each account with parameters (including storing your password in plain text).
-- Use the worst (but somehow most popular) method of opening the game from the battlenet client each time with multiple game installs.
-- Manually using ProcExp to kill the "Check for other instances" handle, or manually running a script for handle.exe to do the same thing.
-- Use Virtual Machines's, multiple computers or multiple user accounts.
+- Manually use ProcExp to kill the "Check for other instances" handle, or manually running a script for handle.exe to do the same thing.
+- Use Virtual Machines's, multiple computers or multiple user accounts (Windows account switching).
 - Run any dodgy executables where you don't know what's actually running.
  	- Note that this script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool.
  	- Note that this script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
