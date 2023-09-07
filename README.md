@@ -5,6 +5,9 @@ If you're impacted, then you will notice an error message (in red) briefly show 
 There are two easy fixes for this, perform one of the following:<br>
 - Fix 1: Open stats.csv and delete the value for LastUpdateCheck (eg change "3/08/2023 8:32:06 pm" to "").
 - Fix 2: Download the latest release and copy the D2Loader.ps1 file from the latest release to where your script sits to overwrite it.
+<br>
+There's also an issue for versions 1.8.1, 1.8.2 and 1.8.3 where those of you with different date/time formats receive an error due to it being unable to read the date properly. This will be resolved in v1.8.4 any day now :)
+
 ---
 
 # Overview
@@ -203,7 +206,8 @@ Don't forget to enable this feature in the [config](#4-script-config-mostly-opti
 **A:** As of 1.5.0, the script has the ability to update itself. I will also include steps in the script to update config.xml, accounts.csv and stats.csv if new fields are added. For users on older versions, to update manually, all you need to do is download the latest release, extract the .zip and copy the new D2Loader.ps1 over to where the old D2Loader.ps1 file is and overwrite it. If this script shows a warning "Couldn't check for updates. GitHub API limit may have been reached...", it's most likely due to me testing things and exceeding GitHubs API limit, ignore and try again later.
 
 **Q:** When Diablo opens it won't allow me to select an online character<br>
-**A:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).
+**A1:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).<br>
+**A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).
 
 **Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
 **A:** Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it. 
