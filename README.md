@@ -1,12 +1,11 @@
-**Notice about Update Issue for v1.8.1 and v1.8.2**<br>
-In these two releases there was an issue that didn't present itself until the script was run on a day of the month that's a single digit.<br>
-This means if you ran the script any time between 1st through to the 9th of August 2023, then the update checker will have broken :(<br>
-If you're impacted, then you will notice an error message (in red) briefly show when launching the script and/or notice your script version is stuck on v1.8.1 or v1.8.2.<br>
-There are two easy fixes for this, perform one of the following:<br>
-- Fix 1: Open stats.csv and delete the value for LastUpdateCheck (eg change "3/08/2023 8:32:06 pm" to "").
-- Fix 2: Download the latest release and copy the D2Loader.ps1 file from the latest release to where your script sits to overwrite it.
-<br>
-There's also an issue for versions 1.8.1, 1.8.2 and 1.8.3 where those of you with different date/time formats receive an error due to it being unable to read the date properly. This will be resolved in v1.8.4 any day now :)
+**Notice about Update Issues for v1.8.1 through to v1.8.3**<br>
+In v1.8.1 and v1.8.2 there was an issue that didn't present itself until the script was run on a day of the month that's a single digit.<br>
+This meant if you ran the script any time between 1st through to the 9th of August 2023, then the update checker will have broken :(<br>
+There was also a separate issue where this didn't work properly for folk in different regions where your computers use the different date/time formatting settings.<br>
+If you're impacted, then you will notice an error message (in red) briefly show when launching the script and/or notice your script version is stuck on a version below v1.8.4.<br>
+There are two easy fixes for this, perform the following:<br>
+1. Open stats.csv and delete the value for LastUpdateCheck (eg change "3/08/2023 8:32:06 pm" to "").
+2. Download the latest release and copy the D2Loader.ps1 file from the latest release to where your script sits to overwrite it.
 
 ---
 
