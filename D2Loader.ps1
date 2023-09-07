@@ -18,20 +18,20 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
  
-Changes since 1.8.2 (next version edits):
-Fix issue where updater doesn't work on first of the month. My bad. Some folks will have to manually update from 1.8.2 from whatever new version there is.
+Changes since 1.8.3 (next version edits):
+Fix issue where updater uses a date value that doesn't work for all regions. Changed to Universal format.
 
-1.8.3-1.9.0 to do list
+1.8.5-1.9.0 to do list
 Find more accurate dclone tracker - Replacement Source likely to be https://diablo2.io/dclone_api.php. maybe add config option for $D2CloneTracker to choose between diablo2.io & D2runewizard.com.
 DClone status output tidy up.
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
 Unlikely - Possibly add Current and Next TZ status for Single player folk, but ONLY if it's an easy addition with an easy source.
 Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windows. Investigate how this could be done. Would need an agent to detect key combos, Possibly via AutoIT or Autohotkey. Likely not possible within powershell and requires a separate project.
-Fix whatever I broke or poorly implemented in 1.8.1 :)
+Fix whatever I broke or poorly implemented in 1.8.4 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.8.3"
+$CurrentVersion = "1.8.4"
 
 ###########################################################################################################################################
 # Script itself
@@ -181,22 +181,22 @@ if ($CurrentStats -eq $null){
 	write-host
 	PressTheAnyKeyToExit
 }
-if (-not ($CurrentStats | Get-Member -Name "LastUpdateCheck" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.1. If LastUpdateCheck column doesn't exist, add it to the CSV data
+if (-not ($CurrentStats | Get-Member -Name "LastUpdateCheck" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.1+. If LastUpdateCheck column doesn't exist, add it to the CSV data
 	$CurrentStats | ForEach-Object {
-		$_ | Add-Member -NotePropertyName "LastUpdateCheck" -NotePropertyValue "28/06/2000 12:00:00 pm"
+		$_ | Add-Member -NotePropertyName "LastUpdateCheck" -NotePropertyValue "2000.06.28 12:00:00" #previously "28/06/2000 12:00:00 pm"
 	}
 }
 elseif ($CurrentStats.LastUpdateCheck -eq "") {# If script has just been freshly downloaded.
-	$CurrentStats.LastUpdateCheck = "28/06/2000 12:00:00 pm"
+	$CurrentStats.LastUpdateCheck = "2000.06.28 12:00:00" #previously "28/06/2000 12:00:00 pm"
 	$CurrentStats | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
 }
 
-if ($CurrentStats.LastUpdateCheck.IndexOf("/") -eq 1){# If date (day) is only a single digit.
+if ($CurrentStats.LastUpdateCheck.IndexOf("/") -eq 1){# If date (day) is only a single digit for the original date format DD/MM/YYYY HH:MM:SS. Mostly redundant with new format, but is still used once for users on v1.8.3 and below to convert from "dd/MM/yyyy h:mm:ss tt" to "yyyyMMddTHHmmss"
 	$CurrentStats.LastUpdateCheck = "0" + $CurrentStats.LastUpdateCheck
 }	
 
 #Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
-if ([DateTime]::ParseExact($CurrentStats.LastUpdateCheck, "dd/MM/yyyy h:mm:ss tt", $null) -lt (Get-Date).addhours(-8).datetime){# Compare current date and time to LastUpdateCheck date & time.
+if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.dd HH:mm:ss')){# Compare current date and time to LastUpdateCheck date & time.
 	try {
 		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
 		$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
@@ -256,8 +256,8 @@ if ([DateTime]::ParseExact($CurrentStats.LastUpdateCheck, "dd/MM/yyyy h:mm:ss tt
 				& ($Script:WorkingDirectory + "\" + $Script:ScriptFileName)	
 				exit
 			}
-		}	
-		$CurrentStats.LastUpdateCheck = get-date
+		}
+		$CurrentStats.LastUpdateCheck = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
 		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update stats.csv with the new time played.		
 	}
 	Catch {
