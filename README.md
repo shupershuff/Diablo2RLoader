@@ -3,9 +3,8 @@ In v1.8.1 and v1.8.2 there was an issue that didn't present itself until the scr
 This meant if you ran the script any time between 1st through to the 9th of August 2023, then the update checker will have broken :(<br>
 There was also a separate issue where this didn't work properly for folk in different regions where your computers use the different date/time formatting settings.<br>
 If you're impacted, then you will notice an error message (in red) briefly show when launching the script and/or notice your script version is stuck on a version below v1.8.4.<br>
-There are two easy fixes for this, perform the following:<br>
-1. Open stats.csv and delete the value for LastUpdateCheck (eg change "3/08/2023 8:32:06 pm" to "").
-2. Download the latest release and copy the D2Loader.ps1 file from the latest release to where your script sits to overwrite it.
+There is an easy fix for this, perform the following:<br>
+1. Download the latest release and copy the D2Loader.ps1 file from the latest release to where your script sits to overwrite it.
 
 ---
 
