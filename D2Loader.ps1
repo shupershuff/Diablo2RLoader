@@ -186,14 +186,10 @@ if (-not ($CurrentStats | Get-Member -Name "LastUpdateCheck" -MemberType NotePro
 		$_ | Add-Member -NotePropertyName "LastUpdateCheck" -NotePropertyValue "2000.06.28 12:00:00" #previously "28/06/2000 12:00:00 pm"
 	}
 }
-elseif ($CurrentStats.LastUpdateCheck -eq "") {# If script has just been freshly downloaded.
+elseif ($CurrentStats.LastUpdateCheck -eq "" -or $CurrentStats.LastUpdateCheck -like "*/*") {# If script has just been freshly downloaded or has the old Date format.
 	$CurrentStats.LastUpdateCheck = "2000.06.28 12:00:00" #previously "28/06/2000 12:00:00 pm"
 	$CurrentStats | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
 }
-
-if ($CurrentStats.LastUpdateCheck.IndexOf("/") -eq 1){# If date (day) is only a single digit for the original date format DD/MM/YYYY HH:MM:SS. Mostly redundant with new format, but is still used once for users on v1.8.3 and below to convert from "dd/MM/yyyy h:mm:ss tt" to "yyyyMMddTHHmmss"
-	$CurrentStats.LastUpdateCheck = "0" + $CurrentStats.LastUpdateCheck
-}	
 
 #Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
 if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.dd HH:mm:ss')){# Compare current date and time to LastUpdateCheck date & time.
