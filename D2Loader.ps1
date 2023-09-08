@@ -237,6 +237,7 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 				}
 			} Until ($UpdateResponseValid -eq $True)
 			if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes"){#if user wants to update script, download .zip of latest release, extract to temporary folder and replace old D2Loader.ps1 with new D2Loader.ps1
+				Write-Host
 				Write-Host " Updating... :)" -foregroundcolor green
 				New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
 				$ZipURL = $ReleaseInfo.zipball_url #get zip download URL	
