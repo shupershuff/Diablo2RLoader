@@ -21,7 +21,7 @@ Using this script means you DON'T have to do any of this awful stuff to multibox
 - Use the worst (but somehow most popular) method of opening the game from the battlenet client each time with multiple game installs taking up heaps of disk space.
 - Set up shortcuts on your desktop for each account with parameters (including storing your password in plain text).
 - Manually use ProcExp to kill the "Check for other instances" handle, or manually running a script for handle.exe to do the same thing.
-- Use Virtual Machines's, multiple computers or multiple user accounts (Windows account switching).
+- Use Virtual Machines, multiple computers or multiple user accounts (Windows account switching).
 - Run any dodgy executables where you don't know what's actually running.
  	- Note that this script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool.
  	- Note that this script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
