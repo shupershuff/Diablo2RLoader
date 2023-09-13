@@ -18,8 +18,9 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
  
-Changes since 1.8.3 (next version edits):
-Fix issue where updater uses a date value that doesn't work for all regions. Changed to Universal format.
+Changes since 1.8.4 (next version edits):
+Fix display issue for other regions for Hours Played & Session Time.
+Minor update to Info screen.
 
 1.8.5-1.9.0 to do list
 Find more accurate dclone tracker - Replacement Source likely to be https://diablo2.io/dclone_api.php. maybe add config option for $D2CloneTracker to choose between diablo2.io & D2runewizard.com.
@@ -31,7 +32,7 @@ Fix whatever I broke or poorly implemented in 1.8.4 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.8.4"
+$CurrentVersion = "1.8.4.1"
 
 ###########################################################################################################################################
 # Script itself
@@ -196,7 +197,8 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 	try {
 		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
 		$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
-		if ([version[]]$ReleaseInfo.Name.Trim('v') -gt $Script:CurrentVersion) {
+		$Script:LatestVersion = [version[]]$ReleaseInfo.Name.Trim('v')
+		if ($Script:LatestVersion -gt $Script:CurrentVersion) {
 			Write-Host
 			Write-Host " Update available! See Github for latest version and info" -foregroundcolor Yellow -nonewline
 			if ([version[]]$CurrentVersion -in ($Releases.Name.Trim('v') | sort -desc)[2..$releases.count]){
@@ -752,8 +754,10 @@ Function Inventory {#Info screen
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"	
 	$Line1 = "                    --------------------------------"
 	#F*ck me these next two lines and the 'hours played' took forever to figure out. Convert time string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours. Finally convert <Hours>.<Percentage Of an Hour> to <Hours>:<Minutes>
-	$Line2 = ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m    " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($CurrentStats.TotalGameTime).totalhours).replace(",","")),"^\d+").value + ":" + "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0 )  )
-	$Line3 = ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($Script:SessionTimer).totalhours).replace(",","")),"^\d+").value + ":" +        "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0 )  )
+	#$Line2 = ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m    " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($CurrentStats.TotalGameTime).totalhours).replace(",","")),"^\d+").value + ":" + "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0 )  )
+	#$Line3 = ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($Script:SessionTimer).totalhours).replace(",","")),"^\d+").value + ":" +        "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0 )  )
+	$Line2 = ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m    " +  ((($time =([TimeSpan]::Parse($CurrentStats.TotalGameTime))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
+	$Line3 = ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m " + ((($time =([TimeSpan]::Parse($Script:SessionTimer))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
 	$Line4 = ("                   |  $X[38;2;255;255;255;22mScript Launch Counter:$X[0m   " + $CurrentStats.TimesLaunched)
 	$Line5 = "                    --------------------------------"
 	$Line6 = ("                   |  $X[38;2;255;165;000;22mHR's$X[0m Found:              " + $(if ($CurrentStats.HighRunesFound -eq "") {"0"} else {$CurrentStats.HighRunesFound}))
@@ -800,13 +804,30 @@ Function Inventory {#Info screen
 			write-host " |"
 		}
 	}
-	write-host; write-host; write-host
+	write-host; write-host
 	write-host ("  Chance to find $X[38;2;65;105;225;22mMagic$X[0m or better: " + [math]::Round((($QualityArraySum - $NormalProbability + 1) * (1/$QualityArraySum) * 100),2) + "%" )
+	write-host
+	write-host ("  D2r Version: " + (Get-Command "$GamePath\D2R.exe").FileVersionInfo.FileVersion)
 	write-host "  Script Install Path: " -nonewline
 	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.	
 	write-host
-	write-host "  Script Version: v$CurrentVersion"
+	write-host "  Your Script Version: v$CurrentVersion"
 	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/tag/v$CurrentVersion"
+	if($null -eq $Script:LatestVersion){
+		try {
+			$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
+			$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
+			$Script:LatestVersion = [version[]]$ReleaseInfo.Name.Trim('v')
+		}
+		Catch {
+			write-verbose "  Couldn't check for updates :("
+		}
+	}
+	if ($Null -ne $Script:LatestVersion -and $Script:LatestVersion -gt $Script:CurrentVersion) {
+		write-host
+		write-host "  Latest Script Version: v$LatestVersion" -foregroundcolor yellow
+		write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/latest" -foregroundcolor yellow
+	}
 	write-host;	write-host; write-host; write-host "  Press any key to continue..." -nonewline
 	readkey -NoOutput $True | out-null
 }
@@ -1075,7 +1096,7 @@ Function OCRCheckerWithTimeout {#Used to timeout OCR requests that take too long
 	}
 	if ($job.State -eq "Running") {
 		Stop-Job -Job $job
-		Write-Host "  Command timed out." $Engine -foregroundcolor red
+		Write-Host "  Command timed out." $global:Engine -foregroundcolor red
 		$Script:OCRSuccess = $False
 	}
 	elseif ($job.State -eq "Completed") {
@@ -1128,7 +1149,7 @@ Function TerrorZone {
 				#write-host "  Attempt:" $using:OCRAttempts -foregroundcolor Yellow #debug
 				#write-host "  Using engine:" $Engine -foregroundcolor Yellow #debug
 				(((Invoke-WebRequest -Uri ("https://api.ocr.space/parse/imageurl?apikey=" + $Using:D2ROCRref + "&filetype=png&isCreateSearchablePdf=false&OCREngine=" + $Engine + "&scale=true&url=https://thegodofpumpkin.com/terrorzones/terrorzone.png") -ErrorAction Stop).Content | ConvertFrom-Json).ParsedResults.ParsedText)
-			} -TimeoutSeconds 11 #allow up to 11 seconds per request. Standard requests are around 3 seconds but as it's a free service it can sometimes be slow. Most of the time when it takes longer than 10 seconds to retrieve OCR it fails. Default timeout from OCR.Space (when an engine is down) is actually 30 seconds before an error is thrown.
+			} -TimeoutSeconds 12 #allow up to 11 seconds per request. Standard requests are around 3 seconds but as it's a free service it can sometimes be slow. Most of the time when it takes longer than 10 seconds to retrieve OCR it fails. Default timeout from OCR.Space (when an engine is down) is actually 30 seconds before an error is thrown.
 		} until ($true -eq $Script:OCRSuccess -or ($Script:OCRAttempts -eq 3 -and $OCRSuccess -eq $false))
 		if ($Script:OCRAttempts -eq 1){#For Engine 2
 			$NextTZ = [regex]::Match($NextTZOCR.Replace("`n", ""), "(?<=Next TerrorZone(?:\s)?(?:\(s\))?(?:\s)?(?:\.|::) ).*").Value #Regex for engine 2
@@ -1262,7 +1283,8 @@ Function DisplayActiveAccounts {
 		}
 		if ($Script:Config.TrackAccountUseTime -eq $true){
 			try {				
-				$AcctPlayTime = (" " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($AccountOption.TimeActive).totalhours).replace(",","")),"^\d+").value + ":" + "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0) + "   ") # F*ck me this took forever to figure out. Convert timeactive string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours. Finally convert <Hours>.<Percentage Of an Hour> to <Hours>:<Minutes>
+				#$AcctPlayTime = (" " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($AccountOption.TimeActive).totalhours).replace(",","")),"^\d+").value + ":" + "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0) + "   ") # F*ck me this took forever to figure out. Convert timeactive string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours. Finally convert <Hours>.<Percentage Of an Hour> to <Hours>:<Minutes>
+				$AcctPlayTime = (" " + (($time =([TimeSpan]::Parse($AccountOption.TimeActive))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes) + "   ")  # Add hours + (days*24) to show total hours, then show ":" followed by minutes
 			}
 			catch {#if account hasn't been opened yet.
 				$AcctPlayTime = "   0   "
@@ -1675,7 +1697,7 @@ Function ChooseAccount {
 						}
 						Write-Host "  Enter the ID# of the account you want to sign into."
 						Write-Host "  Alternatively choose from the following menu options:"
-						Write-Host ("  " + $AllAccountMenuText + $BatchMenuText)
+						Write-Host ("  " + $AllAccountMenuText + $BatchMenuText )#+ "'$X[38;2;255;165;000;22mc$X[0m' to close All accounts,"	 )
 					}
 				}
 				else {#if there aren't any available options, IE all accounts are open
