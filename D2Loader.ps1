@@ -243,7 +243,8 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 			}
 			Write-Host; Write-Host
 			Do {
-				Write-Host " Would you like to update? $X[38;2;255;165;000;22mY$X[0m/$X[38;2;255;165;000;22mN$X[0m: " -nonewline
+				Write-Host " Your Current Version is v$CurrentVersion."
+				Write-Host (" Would you like to update to v"+ $Script:LatestVersion + "? $X[38;2;255;165;000;22mY$X[0m/$X[38;2;255;165;000;22mN$X[0m: ") -nonewline
 				$ShouldUpdate = ReadKey
 				if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes" -or $ShouldUpdate -eq "n" -or $ShouldUpdate -eq "no"){
 					$UpdateResponseValid = $True
