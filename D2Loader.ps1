@@ -21,8 +21,10 @@ Servers:
 Changes since 1.8.4 (next version edits):
 Fix display issue for other regions for Hours Played & Session Time.
 Minor update to Info screen.
+Disregard Keys such as "Alt" as input options.
+Small improvements to error messaging for NextTZ.
 
-1.8.5-1.9.0 to do list
+1.8.6-1.9.0 to do list
 Find more accurate dclone tracker - Replacement Source likely to be https://diablo2.io/dclone_api.php. maybe add config option for $D2CloneTracker to choose between diablo2.io & D2runewizard.com.
 DClone status output tidy up.
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
@@ -32,7 +34,7 @@ Fix whatever I broke or poorly implemented in 1.8.4 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.8.4.1"
+$CurrentVersion = "1.8.5"
 
 ###########################################################################################################################################
 # Script itself
@@ -66,7 +68,6 @@ if ($Null -ne $ManualSettingSwitcher){
 	$ScriptArguments += " -ManualSettingSwitcher $ManualSettingSwitcher"
 	$Script:AskForSettings = $True
 }
-
 #check if username was passed through via parameter
 if ($ScriptArguments -ne $Null){
 	$Script:ParamsUsed = $true
@@ -91,24 +92,37 @@ $D2CloneTrackerSource = "D2runewizard.com" # Future option for "diablo2.io"
 $MenuRefreshRate = 30 #How often the script refreshes in seconds.
 $Script:ScriptFileName = Split-Path $MyInvocation.MyCommand.Path -Leaf #find the filename of the script in case a user renames it.
 $Script:SessionTimer = 0 #set initial session timer to avoid errors in info menu.
+#Baseline of acceptable characters for ReadKey functions. Used to prevents receiving inputs from folk who are alt tabbing etc.
+$Script:AllowedKeyList = @(48,49,50,51,52,53,54,55,56,57) #0 to 9
+$Script:AllowedKeyList += @(48,49,50,51,52,53,54,55,56,57) #0 to 9 on numpad
+$Script:AllowedKeyList += @(65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90) # A to Z
+$EnterKey = 13
 
-Function ReadKey([string]$message=$Null,[bool]$NoOutput) {#used to receive user input
+Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys) {#used to receive user input
     $key = $Null
     $Host.UI.RawUI.FlushInputBuffer()
     if (![string]::IsNullOrEmpty($message)) {
         Write-Host -NoNewLine $message
     }
-    while($Null -eq $key) {
-        if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
+	$AllowedKeyList = $Script:AllowedKeyList + @(13,27) #Add Enter & Escape to the allowedkeylist as acceptable inputs.
+    while ($Null -eq $key) {
+        if ($Host.UI.RawUI.KeyAvailable) {
             $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
-            if ($key_.KeyDown) {
-                $key = $key_
-            }
-        } else {
-            Start-Sleep -m 250  # Milliseconds
+            if ($True -ne $AllowAllKeys){
+				if ($key_.KeyDown -and $key_.VirtualKeyCode -in $AllowedKeyList) {
+					$key = $key_
+				}
+			}
+			else {
+				if ($key_.KeyDown) {
+					$key = $key_
+				}
+			}
+        }
+		else {
+            Start-Sleep -m 200  # Milliseconds
         }
     }
-    $EnterKey = 13
 	if ($key_.VirtualKeyCode -ne $EnterKey -and -not ($Null -eq $key) -and [bool]$NoOutput -ne $true) {
         Write-Host ("$X[38;2;255;165;000;22m" + "$($key.Character)" + "$X[0m") -NoNewLine
     }
@@ -125,24 +139,25 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput) {#used to receive user 
 }
 
 Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null) {#used to receive user input but times out after X amount of time
-    $key = $Null
+	$key = $Null
     $Host.UI.RawUI.FlushInputBuffer()
     if (![string]::IsNullOrEmpty($message)) {
         Write-Host -NoNewLine $message
     }
     $Counter = $timeOutSeconds * 1000 / 250
-    while($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)) {
+	$IgnoreKeyList = @(9,13,16,17,18,20,32,91,192) #Ignore Tab,Enter,Shift,Ctrl,Alt,Caps,Space,Windows Key,Tilde
+    while ($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)) {
         if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
             $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
-            if ($key_.KeyDown) {
+            if ($key_.KeyDown -and $key_.VirtualKeyCode -in $AllowedKeyList) {
                 $key = $key_
             }
-        } else {
-            Start-Sleep -m 250  # Milliseconds
         }
-    }
-    $EnterKey = 13
-    if ($key_.VirtualKeyCode -ne $EnterKey-and -not ($Null -eq $key)) {
+		else {
+            Start-Sleep -m 200  # Milliseconds
+        }
+    }	
+    if ($key_.VirtualKeyCode -ne $EnterKey -and -not ($Null -eq $key)) {
         Write-Host ("$X[38;2;255;165;000;22m" + "$($key.Character)" + "$X[0m")
     }
     if (![string]::IsNullOrEmpty($message)) {
@@ -159,12 +174,12 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
 }
 Function PressTheAnyKey {#Used instead of Pause so folk can hit any key to continue
 	write-host "  Press any key to continue..." -nonewline
-	readkey -NoOutput $True | out-null
+	readkey -NoOutput $True -AllowAllKeys $True | out-null
 	write-host
 }
 Function PressTheAnyKeyToExit {#Used instead of Pause so folk can hit any key to exit
 	write-host "  Press Any key to exit..." -nonewline
-	readkey -NoOutput $True | out-null
+	readkey -NoOutput $True -AllowAllKeys $True | out-null
 	Exit
 }
 
@@ -257,6 +272,7 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 			}
 		}
 		$CurrentStats.LastUpdateCheck = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
+		$Script:LatestVersionCheck = $CurrentStats.LastUpdateCheck
 		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update stats.csv with the new time played.		
 	}
 	Catch {
@@ -711,7 +727,7 @@ function Normal {
     process { Write-Host "  $X[38;2;255;255;255;48;2;1;1;1;4m$_$X[0m"}
 }
 
-function quoteroll {#stupid thing to draw a random quote but also draw a random quality.
+function QuoteRoll {#stupid thing to draw a random quote but also draw a random quality.
 	$Quality = get-random $Script:ItemLookup #pick a random entry from ItemLookup hashtable.
 	Write-Host
 	$LeQuote = (Get-Random -inputobject $Script:quotelist) #pick a random quote.
@@ -753,9 +769,6 @@ Function Inventory {#Info screen
 	write-host;	write-host
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"	
 	$Line1 = "                    --------------------------------"
-	#F*ck me these next two lines and the 'hours played' took forever to figure out. Convert time string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours. Finally convert <Hours>.<Percentage Of an Hour> to <Hours>:<Minutes>
-	#$Line2 = ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m    " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($CurrentStats.TotalGameTime).totalhours).replace(",","")),"^\d+").value + ":" + "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0 )  )
-	#$Line3 = ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($Script:SessionTimer).totalhours).replace(",","")),"^\d+").value + ":" +        "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0 )  )
 	$Line2 = ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m    " +  ((($time =([TimeSpan]::Parse($CurrentStats.TotalGameTime))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
 	$Line3 = ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m " + ((($time =([TimeSpan]::Parse($Script:SessionTimer))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
 	$Line4 = ("                   |  $X[38;2;255;255;255;22mScript Launch Counter:$X[0m   " + $CurrentStats.TimesLaunched)
@@ -773,7 +786,6 @@ Function Inventory {#Info screen
 	$Line16 = "                    --------------------------------"
 	$Lines = @($Line1,$Line2,$Line3,$Line4,$Line5,$Line6,$Line7,$Line8,$Line9,$Line10,$Line11,$Line12,$Line13,$Line14,$Line15,$Line16)
 	$LongestObject = $null
-	$maxLength = 0
 	# Loop through each object in the array to find longest line (for formatting)
 	foreach ($Line in $Lines) {
 		if (($Line -replace '\[.*?22m', '' -replace '\[0m','').Length -gt $LongestLine) {
@@ -807,16 +819,17 @@ Function Inventory {#Info screen
 	write-host; write-host
 	write-host ("  Chance to find $X[38;2;65;105;225;22mMagic$X[0m or better: " + [math]::Round((($QualityArraySum - $NormalProbability + 1) * (1/$QualityArraySum) * 100),2) + "%" )
 	write-host
-	write-host ("  D2r Version: " + (Get-Command "$GamePath\D2R.exe").FileVersionInfo.FileVersion)
+	write-host ("  D2r Game Version:    " + (Get-Command "$GamePath\D2R.exe").FileVersionInfo.FileVersion)
 	write-host "  Script Install Path: " -nonewline
 	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.	
 	write-host
 	write-host "  Your Script Version: v$CurrentVersion"
 	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/tag/v$CurrentVersion"
-	if($null -eq $Script:LatestVersion){
+	if($Script:LatestVersionCheck -eq $null -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
 		try {
 			$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
 			$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
+			$Script:LatestVersionCheck = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
 			$Script:LatestVersion = [version[]]$ReleaseInfo.Name.Trim('v')
 		}
 		Catch {
@@ -828,8 +841,8 @@ Function Inventory {#Info screen
 		write-host "  Latest Script Version: v$LatestVersion" -foregroundcolor yellow
 		write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/latest" -foregroundcolor yellow
 	}
-	write-host;	write-host; write-host; write-host "  Press any key to continue..." -nonewline
-	readkey -NoOutput $True | out-null
+	write-host;	write-host; write-host
+	PressTheAnyKey
 }
 
 $Script:QuoteList =
@@ -848,6 +861,7 @@ $Script:QuoteList =
 "Looking for Baal?",
 "All who oppose me, beware",
 "Greetings",
+"We live...AGAIN!",
 "Ner. Ner! Nur. Roah. Hork, Hork.",
 "Greetings, stranger. I'm not surprised to see your kind here.",
 "There is a place of great evil in the wilderness.",
@@ -865,11 +879,15 @@ $Script:QuoteList =
 "I have no grief for him. Oblivion is his reward.",
 "The catapults have been silenced.",
 "The staff of kings, you astound me!",
+"What's the matter, hero? Questioning your fortitude? I know we are.",
+"This whole place is one big ale fog.",
+"So, this is daylight… It's over-rated.",
 "When - or if - I get to Lut Gholein, I'm going to find the largest bowl`nof Narlant weed and smoke 'til all earthly sense has left my body.",
 "I've just about had my fill of the walking dead.",
 "Oh I hate staining my hands with the blood of foul Sorcerers!",
 "Damn it, I wish you people would just leave me alone!",
 "Beware! Beyond lies mortal danger for the likes of you!",
+"Beware! The evil is strong ahead.",
 "Only the darkest Magics can turn the sun black.",
 "You are too late! HAA HAA HAA",
 "You now speak to Ormus. He was once a great mage, but now lives like a`nrat in a sinking vessel",
@@ -1088,15 +1106,14 @@ Function OCRCheckerWithTimeout {#Used to timeout OCR requests that take too long
 		[int] $TimeoutSeconds
 	)
 	$Script:OCRSuccess = $Null
-	$job = Start-Job -ScriptBlock $ScriptBlock
+	$job = Start-Job -ScriptBlock $ScriptBlock -ArgumentList $Engine
 	$timer = [Diagnostics.Stopwatch]::StartNew()
-
 	while ($job.State -eq "Running" -and $timer.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
 		Start-Sleep -Milliseconds 10
 	}
 	if ($job.State -eq "Running") {
 		Stop-Job -Job $job
-		Write-Host "  Command timed out." $global:Engine -foregroundcolor red
+		Write-Host ("   Attempt " + $Script:OCRAttempts + "/3 failed using OCR engine " + $Engine + ".") -foregroundcolor red
 		$Script:OCRSuccess = $False
 	}
 	elseif ($job.State -eq "Completed") {
@@ -1144,12 +1161,11 @@ Function TerrorZone {
 		$Script:OCRAttempts = 0
 		do { ## Try each OCR engine until success. I've noticed that OCR.Space engines sometimes go down causing the script not being able to detect current TZ. This gives it a bit more reliability, albeit at the cost of time for each additional attempt.
 			$Script:OCRAttempts ++
+			$Engine = (2,1,3)[$Script:OCRAttempts-1]	 #try engines in order of the best quality: Engine 2, then 1 then 3.
 			$NextTZOCR = OCRCheckerWithTimeout -ScriptBlock {
-				$global:Engine = (2,1,3)[$using:OCRAttempts-1]	 #try engines in order of the best quality: Engine 2, then 1 then 3.
-				#write-host "  Attempt:" $using:OCRAttempts -foregroundcolor Yellow #debug
-				#write-host "  Using engine:" $Engine -foregroundcolor Yellow #debug
-				(((Invoke-WebRequest -Uri ("https://api.ocr.space/parse/imageurl?apikey=" + $Using:D2ROCRref + "&filetype=png&isCreateSearchablePdf=false&OCREngine=" + $Engine + "&scale=true&url=https://thegodofpumpkin.com/terrorzones/terrorzone.png") -ErrorAction Stop).Content | ConvertFrom-Json).ParsedResults.ParsedText)
-			} -TimeoutSeconds 12 #allow up to 11 seconds per request. Standard requests are around 3 seconds but as it's a free service it can sometimes be slow. Most of the time when it takes longer than 10 seconds to retrieve OCR it fails. Default timeout from OCR.Space (when an engine is down) is actually 30 seconds before an error is thrown.
+				param ($EngineNumber)
+				(((Invoke-WebRequest -Uri ("https://api.ocr.space/parse/imageurl?apikey=" + $Using:D2ROCRref + "&filetype=png&isCreateSearchablePdf=false&OCREngine=" + $EngineNumber + "&scale=true&url=https://thegodofpumpkin.com/terrorzones/terrorzone.png") -ErrorAction Stop).Content | ConvertFrom-Json).ParsedResults.ParsedText)
+			} -TimeoutSeconds 13 #allow up to 13 seconds per request. Standard requests are around 3 seconds but as it's a free service it can sometimes be slow. Most of the time when it takes longer than 10 seconds to retrieve OCR it fails. Default timeout from OCR.Space (when an engine is down) is actually 30 seconds before an error is thrown.
 		} until ($true -eq $Script:OCRSuccess -or ($Script:OCRAttempts -eq 3 -and $OCRSuccess -eq $false))
 		if ($Script:OCRAttempts -eq 1){#For Engine 2
 			$NextTZ = [regex]::Match($NextTZOCR.Replace("`n", ""), "(?<=Next TerrorZone(?:\s)?(?:\(s\))?(?:\s)?(?:\.|::) ).*").Value #Regex for engine 2
@@ -1175,7 +1191,7 @@ Function TerrorZone {
 		}
 		Write-Host
 		Write-Host "  Information Retrieved at: " $TimeDataObtained
-		Write-Host "  Current TZ pulled from    $CurrentTZProvider"
+		Write-Host "  Current TZ pulled from:    $CurrentTZProvider"
 		Write-Host
 		PressTheAnyKey
 	}
@@ -1283,7 +1299,6 @@ Function DisplayActiveAccounts {
 		}
 		if ($Script:Config.TrackAccountUseTime -eq $true){
 			try {				
-				#$AcctPlayTime = (" " + [regex]::Match(($time =("{0:N2}" -f [TimeSpan]::Parse($AccountOption.TimeActive).totalhours).replace(",","")),"^\d+").value + ":" + "{0:D2}" -f [int][Math]::Round([double]([regex]::Match($time,"\.\d{2}$").value)*60, 0) + "   ") # F*ck me this took forever to figure out. Convert timeactive string to time. Round Current play time to 2 decimal places. Remove comma if some supernerd puts in over 10000 hours. Finally convert <Hours>.<Percentage Of an Hour> to <Hours>:<Minutes>
 				$AcctPlayTime = (" " + (($time =([TimeSpan]::Parse($AccountOption.TimeActive))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes) + "   ")  # Add hours + (days*24) to show total hours, then show ":" followed by minutes
 			}
 			catch {#if account hasn't been opened yet.
@@ -1388,7 +1403,6 @@ Function Menu {
 				Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
 				Write-Host
 				$Script:BatchToOpen = ""
-				PressTheAnyKey
 			}
 		} until ($Script:BatchToOpen -in $AcceptableBatchValues + "c")
 		if ($BatchToOpen -ne "c"){
@@ -1768,6 +1782,7 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 			}
 			if ($Script:RegionOption -notin $Script:ServerOptions.option + "c"){
 				Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
+				write-Host
 				$Script:RegionOption = ""
 			}
 		} until ("" -ne $Script:RegionOption)
