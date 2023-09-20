@@ -208,7 +208,11 @@ Don't forget to enable this feature in the [config](#4-script-config-mostly-opti
 **A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).
 
 **Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
-**A:** Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it. 
+**A:** Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it.
+
+**Q:** When I run this I'm unable to use Push to Talk (PTT) in Discord.<br>
+**A:** As the script needs to run as administrator, this also means it starts the game with elevated rights. As such this can mess with Discord PTT. This is a known issue with Discord. To resolve this you can run [Discord in Administrator mode](https://support.discord.com/hc/en-us/articles/205082178-How-do-I-enable-push-to-talk-if-I-am-running-my-game-in-administrator-mode).<br>
+I recommend that you find the Discord Shortcut or app, go into properties > Compatibility and check the box for "Run this program as administrator" so that it always runs as admin. :)
 
 **Q:** A UAC prompt opens each time asking me to run as Admin. This is annoying. Can I disable this?<br>
 **A:** Yes, there are a couple ways to do this, see here: https://silicophilic.com/add-program-to-uac-exception/#Method_2_Run_Programs_With_Admin_Privileges_Without_UAC_Prompt
