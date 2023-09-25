@@ -121,8 +121,9 @@ There are ways to improve your script MaGic Find...
 	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
  	- Don't forget to enable the Batch feature in the config file.
 7. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
-8. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
-9. Yeah and you should probably save it. That's CTRL + S. It helps :)
+	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
+9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
+10. Yeah and you should probably save it. That's CTRL + S. It helps :)
 
 **Account CSV BEFORE running script:**<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0e3c26c5-8c71-431c-8bf7-06bde4c36c91)<br>
@@ -217,6 +218,9 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 **Q:** A UAC prompt opens each time asking me to run as Admin. This is annoying. Can I disable this?<br>
 **A:** Yes, there are a couple ways to do this, see here: https://silicophilic.com/add-program-to-uac-exception/#Method_2_Run_Programs_With_Admin_Privileges_Without_UAC_Prompt
 
+**Q:** Will this work if I've extracted game files with Casc viewer in an attempt to make the game load faster<br>
+**A:** Yes, if you're one of the people that have done this, you can still run the game using this script. Make sure to specify "-direct -txt" as commandline options in accounts.csv
+
 **Q:** Why does the script need to run as admin?<br>
 **A:** The script needs to run as admin in order to kill the "Check for Other instances" process handle and to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
 
@@ -271,7 +275,7 @@ If there's something you want to see added or improved then let me know. Future 
 Happy for you to make any modifications this script for your own needs providing:
  - Any variants of this script are never sold.
  - Any variants of this script published online should always be open source.
- - Any variants of this script are never modifed to enable or assist in any game altering or malicious behaviour including (but not limited to): Bannable Mods, Cheats, Exploits, Phishing
+ - Any variants of this script are never modifed to enable or assist in any game altering or malicious behaviour including (but not limited to): Bannable Mods, Cheats, Exploits, Phishing, Botting.
 
 # Credit for things I stole: #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
@@ -285,4 +289,4 @@ Happy for you to make any modifications this script for your own needs providing
 - Google.com for everything else.
 <br>
 <br>
-Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
+Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
