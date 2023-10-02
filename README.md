@@ -72,8 +72,25 @@ Other misc stats and info can be seen on the info screen. Statistics are recorde
 You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
 **Check DClone Status**<br>
-You can also check the current DClone status by pressing 'd'.<br>
+You can also manually check the current DClone status by pressing 'd'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/f6f2c934-7fce-47db-a052-97e42874d9be)<br>
+
+**Alarms for DClone Walk status changes**<br>
+NOTE: THIS IS AN UNRELEASED, UPCOMING FEATURE WHICH IS STILL A WORK IN PROGRESS.
+If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.
+If there's a change in status whilst the script is running, it will activate the alarm function.
+The alarm will a text warning (as seen in example below) as well as a text to speech alarm notifying you where the walk is happening.
+The voice alarm activates only once but the text warnings will remain in place for 5 minutes. 
+You will also be notified after the script has launched if there's any imminent walks about to happen (ie status is 5/6).
+See the [config](#4-script-config-mostly-optional) section for how to configure this.
+
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/22288449-6088-4d1c-b559-689907ea0afa)<br>
+Voice Examples (make sure to unmute, GitHub mutes by default):<br>
+
+https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50e9a49d-a01c-40e4-8654-a8da9fe40c05
+
+https://github.com/shupershuff/Diablo2RLoader/assets/63577525/56bd87d5-157f-4119-b99b-bd1d26f06052
+
 **Be an Entertainer in Baals Comedy Club**<br>
 If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
 That way instead of providing any real value in terms of damage, you can provide entertainment value instead.<br>
@@ -92,20 +109,6 @@ Available launch parameters and values to use are as per the table below:<br>
 | -manualsettingswitcher | True                                        | Use this if you want to manually choose which settings file to load with each account. | Recommend not using this but instead enabling SettingSwitcherEnabled in your config file so that it automatically loads from settings<_ID_>.json |
 
 To make a shortcut to open a set of accounts, copy the D2RLoader Shortcut, rename it to whatever suits, open the properties and add parameters to the target eg -batch 1 -region na<br>
-
-**Alarms for DClone Walk status changes**<br>
-NOTE: THIS IS AN UNRELEASED, UPCOMING FEATURE WHICH IS STILL A WORK IN PROGRESS.
-If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.
-If there's a change in status whilst the script is running, it will activate the alarm function.
-The alarm will a text warning (as seen in example below) as well as a text to speech alarm notifying you where the walk is happening.
-The voice alarm activates only once but the text warnings will remain in place for 5 minutes. 
-You will also be notified after the script has launched if there's any imminent walks about to happen (ie status is 5/6).
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/22288449-6088-4d1c-b559-689907ea0afa)<br>
-Voice Examples (make sure to unmute, GitHub mutes by default):<br>
-
-https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50e9a49d-a01c-40e4-8654-a8da9fe40c05
-
-https://github.com/shupershuff/Diablo2RLoader/assets/63577525/56bd87d5-157f-4119-b99b-bd1d26f06052
 
 **Magic Find in the script**<br>
 You might also notice the quotes sometimes change colour, each time you refresh the script you have a chance to roll for Normal, Magic, Rare, Set, Unique quality quotes.
