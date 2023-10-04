@@ -1245,7 +1245,7 @@ Function DClone {# Display DClone Status.
 			$CurrentStatus = $D2RDCloneResponse | select @{Name='Server'; Expression={$_.region}},@{Name='Ladder'; Expression={$_.ladder}},@{Name='Core'; Expression={$_.hc}},@{Name='Progress'; Expression={$_.progress}}
 		}
 		Catch {
-			$DCloneErrorMessage = "  Error: RCouldn't connect to $D2CloneTrackerSource to check for DClone Status."
+			$DCloneErrorMessage = "  Error: Couldn't connect to $D2CloneTrackerSource to check for DClone Status."
 		}
 	}
 	Else {#if XML is invalid for D2CloneTrackerSource
@@ -1258,7 +1258,7 @@ Function DClone {# Display DClone Status.
 			Presstheanykey
 		}
 		Return
-	}	
+	}
 	if ($DCloneErrorMessage -ne $null){
 		Write-host $DCloneErrorMessage -Foregroundcolor red
 		if ($DisableOutput -ne $True){
@@ -1404,7 +1404,7 @@ Function DCloneVoiceAlarm {
 	Write-Host
 	if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man"){$voice.voice = $voice.getvoices() | where {$_.id -like "*David*"}}
 	elseif ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman"){$voice.voice = $voice.getvoices() | where {$_.id -like "*ZIRA*"}}
-	else{break}# If specified voice doesn't exist
+	else {break}# If specified voice doesn't exist
 	foreach ($Item in ($Script:DCloneChangesCSV | ConvertFrom-Csv) | where-object {$_.VoiceAlarmStatus -Match "True" -or $_.TextAlarmStatus -Match "True"}) {
 	#$Item #debug todo testing
 		if ($item.tag -match "l"){#if mode contains "L"
@@ -2065,6 +2065,7 @@ Function ChooseAccount {
 			$GetWebRequestFunc = $(Get-Command WebRequestWithTimeOut).Definition
 			if ($Script:Config.DCloneAlarmList -ne ""){#if DClone alarms should be checked on refresh	
 				try {
+					$testcounter ++
 					if ($Script:DCloneChangesCSV -ne $null){
 						$Script:DCloneChangesCSV = Receive-Job $Script:DCloneJob
 						#$Script:DCloneChangesCSV #debugging
