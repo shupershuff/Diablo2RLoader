@@ -2067,7 +2067,7 @@ Function ChooseAccount {
 				try {
 					if ($Script:DCloneChangesCSV -ne $null){
 						$Script:DCloneChangesCSV = Receive-Job $Script:DCloneJob
-						$Script:DCloneChangesCSV #debugging
+						#$Script:DCloneChangesCSV #debugging
 						if($Script:DCloneChangesCSV -match "true"){#if any of the text contains True
 							#write-host "Alarm" #Debug
 							DCloneVoiceAlarm #Create Voice Alarm
