@@ -18,23 +18,30 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
  
-Changes since 1.8.4 (next version edits):
-Fix display issue for other regions for Hours Played & Session Time.
-Minor update to Info screen.
-Disregard Keys such as "Alt" as input options.
-Small improvements to error messaging for NextTZ.
+Changes since 1.8.5 (next version edits):
+Option for Script to Audibly alarm and show alarm text for Dclone changes. Disabled by default. See Readme for more details and how to setup.
+Autoupdate config.xml with any missing configs for the above feature.
+Updater slightly updated so I can use Github API to track how many people have downloaded/updated for subsequent updates.
+Auto Add new config options into Config.xml
+Script attempts to autorecover Stats.csv & Accounts.csv from backup if they somehow get corrupted.
+Adjusted DClone status screen (d) output.
+Ability to choose one of three DClone tracker sources in config.
+Fixed TZ OCR errors when OCR incorrectly detects ": :" instead of "::"
+Fixed an error atatement that incorrectly had a comparison tag "-eq" instead of "="
+Fix character issue in one of the quotes.
+Reduced chances of NextTZ OCR posting blank results (at a cost of slightly increased processing time)
+Minor tidy ups.
 
-1.8.6-1.9.0 to do list
-Find more accurate dclone tracker - Replacement Source likely to be https://diablo2.io/dclone_api.php. maybe add config option for $D2CloneTracker to choose between diablo2.io & D2runewizard.com.
-DClone status output tidy up.
+1.8.7-1.9.0 to do list
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
+To reduce lines, add repeated commands into functions
 Unlikely - Possibly add Current and Next TZ status for Single player folk, but ONLY if it's an easy addition with an easy source.
 Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windows. Investigate how this could be done. Would need an agent to detect key combos, Possibly via AutoIT or Autohotkey. Likely not possible within powershell and requires a separate project.
-Fix whatever I broke or poorly implemented in 1.8.4 :)
+Fix whatever I broke or poorly implemented in 1.9.0 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.8.5"
+$CurrentVersion = "1.8.6"
 
 ###########################################################################################################################################
 # Script itself
@@ -88,7 +95,6 @@ $ProgressPreference = "SilentlyContinue"
 $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\')) #Set Current Directory path.
 $Script:StartTime = Get-Date #Used for elapsed time. Is reset when script refreshes.
 $Script:MOO = "%%%"
-$D2CloneTrackerSource = "D2runewizard.com" # Future option for "diablo2.io"
 $MenuRefreshRate = 30 #How often the script refreshes in seconds.
 $Script:ScriptFileName = Split-Path $MyInvocation.MyCommand.Path -Leaf #find the filename of the script in case a user renames it.
 $Script:SessionTimer = 0 #set initial session timer to avoid errors in info menu.
@@ -180,6 +186,7 @@ Function PressTheAnyKey {#Used instead of Pause so folk can hit any key to conti
 Function PressTheAnyKeyToExit {#Used instead of Pause so folk can hit any key to exit
 	write-host "  Press Any key to exit..." -nonewline
 	readkey -NoOutput $True -AllowAllKeys $True | out-null
+	remove-job * -force
 	Exit
 }
 
@@ -188,15 +195,37 @@ if ((Test-Path -Path "$Script:WorkingDirectory\Stats.csv") -ne $true){#Create St
 	$CreateStatCSV = {} | Select "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
 	write-host " Stats.csv created!"
 }
-
-$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv" #Get current stats csv details
-if ($CurrentStats -eq $null){
-	write-host
-	write-host " Stats.csv is corrupted or empty." -foregroundcolor red
-	write-host " Replace with data from stats.backup.csv or delete stats.csv" -foregroundcolor red
-	write-host
-	PressTheAnyKeyToExit
-}
+do {
+	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv" #Get current stats csv details
+	if ($CurrentStats -ne $null){
+		#Todo: In the Future add CSV validation checks
+		$StatsCSVImportSuccess = $True
+	}
+	else {#Error out and exit if there's a problem with the csv.
+			if ($StatsCSVRecoveryAttempt -lt 1){
+				try {
+					Write-Host " Issue with Stats.csv. Attempting Autorecovery from backup..." -foregroundcolor red
+					Copy-Item -Path $Script:WorkingDirectory\Stats.backup.csv -Destination $Script:WorkingDirectory\Stats.csv
+					Write-Host " Autorecovery successful!" -foregroundcolor Green
+					$StatsCSVRecoveryAttempt ++
+					PressTheAnyKey
+				}
+				Catch {
+					$StatsCSVImportSuccess = $False
+				}
+			}
+			Else {
+				$StatsCSVRecoveryAttempt = 2
+			}
+			if ($StatsCSVImportSuccess -eq $False -or $StatsCSVRecoveryAttempt -eq 2){
+				write-host
+				write-host " Stats.csv is corrupted or empty." -foregroundcolor red
+				write-host " Replace with data from stats.backup.csv or delete stats.csv" -foregroundcolor red
+				write-host
+				PressTheAnyKeyToExit
+			}
+		}
+} until ($StatsCSVImportSuccess -eq $True)
 if (-not ($CurrentStats | Get-Member -Name "LastUpdateCheck" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.1+. If LastUpdateCheck column doesn't exist, add it to the CSV data
 	$CurrentStats | ForEach-Object {
 		$_ | Add-Member -NotePropertyName "LastUpdateCheck" -NotePropertyValue "2000.06.28 12:00:00" #previously "28/06/2000 12:00:00 pm"
@@ -261,6 +290,9 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 				$ZipURL = $ReleaseInfo.zipball_url #get zip download URL	
 				$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
 				Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
+				if ($releases.assets.browser_download_url -ne $null){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.
+					Invoke-WebRequest -Uri $releases.assets.browser_download_url -OutFile $null | out-null 
+				}
 				$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
 				Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
 				$FolderPath = Get-ChildItem -Path $ExtractPath -Directory -Filter "shupershuff*" | Select-Object -ExpandProperty FullName
@@ -324,7 +356,6 @@ if ($Script:Config.CommandLineArguments -ne $Null){#remove this config option as
 	Write-Host " CommandLineArguments has been removed from config.xml" -foregroundcolor green
 	Start-Sleep -milliseconds 1500
 }
-
 if ($Script:Config.CheckForNextTZ -eq $Null){
 	Write-Host
 	Write-Host " Config option 'CheckForNextTZ' missing from config.xml" -foregroundcolor Yellow
@@ -341,7 +372,6 @@ if ($Script:Config.CheckForNextTZ -eq $Null){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-
 if ($Script:Config.ManualSettingSwitcherEnabled -eq $Null){#not to be confused with the AutoSettingSwitcher.
 	Write-Host
 	Write-Host " Config option 'ManualSettingSwitcherEnabled' missing from config.xml" -foregroundcolor Yellow
@@ -357,12 +387,10 @@ if ($Script:Config.ManualSettingSwitcherEnabled -eq $Null){#not to be confused w
 	$Replacement +=	"To make settings option, you can load from, call the file settings.<name>.json eg(settings.Awesome Graphics.json) which will appear as `"Awesome Graphics`" in the menu.-->`n`t"
 	$Replacement +=	"<ManualSettingSwitcherEnabled>False</ManualSettingSwitcherEnabled>" #add option to config file if it doesn't exist.
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-
 if ($Script:Config.TrackAccountUseTime -eq $Null){
 	Write-Host
 	Write-Host " Config option 'TrackAccountUseTime' missing from config.xml" -foregroundcolor Yellow
@@ -379,7 +407,6 @@ if ($Script:Config.TrackAccountUseTime -eq $Null){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-
 if ($Script:Config.EnableBatchFeature -eq $Null){
 	Write-Host
 	Write-Host " Config option 'EnableBatchFeature' missing from config.xml" -foregroundcolor Yellow
@@ -396,7 +423,6 @@ if ($Script:Config.EnableBatchFeature -eq $Null){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-
 if ($Script:Config.DisableOpenAllAccountsOption -eq $Null){
 	Write-Host
 	Write-Host " Config option 'DisableOpenAllAccountsOption' missing from config.xml" -foregroundcolor Yellow
@@ -413,8 +439,99 @@ if ($Script:Config.DisableOpenAllAccountsOption -eq $Null){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-$Script:Config = ([xml](Get-Content "$Script:WorkingDirectory\Config.xml" -ErrorAction Stop)).D2loaderconfig #import config.xml again for any updates made by the above.
+if ($Script:Config.DCloneTrackerSource -eq $Null){
+	Write-Host
+	Write-Host " Config option 'DCloneTrackerSource' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This is a required config option to determine which source should be used for DClone data." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = "</TrackAccountUseTime>"
+	$Replacement = "</TrackAccountUseTime>`n`n`t<!--Options are d2rapi.fly.dev, D2runewizard.com and diablo2.io.`n`t"
+	$Replacement += "Default and recommended option is d2rapi.fly.dev as this pulls live data from the game as opposed to crowdsourced data.`n`t-->"
+	$Replacement += "<DCloneTrackerSource>d2rapi.fly.dev</DCloneTrackerSource>" #add option to config file if it doesn't exist.
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	PressTheAnyKey
+}
+if ($Script:Config.DCloneAlarmList -eq $Null){
+	Write-Host
+	Write-Host " Config option 'DCloneAlarmList' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This is an optional config option to enable both audible and text based DClone alarms." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = "</DCloneTrackerSource>"
+	$Replacement = "</DCloneTrackerSource>`n`n`t<!--Allow you to have the script audibly warn you of upcoming dclone walks.`n`t"
+	$Replacement +=	"Specify as many of the following options as you like: SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR`n`t"
+	$Replacement +=	"EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>`n`t"
+	$Replacement +=	"If left blank this feature is disabled. Default is blank as this may be annoying for some people-->`n`t"
+	$Replacement +=	"<DCloneAlarmList></DCloneAlarmList>" #add option to config file if it doesn't exist.
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	PressTheAnyKey
+}
+if ($Script:Config.DCloneAlarmLevel -eq $Null){
+	Write-Host
+	Write-Host " Config option 'DCloneAlarmLevel' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This field determines what alarms should be received for DClone status changes." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = "</DCloneAlarmList>"
+	$Replacement = "</DCloneAlarmList>`n`n`t<!--Specify what Statuses you want to be alarmed on.`n`t"
+	$Replacement +=	"Enter `"All`" to be alarmed of all status changes`n`t"
+	$Replacement +=	"Enter `"Close`" to be only alarmed when status is 4/6, 5/6 or has just walked.`n`t"
+	$Replacement +=	"Enter `"Imminent`" to be only alarmed when status is 5/6 or has just walked.`n`t"
+	$Replacement +=	"Recommend setting to `"All`"-->`n`t"
+	$Replacement +=	"<DCloneAlarmLevel>All</DCloneAlarmLevel>" #add option to config file if it doesn't exist.
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	PressTheAnyKey
+}
+if ($Script:Config.DCloneAlarmVoice -eq $Null){
+	Write-Host
+	Write-Host " Config option 'DisableOpenAllAccountsOption' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This config allows you to choose between a Woman or Man's robot voice." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = "</DCloneAlarmLevel>"
+	$Replacement = "</DCloneAlarmLevel>`n`n`t<!--Specify what voice you want Bloke for David (Man) or Wench for Zira (Woman).-->`n`t"
+	$Replacement +=	"<DCloneAlarmVoice>Bloke</DCloneAlarmVoice>" #add option to config file if it doesn't exist.
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	PressTheAnyKey
+}
+if ($Script:Config.DCloneAlarmList -ne ""){
+	if ($Script:Config.DCloneAlarmLevel -eq "All"){
+		$Script:DCloneAlarmLevel = "1,2,3,4,5,6"
+	}
+	elseif ($Script:Config.DCloneAlarmLevel -eq "Close"){
+		$Script:DCloneAlarmLevel = "1,4,5,6"
+	}
+	elseif ($Script:Config.DCloneAlarmLevel -eq "Imminent"){
+		$Script:DCloneAlarmLevel = "1,5,6"
+	}
+	else {#if user has typo'd the config file or left it blank.
+		$DCloneErrorMessage = ("  Error: DClone Alarm Levels have been misconfigured in config.xml. ###  Check that the value DCloneAlarmLevel in config.xml is entered correctly.").Replace("###", "`n")
+		Write-host
+		Write-host $DCloneErrorMessage -Foregroundcolor red
+		Write-host
+		PressTheAnyKeyToExit
+	}
+}
 
+$Script:Config = ([xml](Get-Content "$Script:WorkingDirectory\Config.xml" -ErrorAction Stop)).D2loaderconfig #import config.xml again for any updates made by the above.
+$D2CloneTrackerSource = $Script:Config.DCloneTrackerSource # "d2rapi.fly.dev"#"D2runewizard.com" # Future option for "diablo2.io"
 if ($Script:Config.EnableBatchFeature -eq $true -or $Null -ne $Batch){
 	$Script:EnableBatchFeature = $True
 	$BatchOption = "b" #specified here as well as in the ChooseAccounts section so that this works when being passed as a parameter
@@ -547,106 +664,126 @@ if ((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #
 
 #Import Account CSV
 Function ImportCSV {
-	if ($Script:AccountUsername -eq $Null){#If no parameters sent to script.
-		try {
-			$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv" #import all accounts from csv
-		}
-		Catch {
-			Write-Host
-			Write-Host " Accounts.csv does not exist. Make sure you create this and populate with accounts first." -foregroundcolor red
-			PressTheAnyKeyToExit
-		}
-	}
-	if ($Script:AccountOptionsCSV -ne $Null){
-		#check Accounts.csv has been updated and doesn't contain the example account.
-		if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
-			Write-Host
-			Write-Host "You haven't setup accounts.csv with your accounts." -foregroundcolor red
-			Write-Host "Add your account details to the CSV file and run the script again :)" -foregroundcolor red
-			Write-Host
-			PressTheAnyKeyToExit
-		}
-		if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.7.0. If batch column doesn't exist, add it
-			# Column does not exist, so add it to the CSV data
-			$Script:AccountOptionsCSV | ForEach-Object {
-				$_ | Add-Member -NotePropertyName "Batches" -NotePropertyValue $Null
+	do {
+		if ($Script:AccountUsername -eq $Null){#If no parameters sent to script.
+			try {
+				$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv" #import all accounts from csv
 			}
-			# Export the updated CSV data back to the file
-			$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-		}
-		if (-not ($Script:AccountOptionsCSV | Get-Member -Name "CustomLaunchArguments" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If CustomLaunchArguments column doesn't exist, add it
-			# Column does not exist, so add it to the CSV data
-			$Script:AccountOptionsCSV | ForEach-Object {
-				$_ | Add-Member -NotePropertyName "CustomLaunchArguments" -NotePropertyValue $Script:OriginalCommandLineArguments
+			Catch {
+				Write-Host
+				Write-Host " Accounts.csv does not exist. Make sure you create this and populate with accounts first." -foregroundcolor red
+				PressTheAnyKeyToExit
 			}
-			# Export the updated CSV data back to the file
-			$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-			Write-Host " Added CustomLaunchArguments column to accounts.csv." -foregroundcolor green
-			Write-Host
-			Start-Sleep -milliseconds 1200
-			PressTheAnyKey
 		}
-		if (-not ($Script:AccountOptionsCSV | Get-Member -Name "TimeActive" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If TimeActive column doesn't exist, add it
-			# Column does not exist, so add it to the CSV data
-			$Script:AccountOptionsCSV | ForEach-Object {
-				$_ | Add-Member -NotePropertyName "TimeActive" -NotePropertyValue $Null
+		if ($Script:AccountOptionsCSV -ne $Null){
+			#check Accounts.csv has been updated and doesn't contain the example account.
+			if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
+				Write-Host
+				Write-Host "You haven't setup accounts.csv with your accounts." -foregroundcolor red
+				Write-Host "Add your account details to the CSV file and run the script again :)" -foregroundcolor red
+				Write-Host
+				PressTheAnyKeyToExit
 			}
-			# Export the updated CSV data back to the file
-			$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-			Write-host " Added TimeActive column to accounts.csv." -foregroundcolor Green
-			PressTheAnyKey
-		}
-		if ($Script:ConvertPlainTextPasswords -ne $False){
-			#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
-			$NewCSV = Foreach ($Entry in $Script:AccountOptionsCSV) {
-				if ($Entry.PWisSecureString.length -gt 0 -and $Entry.PWisSecureString -ne $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
-					$Entry
+			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.7.0. If batch column doesn't exist, add it
+				# Column does not exist, so add it to the CSV data
+				$Script:AccountOptionsCSV | ForEach-Object {
+					$_ | Add-Member -NotePropertyName "Batches" -NotePropertyValue $Null
 				}
-				if (($Entry.PWisSecureString.length -eq 0 -or $Entry.PWisSecureString -eq "no" -or $Entry.PWisSecureString -eq $false) -and $Entry.PW.length -ne 0){#if account.csv has a password and PWisSecureString isn't set to yes, convert PW to secure string and update CSV.
-					$Entry.PW = ConvertTo-SecureString -String $Entry.PW -AsPlainText -Force
-					$Entry.PW = $Entry.PW | ConvertFrom-SecureString
-					$Entry.PWisSecureString = "Yes"
-					Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
-					Start-Sleep -milliseconds 100
-					$Entry
-					$CSVupdated = $true
+				# Export the updated CSV data back to the file
+				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+			}
+			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "CustomLaunchArguments" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If CustomLaunchArguments column doesn't exist, add it
+				# Column does not exist, so add it to the CSV data
+				$Script:AccountOptionsCSV | ForEach-Object {
+					$_ | Add-Member -NotePropertyName "CustomLaunchArguments" -NotePropertyValue $Script:OriginalCommandLineArguments
 				}
-				if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
-					Write-Host
-					Write-Host (" The account " + $Entry.AccountLabel + " doesn't yet have a password defined.") -foregroundcolor yellow
-					Write-Host
-					$Entry.PW = read-host -AsSecureString " Enter the Battle.net password for"$Entry.AccountLabel
-					$Entry.PW = $Entry.PW | ConvertFrom-SecureString
-					$Entry.PWisSecureString = "Yes"
-					Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
-					Start-Sleep -milliseconds 100
-					$Entry
-					$CSVupdated = $true
+				# Export the updated CSV data back to the file
+				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+				Write-Host " Added CustomLaunchArguments column to accounts.csv." -foregroundcolor green
+				Write-Host
+				Start-Sleep -milliseconds 1200
+				PressTheAnyKey
+			}
+			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "TimeActive" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If TimeActive column doesn't exist, add it
+				# Column does not exist, so add it to the CSV data
+				$Script:AccountOptionsCSV | ForEach-Object {
+					$_ | Add-Member -NotePropertyName "TimeActive" -NotePropertyValue $Null
+				}
+				# Export the updated CSV data back to the file
+				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+				Write-host " Added TimeActive column to accounts.csv." -foregroundcolor Green
+				PressTheAnyKey
+			}
+			if ($Script:ConvertPlainTextPasswords -ne $False){
+				#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
+				$NewCSV = Foreach ($Entry in $Script:AccountOptionsCSV) {
+					if ($Entry.PWisSecureString.length -gt 0 -and $Entry.PWisSecureString -ne $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+						$Entry
+					}
+					if (($Entry.PWisSecureString.length -eq 0 -or $Entry.PWisSecureString -eq "no" -or $Entry.PWisSecureString -eq $false) -and $Entry.PW.length -ne 0){#if account.csv has a password and PWisSecureString isn't set to yes, convert PW to secure string and update CSV.
+						$Entry.PW = ConvertTo-SecureString -String $Entry.PW -AsPlainText -Force
+						$Entry.PW = $Entry.PW | ConvertFrom-SecureString
+						$Entry.PWisSecureString = "Yes"
+						Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
+						Start-Sleep -milliseconds 100
+						$Entry
+						$CSVupdated = $true
+					}
+					if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
+						Write-Host
+						Write-Host (" The account " + $Entry.AccountLabel + " doesn't yet have a password defined.") -foregroundcolor yellow
+						Write-Host
+						$Entry.PW = read-host -AsSecureString " Enter the Battle.net password for"$Entry.AccountLabel
+						$Entry.PW = $Entry.PW | ConvertFrom-SecureString
+						$Entry.PWisSecureString = "Yes"
+						Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
+						Start-Sleep -milliseconds 100
+						$Entry
+						$CSVupdated = $true
+					}
+				}
+				if ($CSVupdated -eq $true){#if CSV needs to be updated
+					Try {
+						$NewCSV | Export-CSV "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #update CSV file
+						Write-Host " Accounts.csv updated: Passwords have been secured." -foregroundcolor green
+						Start-Sleep -milliseconds 4000
+					}
+					Catch {
+						Write-Host
+						Write-Host " Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
+						Write-Host " Please close accounts.csv and run the script again!" -foregroundcolor red
+						PressTheAnyKeyToExit
+					}
 				}
 			}
-			if ($CSVupdated -eq $true){#if CSV needs to be updated
-				Try {
-					$NewCSV | Export-CSV "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #update CSV file
-					Write-Host " Accounts.csv updated: Passwords have been secured." -foregroundcolor green
-					Start-Sleep -milliseconds 4000
+			$AccountCSVImportSuccess = $True
+		}
+		else {#Error out and exit if there's a problem with the csv.
+			if ($AccountCSVRecoveryAttempt -lt 1){
+				try {
+					Write-Host " Issue with accounts.csv. Attempting Autorecovery from backup..." -foregroundcolor red
+					Copy-Item -Path $Script:WorkingDirectory\Accounts.backup.csv -Destination $Script:WorkingDirectory\Accounts.csv
+					Write-Host " Autorecovery successful!" -foregroundcolor Green
+					$AccountCSVRecoveryAttempt ++
+					PressTheAnyKey
 				}
 				Catch {
-					Write-Host
-					Write-Host " Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
-					Write-Host " Please close accounts.csv and run the script again!" -foregroundcolor red
-					PressTheAnyKeyToExit
+					$AccountCSVImportSuccess = $False
 				}
 			}
+			Else {
+				$AccountCSVRecoveryAttempt = 2
+			}
+			if ($AccountCSVImportSuccess -eq $False -or $AccountCSVRecoveryAttempt -eq 2){
+				write-host
+				write-host " There's an issue with accounts.csv." -foregroundcolor red
+				write-host " Please ensure that this is filled out correctly and rerun the script." -foregroundcolor red
+				write-host " Alternatively, rebuild CSV from scratch or restore from accounts.backup.csv" -foregroundcolor red
+				write-host
+				PressTheAnyKeyToExit
+			}
 		}
-	}
-	else {#Error out and exit if there's a problem with the csv.
-		write-host
-		write-host " There's an issue with accounts.csv." -foregroundcolor red
-		write-host " Please ensure that this is filled out correctly and rerun the script." -foregroundcolor red
-		write-host " Alternatively, rebuild CSV from scratch or restore from accounts.backup.csv" -foregroundcolor red
-		write-host
-		PressTheAnyKeyToExit
-	}
+	} until ($AccountCSVImportSuccess -eq $True)
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"
 	([int]$CurrentStats.TimesLaunched) ++
 	if ($CurrentStats.TotalGameTime -eq ""){$CurrentStats.TotalGameTime = 0} #prevents errors from happening on first time run.
@@ -746,10 +883,11 @@ function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 	if ($Quality -eq "Magic"){([int]$CurrentStats.MagicItemsFound) ++}
 	if ($Quality -eq "Normal"){([int]$CurrentStats.NormalItemsFound) ++}
 	try {
-		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv with Total Time played.
+		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv
 	}
 	Catch {
 		Write-host "  Couldn't update stats.csv" -foregroundcolor yellow
+		Start-Sleep -Milliseconds 256
 	}
 }
 
@@ -882,7 +1020,7 @@ $Script:QuoteList =
 "The staff of kings, you astound me!",
 "What's the matter, hero? Questioning your fortitude? I know we are.",
 "This whole place is one big ale fog.",
-"So, this is daylight… It's over-rated.",
+"So, this is daylight... It's over-rated.",
 "When - or if - I get to Lut Gholein, I'm going to find the largest bowl`nof Narlant weed and smoke 'til all earthly sense has left my body.",
 "I've just about had my fill of the walking dead.",
 "Oh I hate staining my hands with the blood of foul Sorcerers!",
@@ -1037,98 +1175,341 @@ Function JokeMaster {
 	Write-Host;	Write-Host
 	PressTheAnyKey
 }
+
 Function DClone {# Display DClone Status.
-	$headers = @{
-		"D2R-Contact" = "placeholderemail@email.com"
-		"D2R-Platform" = "GitHub"
-		"D2R-Repo" = "https://github.com/shupershuff/Diablo2RLoader"
+	param (
+		[bool] $DisableOutput,
+		[String] $D2CloneTrackerSource,
+		[String] $Taglist,
+		[object] $DCloneChanges,
+		[String] $DCloneAlarmLevel
+	)
+	#$D2CloneTrackerSource = "D2runewizard.com" #todo testing debug
+	if ($D2CloneTrackerSource -eq "d2rapi.fly.dev"){
+		$URI = "https://d2rapi.fly.dev/dclone"
+		try {
+			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -ScriptBlock {
+				#param ($URI)
+				Invoke-RestMethod -Uri $using:URI -Method GET
+			} -TimeoutSeconds 2
+			#$D2RDCloneResponse = Invoke-RestMethod -Uri $URI -Method GET #Pull DClone status from provider.
+			#$LadderStatus = $D2RDCloneResponse.PSObject.Properties | where-object {$_.name -notlike "*nonladder*"} | select name,value #| sort name
+			#$NonLadderStatus = $D2RDCloneResponse.PSObject.Properties | where-object {$_.name -like "*nonladder*"} | select name,value #| sort name
+			$CurrentStatus = $D2RDCloneResponse.PSObject.Properties | select @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.value + 1)}} #| sort server #add +1 as this source counts status from 0
+		}
+		Catch {
+			$DCloneErrorMessage = "  Error: Couldn't connect to $D2CloneTrackerSource to check for DClone Status."
+		}
 	}
-	$uri = "https://d2runewizard.com/api/diablo-clone-progress/all?token=Pzttbnf1LduTScqauozCLQ"
-	$D2RWDCloneResponse = Invoke-RestMethod -Uri $uri -Method GET -header $headers #Pull DClone status from provider.
-	$LadderStatus = $D2RWDCloneResponse.servers | where-object {$_.Server -match "^ladder"} | select server,progress | sort server
-	$NonLadderStatus = $D2RWDCloneResponse.servers | where-object {$_.Server -match "nonladder"} | select server,progress | sort server
-	$CurrentStatus = $D2RWDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} | sort server
+	elseif ($D2CloneTrackerSource -eq "D2runewizard.com"){
+		$QLC = "zouaqcSTudL"
+		$tokreg = ("QLC" + $qlc + 1 +"fnbttzP")
+		$D2RWref = ""
+		for ($i = $tokreg.Length - 1; $i -ge 0; $i--) {
+			$D2RWref += $tokreg[$i]
+		}
+		$headers = @{
+			"D2R-Contact" = "placeholderemail@email.com"
+			"D2R-Platform" = "GitHub"
+			"D2R-Repo" = "https://github.com/shupershuff/Diablo2RLoader"
+		}
+		try {
+			$URI = "https://d2runewizard.com/api/diablo-clone-progress/all?token=$D2RWref"
+			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -Headers -$headers -ScriptBlock {
+				#param ($URI)
+				Invoke-RestMethod -Uri $using:URI -Method GET -Headers $using:Headers
+			} -TimeoutSeconds 2
+			#$D2RDCloneResponse = Invoke-RestMethod -Uri $URI -Method GET -header $headers #Pull DClone status from provider.
+			#$LadderStatus = $D2RDCloneResponse.servers | where-object {$_.Server -match "^ladder"} | select server,progress #| sort server
+			#$NonLadderStatus = $D2RDCloneResponse.servers | where-object {$_.Server -match "nonladder"} | select server,progress #| sort server
+			$CurrentStatus = $D2RDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} #| sort server
+		}
+		Catch {
+			$DCloneErrorMessage = "  Error: Couldn't connect to $D2CloneTrackerSource to check for DClone Status."
+		}
+	}
+	elseif ($D2CloneTrackerSource -eq "Diablo2.io"){
+		$headers = @{
+			"User-Agent" = "github.com/shupershuff/Diablo2RLoader"
+		}
+		$URI = "https://diablo2.io/dclone_api.php"
+		try {
+			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -ScriptBlock {
+				#param ($headers)
+				Invoke-RestMethod -Uri $using:URI -Method GET -Headers $using:Headers
+			} -TimeoutSeconds 2
+			#$D2RDCloneResponse = Invoke-RestMethod -Uri $URI -Headers $Headers
+			#$D2RDCloneResponse | select progress,region,ladder,hc
+			#$LadderStatus = $D2RDCloneResponse.servers | where-object {$_.Server -match "^ladder" -and $_.Server -notmatch "PSComputerName" -and $_.Server -notmatch "RunspaceId" -and $_.Server -notmatch "PSShowComputerName"} | select server,progress #| sort server
+			#$NonLadderStatus = $D2RDCloneResponse.servers | where-object {$_.Server -match "nonladder"} | select server,progress #| sort server
+			$CurrentStatus = $D2RDCloneResponse | select @{Name='Server'; Expression={$_.region}},@{Name='Ladder'; Expression={$_.ladder}},@{Name='Core'; Expression={$_.hc}},@{Name='Progress'; Expression={$_.progress}}
+		}
+		Catch {
+			$DCloneErrorMessage = "  Error: RCouldn't connect to $D2CloneTrackerSource to check for DClone Status."
+		}
+	}
+	Else {#if XML is invalid for D2CloneTrackerSource
+		$DCloneErrorMessage = ("  Error: Couldn't check for DClone Status. ###  Check DCloneTrackerSource in config.xml is entered correctly.").Replace("###", "`n")
+		Write-host
+		Write-host $DCloneErrorMessage -Foregroundcolor red
+		if ($DisableOutput -ne $True){
+			Write-host
+			$Script:AccountID = $null
+			Presstheanykey
+		}
+		Return
+	}	
+	if ($DCloneErrorMessage -ne $null){
+		Write-host $DCloneErrorMessage -Foregroundcolor red
+		if ($DisableOutput -ne $True){
+			Write-host
+			$Script:AccountID = $null
+			Presstheanykey
+		}
+		Return
+	}
 	$DCloneLadderTable = New-Object -TypeName System.Collections.ArrayList
 	$DCloneNonLadderTable = New-Object -TypeName System.Collections.ArrayList
+	if ($DCloneChanges -eq "" -or $DCloneChanges -eq $null){
+		$DCloneChangesArray = New-Object -TypeName System.Collections.ArrayList
+	}
+	Else {
+		$DCloneChangesArray = $DCloneChanges | ConvertFrom-Csv -ErrorAction silentlycontinue #temporarily convert to array
+	}
 	foreach ($Status in $CurrentStatus){
 		$DCloneLadderInfo = New-Object -TypeName psobject
 		$DCloneNonLadderInfo = New-Object -TypeName psobject
-		if ($Status.server -match "^ladder"){
-			$DCloneLadderInfo  | Add-Member -MemberType NoteProperty -Name LadderServer -Value $Status.server
-			$DCloneLadderInfo  | Add-Member -MemberType NoteProperty -Name LadderProgress -Value $Status.progress
-			[VOID]$DCloneLadderTable.Add($DCloneLadderInfo)
+		#Convert data from all sources into consistent names and tags to be sorted and filtered.
+		if ($Status.server -like "*us*" -or $Status.server -like "*americas*" -or $Status.Server -eq "1"){$Tag = "-NA";$ServerName = "Americas"}
+		elseif ($Status.server -like "*eu*" -or $Status.server -like "*europe*" -or $Status.Server -eq "2"){$Tag = "-EU";$ServerName = "Europe"}
+		elseif ($Status.server -like "*kr*" -or $Status.server -like "*asia*" -or $Status.Server -eq "3"){$Tag = "-KR";$ServerName = "Asia"}
+		if (($Status.server -notlike "*nonladder*" -and -not [int]::TryParse($Status.server,[ref]$null)) -or $Status.Ladder -eq "2"){
+			if ($Status.server -match "hardcore" -or $Status.Core -eq "2"){$Tag = ("HCL" + $Tag);$ServerName = ("HCL - " + $ServerName)}
+			else {$Tag = ("SCL" + $Tag);$ServerName = ("SCL - " + $ServerName)}
+			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
+			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderServer -Value $ServerName
+			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderProgress -Value $Status.progress
+			[VOID]$DCloneLadderTable.Add($DCloneLadderInfo)		
 		}
 		Else {
-			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderServer -Value $Status.server
+			if ($Status.server -match "hardcore" -or $Status.Core -eq 2){$Tag = ("HC" + $Tag);$ServerName = ("HC - " + $ServerName)}
+			else {$Tag = ("SC" + $Tag);$ServerName = ("SC - " + $ServerName)}
+			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
+			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderServer -Value $ServerName
 			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderProgress -Value $Status.progress
 			[VOID]$DCloneNonLadderTable.Add($DCloneNonLadderInfo)
 		}
+		if ($True -eq $DisableOutput){	
+			#$taglist = "SCL-NA, SCL-EU, HC-EU, HC-KR"#"SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR"
+			if ($taglist -match $Tag ){#if D Dclone region and server matches what's in config, check for changes.
+				#Write-Host " Tag $tag in taglist" #testing todo
+				if ($DCloneChangesArray | where-object {$_.Tag -eq $Tag}){
+					foreach ($Item in $DCloneChangesArray | where-object {$_.Tag -eq $Tag}) {#for each tag specified in config.xml...
+						$item.VoiceAlarmStatus = $False 
+						$item.TextAlarmStatus = $False 
+						if ($item.OldStatus -ne $Status.progress){
+							if ($Status.progress -ge 5 -and ($DCloneAlarmLevel -match 5)) {#if D Clone walk is imminent
+								$item.VoiceAlarmStatus = $True
+							}
+							elseif ($Status.progress -eq 1 -or $Status.progress -eq 6){#if D Clone walk has just happened
+								$item.VoiceAlarmStatus = $True
+							}
+							elseif ($DCloneAlarmLevel -match $Status.progress){#if User has configured alarms to happen for lower D Clone status levels (2,3,4)
+								$item.VoiceAlarmStatus = $True
+							}
+							$item.TextAlarmStatus = $True 
+							$item.OldStatus = $Status.progress
+							$item.LastUpdate = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
+						}
+						elseif ($Status.progress -eq 5){#if status hasn't changed, but status is 5 (imminent), show alarm text on main menu
+							$item.TextAlarmStatus = $True 
+						}
+						elseif ($Status.progress -lt 5 -and $item.LastUpdate -gt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#if status is less than 5 and has changed within the last 5 minutes, enable text alarm
+							$item.TextAlarmStatus = $True
+						}
+						elseif ($item.LastUpdate -ne $null -and $item.LastUpdate -lt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#after 5 minutes remove the text alarm
+							$item.LastUpdate = $null 
+							$item.TextAlarmStatus = $False
+						}
+					}
+				}
+				Else {
+					try {
+						if ($Status.progress -ge 5){
+							$VoiceAlarmStatus = $True
+							$TextAlarmStatus = $True
+						}
+						Else {
+							$VoiceAlarmStatus = $False
+							$TextAlarmStatus = $False
+						}
+						$DCloneChangesArray += [PSCustomObject]@{Tag = $Tag; OldStatus = $Status.progress; VoiceAlarmStatus = $VoiceAlarmStatus; TextAlarmStatus = $TextAlarmStatus; LastUpdate = $null}
+					}
+					Catch {#if script is refreshed too quick and $DCloneChangesArray gets corrupted, reset it.
+						$DCloneChangesArray = $null
+						Return
+					}
+				}
+				
+			}
+		}
 	}
-	$Count = 0
-	Do {
-		if ($Count -eq 0){
-			Write-Host
-			Write-Host "                         Current DClone Status:"
-			Write-Host
-			Write-Host " ##########################################################################"
-			Write-Host " #             Ladder               |             Non-Ladder              #"
-			Write-Host " ###################################|######################################"
-			Write-Host " #  Server                  Status  |  Server                     Status  #"
-			Write-Host " #----------------------------------|-------------------------------------#"
+	if ($True -ne $DisableOutput){
+		$DCloneLadderTable = $DCloneLadderTable | sort LadderServer
+		$DCloneNonLadderTable = $DCloneNonLadderTable | sort NonLadderServer
+		$Count = 0
+		Do {
+			if ($Count -eq 0){
+				Write-Host
+				Write-Host "                         Current DClone Status:"
+				Write-Host
+				Write-Host " ##########################################################################"
+				Write-Host " #             Ladder               |             Non-Ladder              #"
+				Write-Host " ###################################|######################################"
+				Write-Host " #  Server                  Status  |  Server                     Status  #"
+				Write-Host " #----------------------------------|-------------------------------------#"
+			}
+			if ($Count -eq 3){Write-Host " #----------------------------------|-------------------------------------#"}
+			$LadderServer = ($DCloneLadderTable.LadderServer[$Count]).tostring()
+			do { # formatting nonsense.
+				$LadderServer = ($LadderServer + " ")
+			}
+			until ($LadderServer.length -ge 26)
+			$NonLadderServer = ($DCloneNonLadderTable.NonLadderServer[$Count]).tostring()
+			do { # formatting nonsense.
+				$NonLadderServer = ($NonLadderServer + " ")
+			}
+			until ($NonLadderServer.length -ge 29)
+			Write-Host (" #  " + $LadderServer + " " + $DCloneLadderTable.LadderProgress[$Count] + "    |  " + $NonLadderServer + " " + $DCloneNonLadderTable.NonLadderProgress[$Count]+ "    #")
+			$Count = $Count + 1
+			if ($Count -eq 6){
+				Write-Host " #                                  |                                     #"
+				Write-Host " ##########################################################################"
+				Write-Host
+				Write-Host "   DClone Status provided $D2CloneTrackerSource"
+				Write-Host
+			}
 		}
-		if ($Count -eq 3){Write-Host " #----------------------------------|-------------------------------------#"}
-		$LadderServer = ($DCloneLadderTable.LadderServer[$Count]).tostring()
-		do { # formatting nonsense.
-			$LadderServer = ($LadderServer + " ")
-		}
-		until ($LadderServer.length -ge 26)
-		$NonLadderServer = ($DCloneNonLadderTable.NonLadderServer[$Count]).tostring()
-		do { # formatting nonsense.
-			$NonLadderServer = ($NonLadderServer + " ")
-		}
-		until ($NonLadderServer.length -ge 29)
-		Write-Host (" #  " + $LadderServer + " " + $DCloneLadderTable.LadderProgress[$Count] + "    |  " + $NonLadderServer + " " + $DCloneNonLadderTable.NonLadderProgress[$Count]+ "    #")
-		$Count = $Count + 1
-		if ($Count -eq 6){
-			Write-Host " #                                  |                                     #"
-			Write-Host " ##########################################################################"
-			Write-Host
-			Write-Host "   DClone Status provided $D2CloneTrackerSource"
-			Write-Host
-		}
+		Until ($Count -eq 6)
+		PressTheAnyKey
 	}
-	Until ($Count -eq 6)	
-	#$D2RWDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} | sort server
-	PressTheAnyKey
+	Elseif ($Taglist -ne "" -and $DCloneChangesArray -ne $null){#Else if Output is disabled and taglist has been specified, output dclone changes for alarm
+		$DCloneChangesArray | ConvertTo-Csv -NoTypeInformation
+	}
 }
-Function OCRCheckerWithTimeout {#Used to timeout OCR requests that take too long so that another attempt can be made with a different OCR engine.
+
+Function DCloneVoiceAlarm {
+	$voice = New-Object -ComObject Sapi.spvoice
+	$voice.rate = -2 #How quickly the voice message should be
+	Write-Host
+	if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man"){$voice.voice = $voice.getvoices() | where {$_.id -like "*David*"}}
+	elseif ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman"){$voice.voice = $voice.getvoices() | where {$_.id -like "*ZIRA*"}}
+	else{break}# If specified voice doesn't exist
+	foreach ($Item in ($Script:DCloneChangesCSV | ConvertFrom-Csv) | where-object {$_.VoiceAlarmStatus -Match "True" -or $_.TextAlarmStatus -Match "True"}) {
+	#$Item #debug todo testing
+		if ($item.tag -match "l"){#if mode contains "L"
+			$LadderText = "Ladder"
+		}
+		else {#else it's non ladder
+			$LadderText = "NonLadder"
+		}
+		if ($item.tag -match "HC"){
+			$CoreText = "Hardcore"
+		}
+		Else {#if mode contains "SC"
+			$CoreText = "Softcore"
+		}
+		if ($item.tag -match "NA"){
+			$DCloneRegion = "Americas"
+		}
+		elseif ($item.tag -match "KR"){
+			$DCloneRegion = "Asia"
+		}
+		else {
+			$DCloneRegion = "Europe"
+		}
+		if ($Item.OldStatus -eq 5){#change to 5
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone is about to walk in $DCloneRegion on $CoreText $LadderText ($($item.tag))!$X[0m"
+			$Message = ("D Clone Imminent! DClone is about to walk in $DCloneRegion on " + $CoreText + " " + $LadderText)
+		}
+		Elseif ($Item.OldStatus -eq 1 -or $Item.OldStatus -eq 6){
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone has just walked in $DCloneRegion on $CoreText $LadderText ($($item.tag)).$X[0m"
+			$Message = ("D Clone Has just walked in $DCloneRegion on " + $CoreText + " " + $LadderText)
+		}
+		Elseif ($Script:DCloneAlarmLevel -match $Item.OldStatus) {
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone Update! DClone is now $($Item.OldStatus)/6 in $DCloneRegion on $CoreText $LadderText ($($item.tag))$X[0m"
+			$Message = ("D Clone is now " + $Item.OldStatus + " out of 6 in $DCloneRegion on " + $CoreText + " " + $LadderText)
+		}
+		if ($item.VoiceAlarmStatus -eq $True){
+			$voice.speak("$Message") | out-null
+		}
+	}
+	if ($Message -ne $null){
+		Write-Host
+		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mD Clone status provided by $D2CloneTrackerSource$X[0m"
+	}
+}
+Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long so that another attempt can be made with a different OCR engine.
 	param (
 		[ScriptBlock] $ScriptBlock,
-		[int] $TimeoutSeconds
+		[int] $TimeoutSeconds,
+		[String] $InitiatingFunction,
+		[String] $DCloneSource
 	)
-	$Script:OCRSuccess = $Null
-	$job = Start-Job -ScriptBlock $ScriptBlock -ArgumentList $Engine
+	if ($InitiatingFunction -eq "TZ_OCR"){
+		$Script:OCRSuccess = $Null
+		$ArgumentList = $Engine
+	}
+	elseif ($InitiatingFunction -eq "DClone"){
+		#$Script:DCloneWebRequestSuccess = $Null #not sure if this will be used yet
+		$ArgumentList = $URI	
+	}
+	$TimedJob = Start-Job -ScriptBlock $ScriptBlock -ArgumentList $ArgumentList #Sets the parameter $EngineNumber to $Engine
 	$timer = [Diagnostics.Stopwatch]::StartNew()
-	while ($job.State -eq "Running" -and $timer.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+	while ($TimedJob.State -eq "Running" -and $timer.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
 		Start-Sleep -Milliseconds 10
 	}
-	if ($job.State -eq "Running") {
-		Stop-Job -Job $job
-		Write-Host ("   Attempt " + $Script:OCRAttempts + "/3 failed using OCR engine " + $Engine + ".") -foregroundcolor red
-		$Script:OCRSuccess = $False
+	if ($TimedJob.State -eq "Running") {
+		Stop-Job -Job $TimedJob 
+		if ($InitiatingFunction -eq "TZ_OCR"){
+			Write-Host ("   Attempt " + $Script:OCRAttempts + "/3 failed using OCR engine " + $Engine + ".") -foregroundcolor red
+			$Script:OCRSuccess = $False
+		}
+		elseif ($InitiatingFunction -eq "DClone"){
+			Write-Host ("   Timed out connecting to DClone Data Source.") -foregroundcolor red
+			#$Script:DCloneWebRequestSuccess = $False #not sure if this will be used yet
+		}
 	}
-	elseif ($job.State -eq "Completed") {
-		$result = Receive-Job -Job $job
-		$Script:OCRSuccess = $True
+	elseif ($TimedJob.State -eq "Completed") {
+		$result = Receive-Job -Job $TimedJob 
+		if ($InitiatingFunction -eq "TZ_OCR"){
+			$Script:OCRSuccess = $True
+			$Script:SuccessfulEngine = $Engine
+		}
+		#elseif ($InitiatingFunction -eq "DClone"){
+			#$Script:DCloneWebRequestSuccess = $True #not sure if this will be used yet
+		#}
 		#Write-Host "  Command completed successfully."
+		foreach ($Object in $result){#Remove Properties from Result Array inserted by the Start-Job command. This prevents skewed data for DClone status checks.
+			$Object.PSObject.Properties.Remove("RunspaceId")
+			$Object.PSObject.Properties.Remove("PSComputerName")
+			$Object.PSObject.Properties.Remove("PSShowComputerName")
+		}
 		$result
 	}
 	else {
-		$Script:OCRSuccess = $False
-		Write-Host " OCR failure or error, couldn't read next TZ details." -foregroundcolor red
+		if ($InitiatingFunction -eq "TZ_OCR"){
+			$Script:OCRSuccess = $False
+			Write-Host " OCR failure or error, couldn't read next TZ details." -foregroundcolor red
+		}
+		elseif ($InitiatingFunction -eq "DClone"){
+			#$Script:DCloneWebRequestSuccess = $False #not sure if this will be used yet
+			Write-Host " Couldn't connect to DClone Source." -foregroundcolor red	
+		}
 	}
-	Remove-Job -Job $job
+	Remove-Job -Job $TimedJob 
 }
+
 Function TerrorZone {
 	# Get the current time data was pulled
 	$TimeDataObtained = (Get-Date -Format 'h:mmtt')
@@ -1162,26 +1543,37 @@ Function TerrorZone {
 		$Script:OCRAttempts = 0
 		do { ## Try each OCR engine until success. I've noticed that OCR.Space engines sometimes go down causing the script not being able to detect current TZ. This gives it a bit more reliability, albeit at the cost of time for each additional attempt.
 			$Script:OCRAttempts ++
-			$Engine = (2,1,3)[$Script:OCRAttempts-1]	 #try engines in order of the best quality: Engine 2, then 1 then 3.
-			$NextTZOCR = OCRCheckerWithTimeout -ScriptBlock {
-				param ($EngineNumber)
+			$Engine = (2,1,3)[$Script:OCRAttempts-1] #try engines in order of the best quality: Engine 2, then 1 then 3.
+			$NextTZOCR = WebRequestWithTimeOut -InitiatingFunction "TZ_OCR" -ScriptBlock {
+				param ($EngineNumber) #Run the scriptblock with $EngineNumber as a parameter. This way we can insert the variable $Engine into the scriptblock. It's not possible to insert this variable into the script block any other way.
 				(((Invoke-WebRequest -Uri ("https://api.ocr.space/parse/imageurl?apikey=" + $Using:D2ROCRref + "&filetype=png&isCreateSearchablePdf=false&OCREngine=" + $EngineNumber + "&scale=true&url=https://thegodofpumpkin.com/terrorzones/terrorzone.png") -ErrorAction Stop).Content | ConvertFrom-Json).ParsedResults.ParsedText)
 			} -TimeoutSeconds 13 #allow up to 13 seconds per request. Standard requests are around 3 seconds but as it's a free service it can sometimes be slow. Most of the time when it takes longer than 10 seconds to retrieve OCR it fails. Default timeout from OCR.Space (when an engine is down) is actually 30 seconds before an error is thrown.
-		} until ($true -eq $Script:OCRSuccess -or ($Script:OCRAttempts -eq 3 -and $OCRSuccess -eq $false))
-		if ($Script:OCRAttempts -eq 1){#For Engine 2
-			$NextTZ = [regex]::Match($NextTZOCR.Replace("`n", ""), "(?<=Next TerrorZone(?:\s)?(?:\(s\))?(?:\s)?(?:\.|::) ).*").Value #Regex for engine 2
-		} Elseif ($Script:OCRAttempts -eq 2){#For Engine 1
-			$NextTZ = ($NextTZOCR.trim() -split "`n")[-1].replace("Next TerrorZone(s)","").replace(".","").replace(":","").trim()  #Regex for engine 1
-		} Else {#For Engine 3
-			$NextTZ = $nexttzocr -replace "\r?\n", " " -replace "(?s).*Next TerrorZone\Ss\S\s","" #Regex for engine 3
-		}
-		if ($OCRSuccess -eq $False){
-			$FailMessage = "Was unable to pull next TZ details :("
-		}
-		if ($NextTZ -eq ""){#if next tz variable is empty due to OCR not working.
-			$FailMessage = "OCR failure, couldn't read next TZ details :("
-			$OCRSuccess -eq $False
-		}
+			if ($SuccessfulEngine -ne $null){
+					$NextTZOCR = $NextTZOCR.replace(": :","::") # Prevents issues if OCR mistakenly reads "::" as ": :" eg: Next TerrorZone(s) : : Barracks / Jail 1 / Jail 2 / Jail 3
+				if ($SuccessfulEngine -eq 2){#For Engine 2
+					$NextTZ = [regex]::Match($NextTZOCR.Replace("`n", ""), "(?<=Next TerrorZone(?:\s)?(?:\(s\))?(?:\s)?(?:\.|::) ).*").Value #Regex for engine 2
+				} Elseif ($SuccessfulEngine -eq 1){#For Engine 1
+					$NextTZ = ($NextTZOCR.trim() -split "`n")[-1].replace("Next TerrorZone(s)","").replace(".","").replace(":","").trim()  #Regex for engine 1
+				} Elseif ($SuccessfulEngine -eq 3) {#For Engine 3
+					$NextTZ = $nexttzocr -replace "\r?\n", " " -replace "(?s).*Next TerrorZone\Ss\S\s","" #Regex for engine 3
+				}
+			}
+			$Script:SuccessfulEngine = $Null
+			if ($OCRSuccess -eq $False){
+				$FailMessage = "Was unable to pull next TZ details :("
+			}
+			if ($NextTZ -eq ""){#if next tz variable is empty due to OCR not working.
+				$FailMessage = "OCR failure, couldn't read next TZ details :("
+				$Script:OCRSuccess = $False
+				if ($Script:OCRAttempts -ne 3){
+					Write-Host "First Crack failed, having attempt number " $Script:OCRAttempts
+					$TryAgain = $True
+				}
+				Else {
+					$TryAgain = $False
+				}
+			}
+		} until ($true -eq $Script:OCRSuccess -or ($Script:OCRAttempts -eq 3 -and $OCRSuccess -eq $false -and $TryAgain -ne $true))
 	}
 	if ($Script:OCRSuccess -eq $False -or $CheckForNextTZ -eq $False){# Messages if things are unsuccessful pulling Next TZ
 		Write-Host
@@ -1377,7 +1769,7 @@ Function Menu {
 				start-sleep -milliseconds 5000
 				exit
 			}
-			if ($Batch -ne $Null -and $Batch -in $AcceptableBatchValues){
+			if ($Batch -ne $Null -and $Batch -in $AcceptableBatchValues){#if batch is valid, set variable so that loop can be exited.
 				$Script:BatchToOpen = $Batch
 			}
 			Else {
@@ -1510,14 +1902,14 @@ Function ChooseAccount {
 			[pscustomobject]@{PW=$Script:PW;acct=$Script:AccountUsername}
 		)
 	}
-	else {#if no account parameters have been set already		
+	else {#if no account parameters have been set already
 		do {
 			if ($Script:AccountID -eq "t"){
 				TerrorZone
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "d"){
-				DClone
+				DClone -DisableOutput $False -D2CloneTrackerSource $D2CloneTrackerSource -TagList $Script:Config.DCloneAlarmList
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "j"){
@@ -1605,7 +1997,6 @@ Function ChooseAccount {
 				$OpenD2LoaderInstances = Get-WmiObject -Class Win32_Process | Where-Object { $_.name -eq "powershell.exe" -and $_.commandline -match $Script:ScriptFileName} | select name,processid,creationdate | sort creationdate -descending
 				if ($OpenD2LoaderInstances.length -gt 1){#If there's more than 1 D2loader.ps1 script open, close until there's only 1 open to prevent the time played accumulating too quickly.
 					foreach ($Process in $OpenD2LoaderInstances[1..($OpenD2LoaderInstances.count -1)]){
-						$Process.processid
 						Stop-Process -id $Process.processid -force #Closes oldest running d2loader script
 					}
 				}
@@ -1669,6 +2060,35 @@ Function ChooseAccount {
 				}
 			}
 			$accountoptions = ($Script:AcceptableValues -join  ", ").trim()
+			#DClone Alarm check
+			$GetDCloneFunc = $(Get-Command DClone).Definition
+			$GetWebRequestFunc = $(Get-Command WebRequestWithTimeOut).Definition
+			if ($Script:Config.DCloneAlarmList -ne ""){#if DClone alarms should be checked on refresh	
+				try {
+					if ($Script:DCloneChangesCSV -ne $null){
+						$Script:DCloneChangesCSV = Receive-Job $Script:DCloneJob
+						$Script:DCloneChangesCSV #debugging
+						if($Script:DCloneChangesCSV -match "true"){#if any of the text contains True
+							#write-host "Alarm" #Debug
+							DCloneVoiceAlarm #Create Voice Alarm
+						}
+					}
+					Else {
+						$Script:DCloneChangesCSV = ""#if menu is refreshed too quick
+					}
+					remove-job * -force
+					$Script:DCloneJob = Start-Job -ScriptBlock {
+						Invoke-Expression "function Dclone {$using:GetDCloneFunc}"
+						Invoke-Expression "function WebRequestWithTimeOut {$Using:GetWebRequestFunc}"
+						Dclone -DisableOutput $True -D2CloneTrackerSource $Using:D2CloneTrackerSource -TagList $Using:Config.DCloneAlarmList -DCloneChanges $using:DCloneChangesCSV -DCloneAlarmLevel $Using:DCloneAlarmLevel
+					} #check for dclone status
+				}
+				catch {
+					Write-Host
+					Write-Host " Unable to check for DClone status via $D2CloneTrackerSource." -Foregroundcolor Red
+					Write-Host " Try restarting script or changing the source in config.xml." -Foregroundcolor Red
+				} 
+			}
 			do {
 				Write-Host
 				$Script:OpenAllAccounts = $False
