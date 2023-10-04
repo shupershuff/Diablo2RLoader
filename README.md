@@ -82,7 +82,7 @@ If there's a change in status whilst the script is running, it will activate the
 The alarm will a text warning (as seen in example below) as well as a text to speech alarm notifying you where the walk is happening.
 The voice alarm activates only once but the text warnings will remain in place for 5 minutes. 
 You will also be notified after the script has launched if there's any imminent walks about to happen (ie status is 5/6).
-See the [config](#4-script-config-mostly-optional) section for how to configure this.
+See the [config](#4-script-config-mostly-optional) and [DClone Status Alarms](#8-dclone-status-alarms-optional) sections for how to configure this.
 
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/22288449-6088-4d1c-b559-689907ea0afa)<br>
 Voice Examples (make sure to unmute, GitHub mutes by default):<br>
@@ -150,7 +150,6 @@ There are ways to improve your script MaGic Find...
 
 
 ## 4. Script Config (Mostly Optional)
-
 Default settings within config.xml *should* be ok but can be optionally changed. Recommend checking out the features here.
 Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ etc.
 - **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
@@ -165,9 +164,14 @@ All other config options below this are strictly optional:<br>
 - Set 'ShortcutCustomIconPath' to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
 - Set 'ConvertPlainTextPasswords' to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
 - Set 'ForceWindowedMode' to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings. Disabled by default.
-- Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section above for more info. Disabled by default.
-- Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section above for more info. Disabled by default.
+- Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
+- Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section below for more info. Disabled by default.
 - Set 'TrackAccountUseTime' to False if you don't want accounts.csv or stats.csv to be autoupdated with playtime. Other Stats are still tracked in stats.csv. Mainly added this option in the unlikely case there are any issues with accounts.csv getting corrupted. Enabled by default.
+THE BELOW IS FOR A FUTURE UPDATE THAT SHOULD BE RELEASED VERY SOON (note as of 5th Oct 2023)
+- Set 'DCloneTrackerSource' to one of the options noted in the config file. Default (and recommended) is d2rapi.fly.dev as it provides realtime data (not crowdsourced).
+- Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#8-dclone-status-alarms-optional) section below for more info. Blank by default.
+- Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
+- Set 'DCloneAlarmVoice' to the preferred Text to Speech Robot voice. Choices are 'Amazon' or 'Paladin'. Amazon by Default.
 
 Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
 
@@ -212,7 +216,23 @@ Setup is exactly the same as the Auto Settings Switcher, except for step 8 as yo
 
 Don't forget to enable this feature in the [config](#4-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
 
+## 8. DClone Status Alarms (Optional)
+You can optionally configure the script to advise when DClone walk status changes.<br>
+This is very handy for when you're playing on another region/game mode or playing another game entirely so you can be audibly warned on status changes without having to manually check a website.<br>
+This will display text warnings on screen for 5 minutes since last status change and will also perform a one off voice alarm advising you what region and game mode the status changed on.
+Checks are performed each time the script refreshes on the main menu (IE, every 30 seconds).<br>
+Note that these check run in a background job that can take 1-2 seconds to complete, so manually refreshing the menu constantly (r) will prevent checks from occuring.<br>
+
+This feature is disabled by default.<br>
+If you want to enable it, simply add in the option(s) you want into DcloneAlarmList in config.xml.<br>
+You will only be alarmed for the game options you add into config. EG if you only want Hardcore Ladder notifications you would enter: <DCloneAlarmList>HCL-NA, HCL-EU, HCL-KR</DCloneAlarmList><br>
+You can also optionally change the other configs for DClone Tracking and DClone Alarms, however I recommend leaving the default values here.<br>
+See the [Script Config](#4-script-config-mostly-optional) section for more info on each config.<br>
+
 # Notes #
+## Performance Recommendations ##
+TBC - Tips coming soon on best setup so your games don't run like slideshows.
+
 ## FAQ / Common Issues
 
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
