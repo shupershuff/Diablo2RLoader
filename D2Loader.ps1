@@ -19,20 +19,21 @@ Servers:
  Asia - kr.actual.battle.net
  
 Changes since 1.8.5 (next version edits):
-Option for Script to Audibly alarm and show alarm text for Dclone changes. Disabled by default. See Readme for more details and how to setup.
-Autoupdate config.xml with any missing configs for the above feature.
-Updater slightly updated so I can use Github API to track how many people have downloaded/updated for subsequent updates.
-Auto Add new config options into Config.xml
-Script attempts to autorecover Stats.csv & Accounts.csv from backup if they somehow get corrupted.
-Adjusted DClone status screen (d) output.
+Never miss a DClone walk while you're online! Optional feature for Script to Audibly alarm and show alarm text for Dclone changes. Disabled by default. See Readme for more details and how to setup.
+Auto update config.xml with new configs for the above feature.
+Updater slightly improved so I can use Github API to track how many people have downloaded/updated for subsequent updates.
+Script now attempts to autorecover Stats.csv & Accounts.csv from backup if they somehow get corrupted.
 Ability to choose one of three DClone tracker sources in config.
-Fixed TZ OCR errors when OCR incorrectly detects ": :" instead of "::"
-Fixed an error atatement that incorrectly had a comparison tag "-eq" instead of "="
-Fix character issue in one of the quotes.
-Reduced chances of NextTZ OCR posting blank results (at a cost of slightly increased processing time)
+Adjusted DClone status screen (d) output to be consistent across sources.
+Fixed Next TZ OCR errors when OCR incorrectly detects ": :" instead of "::".
+Fixed an error statement that incorrectly had a comparison ("-eq") instead of an assignment ("=").
+Fixed character issue in one of the quotes.
+Reduced chances of NextTZ OCR posting blank results (at a cost of slightly increased processing time).
 Minor tidy ups.
 
-1.8.7-1.9.0 to do list
+1.9.1+ to do list
+Possibly add an alternate Next TZ source option, pending response from owner.
+Maybe look at improve handle Killer validation in case this fails for Win 11 users
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
 To reduce lines, add repeated commands into functions
 Unlikely - Possibly add Current and Next TZ status for Single player folk, but ONLY if it's an easy addition with an easy source.
@@ -41,7 +42,7 @@ Fix whatever I broke or poorly implemented in 1.9.0 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.8.6"
+$CurrentVersion = "1.9.0"
 
 ###########################################################################################################################################
 # Script itself
@@ -316,18 +317,21 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 }
 
 #Import Config XML
-try {
-	$Script:Config = ([xml](Get-Content "$Script:WorkingDirectory\Config.xml" -ErrorAction Stop)).D2loaderconfig
-	#Write-Host "Config imported successfully." -foregroundcolor green
+Function ImportXML {
+	try {
+		$Script:Config = ([xml](Get-Content "$Script:WorkingDirectory\Config.xml" -ErrorAction Stop)).D2loaderconfig
+		#Write-Host "Config imported successfully." -foregroundcolor green
+	}
+	Catch {
+		Write-Host ""
+		Write-Host " Config.xml Was not able to be imported. This could be due to a typo or a special character such as `'&`' being incorrectly used." -foregroundcolor red
+		Write-Host " The error message below will show which line in the clientconfig.xml is invalid:" -foregroundcolor red
+		Write-Host (" " + $PSitem.exception.message) -foregroundcolor red
+		Write-Host ""
+		PressTheAnyKeyToExit
+	}
 }
-Catch {
-	Write-Host ""
-	Write-Host " Config.xml Was not able to be imported. This could be due to a typo or a special character such as `'&`' being incorrectly used." -foregroundcolor red
-	Write-Host " The error message below will show which line in the clientconfig.xml is invalid:" -foregroundcolor red
-	Write-Host (" " + $PSitem.exception.message) -foregroundcolor red
-	Write-Host ""
-	PressTheAnyKeyToExit
-}
+ImportXML
 #Perform some validation on config.xml. Helps avoid errors for people who may be on older versions of the script and are updating. Will look to remove all of this in a future update.
 if (Select-String -path $Script:WorkingDirectory\Config.xml -pattern "multiple game installs"){#Sort out an incorrect description text that will have been in folks config.xml for some time. This description was never valid and was from when the setting switcher feature was being developed and tested.
 	write-host
@@ -405,6 +409,7 @@ if ($Script:Config.TrackAccountUseTime -eq $Null){
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 	Start-Sleep -milliseconds 1500
+	ImportXML
 	PressTheAnyKey
 }
 if ($Script:Config.EnableBatchFeature -eq $Null){
@@ -443,24 +448,49 @@ if ($Script:Config.DCloneTrackerSource -eq $Null){
 	Write-Host
 	Write-Host " Config option 'DCloneTrackerSource' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
-	Write-Host " This is a required config option to determine which source should be used for DClone data." -foregroundcolor Yellow
+	Write-Host " This is a required config option to determine which source should be used" -foregroundcolor Yellow
+	Write-Host " for obtaining current DClone status." -foregroundcolor Yellow
 	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
 	Write-Host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 	$Pattern = "</TrackAccountUseTime>"
 	$Replacement = "</TrackAccountUseTime>`n`n`t<!--Options are d2rapi.fly.dev, D2runewizard.com and diablo2.io.`n`t"
-	$Replacement += "Default and recommended option is d2rapi.fly.dev as this pulls live data from the game as opposed to crowdsourced data.`n`t-->"
+	$Replacement += "Default and recommended option is d2rapi.fly.dev as this pulls live data from the game as opposed to crowdsourced data.-->`n`t"
 	$Replacement += "<DCloneTrackerSource>d2rapi.fly.dev</DCloneTrackerSource>" #add option to config file if it doesn't exist.
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 	Start-Sleep -milliseconds 1500
+	ImportXML
+	PressTheAnyKey
+}
+if ($Script:Config.DCloneAlarmLevel -eq $Null){
+	Write-Host
+	Write-Host " Config option 'DCloneAlarmLevel' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This field determines if alarms should activate for all DClone status " -foregroundcolor Yellow
+	Write-Host " changes or just when DClone is about to walk." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = "</DCloneTrackerSource>"
+	$Replacement = "</DCloneTrackerSource>`n`n`t<!--Specify what Statuses you want to be alarmed on.`n`t"
+	$Replacement +=	"Enter `"All`" to be alarmed of all status changes`n`t"
+	$Replacement +=	"Enter `"Close`" to be only alarmed when status is 4/6, 5/6 or has just walked.`n`t"
+	$Replacement +=	"Enter `"Imminent`" to be only alarmed when status is 5/6 or has just walked.`n`t"
+	$Replacement +=	"Recommend setting to `"All`"-->`n`t"
+	$Replacement +=	"<DCloneAlarmLevel>All</DCloneAlarmLevel>" #add option to config file if it doesn't exist.
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	ImportXML
 	PressTheAnyKey
 }
 if ($Script:Config.DCloneAlarmList -eq $Null){
 	Write-Host
 	Write-Host " Config option 'DCloneAlarmList' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
-	Write-Host " This is an optional config option to enable both audible and text based DClone alarms." -foregroundcolor Yellow
+	Write-Host " This is an optional config option to enable both audible and text based" -foregroundcolor Yellow
+	Write-Host " alarms for DClone Status changes." -foregroundcolor Yellow
 	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
 	Write-Host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
@@ -473,45 +503,53 @@ if ($Script:Config.DCloneAlarmList -eq $Null){
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 	Start-Sleep -milliseconds 1500
+	ImportXML
 	PressTheAnyKey
 }
-if ($Script:Config.DCloneAlarmLevel -eq $Null){
-	Write-Host
-	Write-Host " Config option 'DCloneAlarmLevel' missing from config.xml" -foregroundcolor Yellow
-	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
-	Write-Host " This field determines what alarms should be received for DClone status changes." -foregroundcolor Yellow
-	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
-	Write-Host
-	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
-	$Pattern = "</DCloneAlarmList>"
-	$Replacement = "</DCloneAlarmList>`n`n`t<!--Specify what Statuses you want to be alarmed on.`n`t"
-	$Replacement +=	"Enter `"All`" to be alarmed of all status changes`n`t"
-	$Replacement +=	"Enter `"Close`" to be only alarmed when status is 4/6, 5/6 or has just walked.`n`t"
-	$Replacement +=	"Enter `"Imminent`" to be only alarmed when status is 5/6 or has just walked.`n`t"
-	$Replacement +=	"Recommend setting to `"All`"-->`n`t"
-	$Replacement +=	"<DCloneAlarmLevel>All</DCloneAlarmLevel>" #add option to config file if it doesn't exist.
-	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-	Start-Sleep -milliseconds 1500
-	PressTheAnyKey
+if ($Null -ne $Script:Config.DCloneAlarmList -and $Script:Config.DCloneAlarmList -ne ""){#validate data to prevent errors from typos
+	$pattern = "^(HC|SC)(L?)-(NA|EU|KR)$" #set pattern: must start with HC or SC, optionally has L after it, must end in -NA -EU or -KR
+	foreach ($Alarm in $Script:Config.DCloneAlarmList.split(",").trim()) {
+		if ($Alarm -notmatch $pattern) {
+			Write-Host
+			Write-Host " $Alarm is not a valid Alarm entry."  -foregroundcolor Red
+			Write-Host " See valid options in Config.xml"  -foregroundcolor Red
+			Write-Host
+			PressTheAnyKeyToExit
+		}
+	}
 }
 if ($Script:Config.DCloneAlarmVoice -eq $Null){
 	Write-Host
-	Write-Host " Config option 'DisableOpenAllAccountsOption' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " Config option 'DCloneAlarmVoice' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 	Write-Host " This config allows you to choose between a Woman or Man's robot voice." -foregroundcolor Yellow
 	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
 	Write-Host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 	$Pattern = "</DCloneAlarmLevel>"
-	$Replacement = "</DCloneAlarmLevel>`n`n`t<!--Specify what voice you want Bloke for David (Man) or Wench for Zira (Woman).-->`n`t"
-	$Replacement +=	"<DCloneAlarmVoice>Bloke</DCloneAlarmVoice>" #add option to config file if it doesn't exist.
+	$Replacement = "</DCloneAlarmLevel>`n`n`t<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->`n`t"
+	$Replacement +=	"<DCloneAlarmVoice>Paladin</DCloneAlarmVoice>" #add option to config file if it doesn't exist.
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
+
 if ($Script:Config.DCloneAlarmList -ne ""){
+	$ValidVoiceOptions = 
+		"Amazon",
+		"Paladin",
+		"Woman",
+		"Man",
+		"Wench",
+		"Bloke"
+	if ($Script:Config.DCloneAlarmVoice -notin $ValidVoiceOptions){
+		Write-host
+		Write-host " Error: DCloneAlarmVoice in config has an invalid option set." -Foregroundcolor red
+		Write-host " Open config.xml and set this to either Paladin or Amazon." -Foregroundcolor red
+		Write-host
+		PressTheAnyKeyToExit
+	}
 	if ($Script:Config.DCloneAlarmLevel -eq "All"){
 		$Script:DCloneAlarmLevel = "1,2,3,4,5,6"
 	}
@@ -522,7 +560,7 @@ if ($Script:Config.DCloneAlarmList -ne ""){
 		$Script:DCloneAlarmLevel = "1,5,6"
 	}
 	else {#if user has typo'd the config file or left it blank.
-		$DCloneErrorMessage = ("  Error: DClone Alarm Levels have been misconfigured in config.xml. ###  Check that the value DCloneAlarmLevel in config.xml is entered correctly.").Replace("###", "`n")
+		$DCloneErrorMessage = ("  Error: DClone Alarm Levels have been misconfigured in config.xml. ###  Check that the value for DCloneAlarmLevel is entered correctly.").Replace("###", "`n")
 		Write-host
 		Write-host $DCloneErrorMessage -Foregroundcolor red
 		Write-host
@@ -1184,17 +1222,12 @@ Function DClone {# Display DClone Status.
 		[object] $DCloneChanges,
 		[String] $DCloneAlarmLevel
 	)
-	#$D2CloneTrackerSource = "D2runewizard.com" #todo testing debug
 	if ($D2CloneTrackerSource -eq "d2rapi.fly.dev"){
 		$URI = "https://d2rapi.fly.dev/dclone"
 		try {
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -ScriptBlock {
-				#param ($URI)
 				Invoke-RestMethod -Uri $using:URI -Method GET
 			} -TimeoutSeconds 2
-			#$D2RDCloneResponse = Invoke-RestMethod -Uri $URI -Method GET #Pull DClone status from provider.
-			#$LadderStatus = $D2RDCloneResponse.PSObject.Properties | where-object {$_.name -notlike "*nonladder*"} | select name,value #| sort name
-			#$NonLadderStatus = $D2RDCloneResponse.PSObject.Properties | where-object {$_.name -like "*nonladder*"} | select name,value #| sort name
 			$CurrentStatus = $D2RDCloneResponse.PSObject.Properties | select @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.value + 1)}} #| sort server #add +1 as this source counts status from 0
 		}
 		Catch {
@@ -1216,12 +1249,8 @@ Function DClone {# Display DClone Status.
 		try {
 			$URI = "https://d2runewizard.com/api/diablo-clone-progress/all?token=$D2RWref"
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -Headers -$headers -ScriptBlock {
-				#param ($URI)
 				Invoke-RestMethod -Uri $using:URI -Method GET -Headers $using:Headers
 			} -TimeoutSeconds 2
-			#$D2RDCloneResponse = Invoke-RestMethod -Uri $URI -Method GET -header $headers #Pull DClone status from provider.
-			#$LadderStatus = $D2RDCloneResponse.servers | where-object {$_.Server -match "^ladder"} | select server,progress #| sort server
-			#$NonLadderStatus = $D2RDCloneResponse.servers | where-object {$_.Server -match "nonladder"} | select server,progress #| sort server
 			$CurrentStatus = $D2RDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} #| sort server
 		}
 		Catch {
@@ -1235,13 +1264,8 @@ Function DClone {# Display DClone Status.
 		$URI = "https://diablo2.io/dclone_api.php"
 		try {
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -ScriptBlock {
-				#param ($headers)
 				Invoke-RestMethod -Uri $using:URI -Method GET -Headers $using:Headers
 			} -TimeoutSeconds 2
-			#$D2RDCloneResponse = Invoke-RestMethod -Uri $URI -Headers $Headers
-			#$D2RDCloneResponse | select progress,region,ladder,hc
-			#$LadderStatus = $D2RDCloneResponse.servers | where-object {$_.Server -match "^ladder" -and $_.Server -notmatch "PSComputerName" -and $_.Server -notmatch "RunspaceId" -and $_.Server -notmatch "PSShowComputerName"} | select server,progress #| sort server
-			#$NonLadderStatus = $D2RDCloneResponse.servers | where-object {$_.Server -match "nonladder"} | select server,progress #| sort server
 			$CurrentStatus = $D2RDCloneResponse | select @{Name='Server'; Expression={$_.region}},@{Name='Ladder'; Expression={$_.ladder}},@{Name='Core'; Expression={$_.hc}},@{Name='Progress'; Expression={$_.progress}}
 		}
 		Catch {
@@ -1302,7 +1326,7 @@ Function DClone {# Display DClone Status.
 		if ($True -eq $DisableOutput){	
 			#$taglist = "SCL-NA, SCL-EU, HC-EU, HC-KR"#"SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR"
 			if ($taglist -match $Tag ){#if D Dclone region and server matches what's in config, check for changes.
-				#Write-Host " Tag $tag in taglist" #testing todo
+				#Write-Host " Tag $tag in taglist" #debug
 				if ($DCloneChangesArray | where-object {$_.Tag -eq $Tag}){
 					foreach ($Item in $DCloneChangesArray | where-object {$_.Tag -eq $Tag}) {#for each tag specified in config.xml...
 						$item.VoiceAlarmStatus = $False 
@@ -1402,11 +1426,10 @@ Function DCloneVoiceAlarm {
 	$voice = New-Object -ComObject Sapi.spvoice
 	$voice.rate = -2 #How quickly the voice message should be
 	Write-Host
-	if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man"){$voice.voice = $voice.getvoices() | where {$_.id -like "*David*"}}
-	elseif ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman"){$voice.voice = $voice.getvoices() | where {$_.id -like "*ZIRA*"}}
+	if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man" -or $Script:Config.DCloneAlarmVoice -eq "Paladin"){$voice.voice = $voice.getvoices() | where {$_.id -like "*David*"}}
+	elseif ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman" -or $Script:Config.DCloneAlarmVoice -eq "Amazon"){$voice.voice = $voice.getvoices() | where {$_.id -like "*ZIRA*"}}
 	else {break}# If specified voice doesn't exist
 	foreach ($Item in ($Script:DCloneChangesCSV | ConvertFrom-Csv) | where-object {$_.VoiceAlarmStatus -Match "True" -or $_.TextAlarmStatus -Match "True"}) {
-	#$Item #debug todo testing
 		if ($item.tag -match "l"){#if mode contains "L"
 			$LadderText = "Ladder"
 		}
@@ -1445,7 +1468,6 @@ Function DCloneVoiceAlarm {
 		}
 	}
 	if ($Message -ne $null){
-		Write-Host
 		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mD Clone status provided by $D2CloneTrackerSource$X[0m"
 	}
 }
@@ -2065,12 +2087,10 @@ Function ChooseAccount {
 			$GetWebRequestFunc = $(Get-Command WebRequestWithTimeOut).Definition
 			if ($Script:Config.DCloneAlarmList -ne ""){#if DClone alarms should be checked on refresh	
 				try {
-					$testcounter ++
 					if ($Script:DCloneChangesCSV -ne $null){
 						$Script:DCloneChangesCSV = Receive-Job $Script:DCloneJob
 						#$Script:DCloneChangesCSV #debugging
 						if($Script:DCloneChangesCSV -match "true"){#if any of the text contains True
-							#write-host "Alarm" #Debug
 							DCloneVoiceAlarm #Create Voice Alarm
 						}
 					}
@@ -2358,12 +2378,10 @@ Function Processing {
 		}
 		if ($SettingsChoice -ne "c"){
 			#Start Game
-			#write-output $arguments #debug
 			Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
 			Start-Sleep -milliseconds 1500 #give D2r a bit of a chance to start up before trying to kill handle
 			#Close the 'Check for other instances' handle
 			Write-Host " Attempting to close `"Check for other instances`" handle..."
-			#$handlekilled = $true #debug
 			$Output = killhandle | out-string #run killhandle function.
 			if (($Output.contains("DiabloII Check For Other Instances")) -eq $true){
 				$handlekilled = $true
