@@ -79,7 +79,6 @@ You can also manually check the current DClone status by pressing 'd'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/f6f2c934-7fce-47db-a052-97e42874d9be)<br>
 
 **Alarms for DClone Walk status changes**<br>
-NOTE: THIS IS AN UNRELEASED, UPCOMING FEATURE WHICH IS STILL A WORK IN PROGRESS.<br>
 If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.<br>
 If there's a change in status whilst the script is running, it will activate the alarm function.<br>
 The alarm will a text warning (as seen in example below) as well as a text to speech alarm notifying you where the walk is happening.<br>
@@ -169,7 +168,6 @@ All other config options below this are strictly optional:<br>
 - Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
 - Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section below for more info. Disabled by default.
 - Set 'TrackAccountUseTime' to False if you don't want accounts.csv or stats.csv to be autoupdated with playtime. Other Stats are still tracked in stats.csv. Mainly added this option in the unlikely case there are any issues with accounts.csv getting corrupted. Enabled by default.
-THE BELOW IS FOR A FUTURE UPDATE THAT SHOULD BE RELEASED VERY SOON (note as of 5th Oct 2023)
 - Set 'DCloneTrackerSource' to one of the options noted in the config file. Default (and recommended) is d2rapi.fly.dev as it provides realtime data (not crowdsourced).
 - Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#8-dclone-status-alarms-optional) section below for more info. Blank by default.
 - Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
@@ -246,8 +244,8 @@ If you don't want your Diablo games to run like a slideshow, here are some tips.
 Note that on my specs (5950x, RTX2080s (which has 8GB VRAM), 32GB RAM), I run my instances on the lowest graphics options possible. <br>
 DLSS is set to ultra performance. Framerate (FPS) caps for secondary accounts are around 50fps. For my primary account I set the FPS cap to 60fps.<br>
 <br>
-With 3 instances (2 windows at approx 1280x780 resolution, 1 window (primary account) at 2556x1373 resolution, The CPU is barely used, Memory is about 85% utilised, VRAM is 80% utilised and GPU is about 90%.<br>
-With 4 instances (an additional window at approx 1280x780), CPU is still fine, Memory is maxed out, VRAM is maxed out and GPU is 100%. Different parts of the game can run pretty poorly and as such sometimes I reduce the secondary accounts FPS Cap to around 44 instead.<br>
+With 3 instances (2 windows at approx 1280x780 resolution, 1 window (primary account) at 2556x1373 resolution, The CPU is barely used, Memory is about 85% utilised, VRAM is 80% utilised and GPU is about 85-90% (6800MB).<br>
+With 4 instances (an additional window at approx 1280x780), CPU is still fine (15%), Memory is maxed out, VRAM is 92%+ (7600MB+) and GPU is 95-100%. Different parts of the game can run pretty poorly and as such sometimes I reduce the secondary accounts FPS Cap to around 44 instead.<br>
 <br>
 I've noted that with my hardware running 4 instances is generally not fun graphically due to performance stutters, FPS drops and increased chance of crashing. I'd argue that running 4 or more accounts is confusing and isn't fun logistically either but I digress.
 
