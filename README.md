@@ -338,12 +338,13 @@ Happy for you to make any modifications this script for your own needs providing
 - Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
-- Thanks toTheGodOfPumpkin for Next TZ source
+- Thanks to TheGodOfPumpkin for Next TZ source. Full Chur!
 - Thanks to Shalzuth (https://d2rapi.fly.dev), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to https://ocr.space/OCRAPI for their free OCR API
 - Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
+- Lastly big thanks to everyone that's messaged me with issues, ideas, performed testing, sent FG donations, or simply messaged to say thanks. It's awesome to be able to help out and bring some QOL to folks across the world :)
 <br>
 <br>
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
