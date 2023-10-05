@@ -332,14 +332,16 @@ Happy for you to make any modifications this script for your own needs providing
  - Any variants of this script published online should always be open source.
  - Any variants of this script are never modifed to enable or assist in any game altering or malicious behaviour including (but not limited to): Bannable Mods, Cheats, Exploits, Phishing, Botting.
 
-# Credit for things I stole: #
+# Credit for things I stole #
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
-- Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 - Handle tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
-- MoonUnit for thoughts around converting plain text passwords to encrypted strings.
-- never147 for contributing improvements for menu refresh and inputs.
-- TheGodOfPumpkin for Next TZ source
-- https://ocr.space/OCRAPI for their free OCR API
+- Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
+- Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
+- Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
+- Thanks toTheGodOfPumpkin for Next TZ source
+- Thanks to Shalzuth (https://d2rapi.fly.dev), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
+- Thanks to https://ocr.space/OCRAPI for their free OCR API
+- Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
 <br>
