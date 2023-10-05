@@ -46,4 +46,24 @@
 	
 	<!--This allows you to roughly track how long you've used each account while using this script. Choose False if you want to disable this.-->
 	<TrackAccountUseTime>True</TrackAccountUseTime>
+
+	<!--Options are d2rapi.fly.dev, D2runewizard.com and diablo2.io.
+	Default and recommended option is d2rapi.fly.dev as this pulls live data from the game as opposed to crowdsourced data.-->
+	<DCloneTrackerSource>d2rapi.fly.dev</DCloneTrackerSource>
+
+	<!--Allow you to have the script audibly warn you of upcoming dclone walks.
+	Specify as many of the following options as you like: SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR
+	EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>
+	If left blank this feature is disabled. Default is blank as this may be annoying for some people-->
+	<DCloneAlarmList></DCloneAlarmList>
+
+	<!--Specify what Statuses you want to be alarmed on.
+	Enter "All" to be alarmed of all status changes
+	Enter "Close" to be only alarmed when status is 4/6, 5/6 or has just walked.
+	Enter "Imminent" to be only alarmed when status is 5/6 or has just walked.
+	Recommend setting to "All"-->
+	<DCloneAlarmLevel>Close</DCloneAlarmLevel>
+
+	<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->
+	<DCloneAlarmVoice>Paladin</DCloneAlarmVoice>
 </D2loaderconfig>
