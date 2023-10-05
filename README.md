@@ -51,15 +51,18 @@ Optionally you can also have the game launch using custom settings.json for each
 ## Other Features
 **Open All accounts at once**<br>
 Time is precious so work smarter not harder by opening all your accounts at once to maximise your free time to actually play the game instead of clicking through menus.<br>
+
 **Batch Open Accounts**<br>
 Rather than open all accounts, you can open a group of accounts. This feature is designed for you creatures that have several accounts but only want to launch a subset of these, for example only launch the 3 accounts you primarily play from.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0f98dc8e-319a-43b8-b860-c84cb9d6dd60)<br>
+
 **Launch Each account with specific game settings**<br>
 These features were made in mind for multiboxing where you may have different screen sizes and want your secondary accounts to have lower graphics settings:<br>
 _Auto Settings Switcher_: If enabled you can essentially have it so all accounts have their own game settings to load from. Game settings are loaded from settings<_ID_>.json instead of settings.json.<br>
 _Manual Settings Switcher_: Alternatively, if you want to specify which game settings you want to load from, you can choose the settings file each account should use when launching. Once enabled in config, this can be toggled on and off using 's' in the menu.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/3533250d-8558-41a9-911f-5adcb5b6360d)<br>
 You can enable both of these features at the same time. See [Setup Steps](#setup-steps) below.<br>
+
 **Statistics - Track your playtime**<br>
 It was too technically difficult for Blizzard to track time played for D2r within their Battlenet Client so you can use my janky one instead.<br>
 Time per account can be seen from the main menu. Total time the script has ran for can be seen by going into the info screen ('i').
@@ -76,14 +79,13 @@ You can also manually check the current DClone status by pressing 'd'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/f6f2c934-7fce-47db-a052-97e42874d9be)<br>
 
 **Alarms for DClone Walk status changes**<br>
-NOTE: THIS IS AN UNRELEASED, UPCOMING FEATURE WHICH IS STILL A WORK IN PROGRESS.
-If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.
-If there's a change in status whilst the script is running, it will activate the alarm function.
-The alarm will a text warning (as seen in example below) as well as a text to speech alarm notifying you where the walk is happening.
-The voice alarm activates only once but the text warnings will remain in place for 5 minutes. 
-You will also be notified after the script has launched if there's any imminent walks about to happen (ie status is 5/6).
-See the [config](#4-script-config-mostly-optional) and [DClone Status Alarms](#8-dclone-status-alarms-optional) sections for how to configure this.
-
+NOTE: THIS IS AN UNRELEASED, UPCOMING FEATURE WHICH IS STILL A WORK IN PROGRESS.<br>
+If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.<br>
+If there's a change in status whilst the script is running, it will activate the alarm function.<br>
+The alarm will a text warning (as seen in example below) as well as a text to speech alarm notifying you where the walk is happening.<br>
+The voice alarm activates only once but the text warnings will remain in place for 5 minutes. <br>
+You will also be notified after the script has launched if there's any imminent walks about to happen (ie status is 5/6).<br>
+See the [DClone Status Alarms](#8-dclone-status-alarms-optional) and [config](#4-script-config-mostly-optional) sections for more information and how to configure this.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/22288449-6088-4d1c-b559-689907ea0afa)<br>
 Voice Examples (make sure to unmute, GitHub mutes by default):<br>
 
@@ -230,8 +232,24 @@ You can also optionally change the other configs for DClone Tracking and DClone 
 See the [Script Config](#4-script-config-mostly-optional) section for more info on each config.<br>
 
 # Notes #
-## Performance Recommendations ##
-TBC - Tips coming soon on best setup so your games don't run like slideshows.
+## Graphics Performance Recommendations ##
+If you don't want your Diablo games to run like a slideshow, here are some tips. You'll of course need to adjust based on your hardware and setup.
+1. IMPORTANT. Set an Frame Rate (FPS) cap in the graphics options. Recommend 60 but adjust depending on your GPU power and instances you're running. This will prevent each instance from trying to fully utilise your GPU compute.
+2. Reduce graphics settings in game to performance over quality.
+3. Run games in Windowed mode. Especially if you have more than one monitor. Not only will it save you performance, it's waaaay easier than alt tabbing.
+4. In addition to changing your settings to launch the game in windowed mode, you should also make your secondary account windows smaller (ie lower resolution) to save on GPU utilisation. You can adjust resolution from the in game menu or simply by shrinking the window. If need you can of course do the opposite and maximise one of the smaller windows if you are playing another character for a bit.
+5. If you are wanting different graphics settings for different accounts (eg different FPS cap, different audio settings, different resolution, nicer graphics settings etc etc), then I would highly recommend making use of the QOL features of this script. The automatic settings switcher can be used so that each account loads with it's own settings at launch. There is also the manual setting switcher feature if you want to define what settings file to load for a given account. See the relevant sections above for more info.
+6. Obviously if you run other graphic demanding things like wallpaper engine in the background, this will hurt your overall FPS. Some wallpapers will have neglible impact but some are  noticably impactful on performance.
+7. Make use of hardware monitoring software to see how much you are utilising RAM, CPU, GPU - Processor and GPU - VRAM. If you are under or overutilised you can adjust your settings accordingly for the best experience.
+
+**My setup**<br>
+Note that on my specs (5950x, RTX2080s (which has 8GB VRAM), 32GB RAM), I run my instances on the lowest graphics options possible. <br>
+DLSS is set to ultra performance. Framerate (FPS) caps for secondary accounts are around 50fps. For my primary account I set the FPS cap to 60fps.<br>
+<br>
+With 3 instances (2 windows at approx 1280x780 resolution, 1 window (primary account) at 2556x1373 resolution, The CPU is barely used, Memory is about 85% utilised, VRAM is 80% utilised and GPU is about 90%.<br>
+With 4 instances (an additional window at approx 1280x780), CPU is still fine, Memory is maxed out, VRAM is maxed out and GPU is 100%. Different parts of the game can run pretty poorly and as such sometimes I reduce the secondary accounts FPS Cap to around 44 instead.<br>
+<br>
+I've noted that with my hardware running 4 instances is generally not fun graphically due to performance stutters, FPS drops and increased chance of crashing. I'd argue that running 4 or more accounts is confusing and isn't fun logistically either but I digress.
 
 ## FAQ / Common Issues
 
