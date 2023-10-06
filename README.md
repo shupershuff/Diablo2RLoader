@@ -39,7 +39,8 @@ What your windows will look like:<br>
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
 ## But I don't want to use your script you dodgy internet human
 WORK IN PROGRESS<br>
-See Guides for alternative multiboxing methods here: https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script
+Not everyone wants to use a random script or an app and that's understandable.<br>
+See guides for alternative multiboxing methods here: https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script
 
 ## Exactly what does the script do?
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
