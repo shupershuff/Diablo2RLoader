@@ -37,8 +37,11 @@ Script Screenshot:<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50dfcb19-8ef1-4e6f-8cde-35c1f92cbec6)<br>
 What your windows will look like:<br>
 ![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
+## But I don't want to use your script you dodgy internet human
+WORK IN PROGRESS<br>
+See Guides for alternative multiboxing methods here: https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script
 
-## Exactly what does it do?
+## Exactly what does the script do?
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
 It will achieve this by importing account details from a CSV that you populate and essentially launches the game the same way you would with a shortcut: by passing account, password and region parameters to D2r.exe.<br>
 	Note: Plain text passwords entered into the CSV will be converted into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave the PW field in the CSV blank and manually type in when running the script.<br>
@@ -281,10 +284,13 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 **A:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.
 
 **Q:** I would like to say "Thankyou". How do I do that?<br>
-**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks :)<br>
+**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks. It's rewarding to me to know that this is helping people :)<br>
 
 **Q:** I have suggestions and/or issues with this, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
+
+**Q:** If I've read this far through this long ass readme does that mean I can read good?<br>
+**A:** Yes, you read at least up to a Dr Seuss reading level. Well done you!
 
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
@@ -331,8 +337,8 @@ Happy for you to make any modifications this script for your own needs providing
  - Any variants of this script are never modifed to enable or assist in any game altering or malicious behaviour including (but not limited to): Bannable Mods, Cheats, Exploits, Phishing, Botting.
 
 # Credit for things I stole #
+- Handle64 tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
-- Handle tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 - Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
@@ -342,7 +348,8 @@ Happy for you to make any modifications this script for your own needs providing
 - Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
+- Live, Laugh, Love.
 - Lastly big thanks to everyone that's messaged me with issues, ideas, performed testing, sent FG donations, or simply messaged to say thanks. It's awesome to be able to help out and bring some QOL to folks across the world :)
 <br>
 <br>
-Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
+Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
