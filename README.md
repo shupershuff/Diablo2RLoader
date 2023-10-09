@@ -122,6 +122,18 @@ There's also a 1 in 19,999 chance to land a High Rune but you'll never see this 
 There are ways to improve your script MaGic Find...
 
 # Setup Steps
+Please see the detailed setup steps below, it's not as scary as it looks. I've included details for all of the features you may or may not want to use.
+A basic setup only takes 2 or 3 minutes.
+TL;DR steps are:
+1. Download the latest release, extract and unblock it within file properties. See [1. Download](#1-download).
+2. Download handle viewer and place in the folder. See [2. Setup Handle Viewer](#2-setup-handle-viewer).
+3. Add account info to accounts.csv. See [3. Setup Your Accounts](#3-setup-your-accounts).
+4. Edit config.xml to set game path and enable/configure desired features. See [4. Script Config](#4-script-config-mostly-optional).
+5. Run script for first time. See [5. Run the script manually for the first time](#5-run-the-script-manually-for-the-first-time).
+6. Optionally perform steps to configure game settings that each account should load from. See [6. Auto Settings Switcher](#6-auto-settings-switcher-optional-but-recommended) and [7. Manual Settings Switcher](#7-manual-settings-switcher-optional).
+
+If you have any issues I can almost guarantee it's covered in the detailed setup steps below or FAQ section.
+
 ## 1. Download
 1. Download the latest [release](https://github.com/shupershuff/Diablo2RLoader/releases) this and extract the zip file to a folder of your choosing.
 2. Right click on D2loader.ps1 and open properties.
@@ -133,6 +145,7 @@ There are ways to improve your script MaGic Find...
 2. Extract the executable files (specifically handle64.exe) to the .\Handle\ folder
 
 ## 3. Setup Your Accounts
+**NOTE: If you have MFA configured on one account it will need to be disabled for this to work due to Blizzard not implementing MFA capability with this authentication method.**
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
 2. Add number for each account starting from 1.
 3. Add your account sign in address.
