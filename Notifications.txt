@@ -1,1 +1,2 @@
-Authentication to Asia (KR) servers is currently down the parameter connection method. Workaround is to launch all but one account on EU/NA and for the last account connect to Asia. From there use friend joining to connect to asia games.
+Authentication to Asia (KR) servers is currently down the parameter connection method. Workaround is to launch all but one account on EU/NA and for the last account connect to Asia.
+From there use friend joining to connect to asia games.
