@@ -337,8 +337,12 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-At this point I've implemented everything that I wanted to, so I don't have any more planned features to add to the tool.<br>
-If there's something you want to see added or improved then let me know. Future updates may include:
+If there's something you want to see added or improved then let me know. Future updates may include:<br>
+* Alternative Authentication methods (tokens, launch via bnet)
+* Ability to use with MFA enabled accounts/Ability to use both script and launch manually via bnet.
+* Ability to mute minimised windows
+* Ability to skip intro
+* Ability to sent outage notifications to end users
 * Fixing anything I broke in the last release.
 * Adding whatever features you fools ask for.
 * Investigate use of battlenet login tokens (stored in registry) instead of passwords as other loaders have done. This is unlikely as I probably can't figure it out.
