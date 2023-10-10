@@ -1,5 +1,7 @@
 {
-    "Notification":  "",
+    "Notification":  "Authentication to Asia (KR) servers is currently down via the parameter connection method. 
+Workaround is to launch all but one account on EU/NA and for the last account, launch the game via the Battle.net client to connect to Asia.
+From there use friend joining to connect to asia games.",
     "PublishDate":  "2023.10.10 10:52:07",
     "ExpiryDate":  "2023.10.11 15:55:07"
 }
