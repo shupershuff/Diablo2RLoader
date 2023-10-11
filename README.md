@@ -1,4 +1,4 @@
-**Notice about KR Auth Issues**<br>
+**Notice about Asia AKA KR Auth Issues**<br>
 I'm aware of [issues](https://github.com/shupershuff/Diablo2RLoader/issues/28) with Blizzards Authentication servers not authenticating on kr.actual.battle.net.
 This has happened in the past but has historically been resolved by Blizzard within 8 hours or so.<br>
 I have an alternate authentication solution (essentially the same as opening via the bnet client) that can optionally be used in place of username and password which will be released in the next update.
