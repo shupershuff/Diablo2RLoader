@@ -1,3 +1,8 @@
+**Notice about KR Auth Issues**<br>
+I'm aware of issues with Blizzards Authentication servers not authenticating on kr.actual.battle.net.
+This has happened in the past but has historically been resolved by Blizzard within 8 hours or so.
+I have an alternate authentication solution (essentially the same as opening via the bnet client) that can optionally be used in place of username and password which will be released in the next update.
+
 **Notice about Update Issues for v1.8.1 through to v1.8.3**<br>
 In v1.8.1 and v1.8.2 there was an issue that didn't present itself until the script was run on a day of the month that's a single digit.<br>
 This meant if you ran the script any time between 1st through to the 9th of August 2023, then the update checker will have broken :(<br>
