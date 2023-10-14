@@ -859,8 +859,8 @@ Function ImportCSV {
 					$Entry
 				}
 				if (($Entry.TokenIsSecureString.length -eq 0 -or $Entry.TokenIsSecureString -eq "no" -or $Entry.TokenIsSecureString -eq $false) -and $Entry.Token.length -ne 0){#if account.csv has a Token and TokenIsSecureString isn't set to yes, convert Token to secure string and update CSV.
-					ValidateTokenInput -TokenInput $Entry.Token
-					$Entry.Token = ConvertTo-SecureString -String $Entry.Token -AsPlainText -Force
+					$ValidatedToken = ValidateTokenInput -TokenInput $Entry.Token
+					$Entry.Token = ConvertTo-SecureString -String $ValidatedToken -AsPlainText -Force
 					$Entry.Token = $Entry.Token | ConvertFrom-SecureString
 					$Entry.TokenIsSecureString = "Yes"
 					Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
@@ -925,7 +925,7 @@ Function ImportCSV {
 					if ($PWsUpdated -eq $True){
 						Write-Host " Accounts.csv updated: Passwords have been secured." -foregroundcolor green
 					}
-					Start-Sleep -milliseconds 4000
+					Start-Sleep -milliseconds 3000
 				}
 				Catch {
 					Write-Host
@@ -2810,7 +2810,7 @@ Function Processing {
 			if ($Script:Config.AuthenticationMethod -eq "Token"){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
 				$CurrentTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 				write-host " Waiting for you to get to Character select screen..." -foregroundcolor yellow
-				write-host " $X[38;2;255;255;0;4mDO NOT open or close another game instance until this is done.$X[0m"
+				write-host " $X[38;2;255;255;0;4mDO NOT OPEN OR CLOSE ANOTHER GAME INSTANCE UNTIL THIS YOU'VE DONE THIS.$X[0m"
 				do {
 					$NewTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 					$CompareCheck = Compare-Object $CurrentTokenRegValue $NewTokenRegValue
