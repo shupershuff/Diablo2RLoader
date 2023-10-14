@@ -1,5 +1,5 @@
-ID,Acct,AccountLabel,Batches,TimeActive,CustomLaunchArguments,PW,PWIsSecureString,WebToken
-1,YourBNetEmailAddress,FriendlyDisplayname,,,YourCustomLaunchArguments,YourBNetPassword,<LeaveBlank>,Optionally populate with your Token
-2,example1@address.com,BigJoeBloggs,"1",,,ExamplePassw0rd!,,
-3,example2@address.com,JosephineBloggs,"1,2",,,SecurePassw0rd!,,
-4,example3@address.com,JohnDoe,"1,2",,,MonopolyGuy420,,
+ID,Acct,AccountLabel,Batches,TimeActive,CustomLaunchArguments,PW,PWIsSecureString,Token,TokenIsSecureString
+1,YourBNetEmailAddress,FriendlyDisplayname,,,YourCustomLaunchArguments,YourBNetPassword,<LeaveBlank>,Optionally populate with your Token,
+2,example1@address.com,BigJoeBloggs,"1",,,ExamplePassw0rd!,,,
+3,example2@address.com,JosephineBloggs,"1,2",,,SecurePassw0rd!,,,
+4,example3@address.com,JohnDoe,"1,2",,,MonopolyGuy420,,,
