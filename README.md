@@ -163,7 +163,13 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 7. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
 9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
-10. Yeah and you should probably save it. That's CTRL + S. It helps :)
+10. OPTIONAL, if you want to be able to use Token based authentication, you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
+11. Log in with your credentials and approve MFA request (if enabled).
+12. You will be brought to an error page (this is expected. Copy the URL from the error page into the token column of accounts.csv. DO NOT SHARE THIS TOKEN INFORMATION ONLINE.
+13. Close the browser, reopen in private mode, log into each of your other accounts and repeat the step above.
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/d8db6e29-4d1b-4de6-b01c-093058fc3af6)
+
+Make sure to save it and close the file :)
 
 **Account CSV BEFORE running script:**<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0e3c26c5-8c71-431c-8bf7-06bde4c36c91)<br>
@@ -178,7 +184,8 @@ Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ e
 - **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
 
 All other config options below this are strictly optional:<br>
-- Set your default region if you just want to mash enter instead of choosing the region. Default is 1 for NA.
+- Set 'DefaultRegion' to your preferred default region if you just want to mash enter instead of choosing the region. Default is 1 for NA.
+- Set 'AuthenticationMethod' to "Token" if you want to authenticate via a Token instead of parameters. Requires additional setup (see [Setup Your Accounts](#3-setup-your-accounts) above). Default is "Parameter".
 - Set 'EnableBatchFeature' to True if you want the ability to launch accounts in batches. You must also define the batches in your accounts.csv file. Disabled by default.
 - Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False. Disabled by default.
 - Set 'CheckForNextTZ' to True if you want to enable the web request to find NextTZ details. Enabled by default.
@@ -300,7 +307,8 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 **A:** The script needs to run as admin in order to kill the "Check for Other instances" process handle and to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
 
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
-**A:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.
+**A1:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.<br>
+**A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#3-setup-your-accounts)) and enable in config.xml by changing 'AuthenticationMethod' option from "Parameter" to "Token".
 
 **Q:** I would like to say "Thankyou". How do I do that?<br>
 **A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks. It's rewarding to me to know that this is helping people :)<br>
@@ -345,12 +353,11 @@ See this site for more information on what this does: https://stackoverflow.com/
 If there's something you want to see added or improved then let me know. Future updates may include:<br>
 * Alternative Authentication methods (tokens, launch via bnet)
 * Ability to use with MFA enabled accounts/Ability to use both script and launch manually via bnet.
-* Ability to mute minimised windows
+* Possibly add the ability to mute minimised windows (as long as it can be done within windows without additional software)
 * Ability to skip intro
 * Ability to sent outage notifications to end users
 * Fixing anything I broke in the last release.
 * Adding whatever features you fools ask for.
-* Investigate use of battlenet login tokens (stored in registry) instead of passwords as other loaders have done. This is unlikely as I probably can't figure it out.
 * Perhaps make a GUI *if* there's enough interest. Probably not though as there would be a lot of brain activity involved. Pay my mortgage and we'll perhaps maybe talk... probably.
 
 # Usage and Limitations #
