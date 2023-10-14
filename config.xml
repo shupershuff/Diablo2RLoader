@@ -5,7 +5,15 @@
 
 	<!--default region, 1 for NA, 2 for EU, 3 for Asia.-->
 	<DefaultRegion>1</DefaultRegion>
-
+	
+	<!--Choose the authentication method you want the script to use.
+	Options are Token and Parameter. Parameter uses standard UserName Password parameters.
+	With the token option, it's not possible to launch all accounts at once or use the batching feature
+	as you must make sure you get to the character select screen before launching another instance.
+	Token option requires additional setup steps but is useful when Blizzard auth servers are having issues.
+	See Readme for more details. Default and recommended option is Parameter-->
+	<AuthenticationMethod>Token</AuthenticationMethod>
+	
 	<!--Disable the functionality of being able to open all accounts at once. This is for any crazy people who have a lot of accounts and want to prevent accidentally opening all at once.-->
 	<DisableOpenAllAccountsOption>False</DisableOpenAllAccountsOption>
 
