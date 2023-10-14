@@ -573,8 +573,8 @@ if ($Script:Config.AuthenticationMethod -eq $Null){
 	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
 	Write-Host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
-	$Pattern = "</GamePath>"
-	$Replacement = "</GamePath>`n`n`t<!--Choose the authentication method you want the script to use.`n`t"
+	$Pattern = "</DefaultRegion>"
+	$Replacement = "</DefaultRegion>`n`n`t<!--Choose the authentication method you want the script to use.`n`t"
 	$Replacement +=	"Options are Token and Parameter. Parameter uses standard UserName Password parameters.`n`t"
 	$Replacement +=	"With the token option, it's not possible to launch all accounts at once or use the batching feature`n`t"
 	$Replacement +=	"as you must make sure you get to the character select screen before launching another instance.`n`t"
