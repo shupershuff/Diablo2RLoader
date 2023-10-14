@@ -164,9 +164,11 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
 9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
 10. OPTIONAL, if you want to be able to use Token based authentication, you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
-11. Log in with your credentials and approve MFA request (if enabled).
-12. You will be brought to an error page (this is expected. Copy the URL from the error page into the token column of accounts.csv. DO NOT SHARE THIS TOKEN INFORMATION ONLINE.
-13. Close the browser, reopen in private mode, log into each of your other accounts and repeat the step above.
+	a. Log in with your credentials and approve MFA request (if enabled).
+	b. You will be brought to an error page (this is expected. Copy the URL from the error page into the token column of accounts.csv. DO NOT SHARE THIS TOKEN INFORMATION ONLINE.
+	c. Close the browser, reopen in private mode, log into each of your other accounts and repeat the step above.
+	d. The token will be converted to an encrypted string when script is next run.
+	e. You will need to redo this step if you add/remove MFA to your account. D
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/d8db6e29-4d1b-4de6-b01c-093058fc3af6)
 
 Make sure to save it and close the file :)
