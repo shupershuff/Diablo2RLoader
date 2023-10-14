@@ -1070,7 +1070,7 @@ function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 }
 
 Function Inventory {#Info screen
-	#cls
+	cls
 	Write-Host
 	Write-Host "          Stay a while and listen! Here's your D2r Loader info." -foregroundcolor yellow
 	write-host;	write-host
@@ -2105,7 +2105,7 @@ Function DisplayActiveAccounts {
 }
 
 Function Menu {
-	#cls
+	cls
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
 		Write-Host "Account previously opened was:" -foregroundcolor yellow -backgroundcolor darkgreen
@@ -2365,7 +2365,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
-				#cls
+				cls
 				if ($Script:ScriptHasBeenRun -eq $true){
 					Write-Host "Account previously opened was:"  -foregroundcolor yellow -backgroundcolor darkgreen
 					$Lastopened = @(
@@ -2836,7 +2836,7 @@ Function Processing {
 }
 
 ImportCSV
-#cls
+cls
 SetQualityRolls
 Menu
 
