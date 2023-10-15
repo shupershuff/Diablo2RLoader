@@ -150,7 +150,7 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 2. Extract the executable files (specifically handle64.exe) to the .\Handle\ folder
 
 ## 3. Setup Your Accounts
-**NOTE: If you have MFA configured on one account it will need to be disabled for this to work due to Blizzard not implementing MFA capability with this authentication method.**
+**NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
 2. Add number for each account starting from 1.
 3. Add your account sign in address.
@@ -164,12 +164,15 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
 9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
 10. OPTIONAL, if you want to be able to use Token based authentication, you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
-	a. Log in with your credentials and approve MFA request (if enabled).
-	b. You will be brought to an error page (this is expected. Copy the URL from the error page into the token column of accounts.csv. DO NOT SHARE THIS TOKEN INFORMATION ONLINE.
-	c. Close the browser, reopen in private mode, log into each of your other accounts and repeat the step above.
-	d. The token will be converted to an encrypted string when script is next run.
-	e. You will need to redo this step if you add/remove MFA to your account. D
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/d8db6e29-4d1b-4de6-b01c-093058fc3af6)
+	a. Log in with your credentials and approve MFA request (if enabled).<br>
+	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
+ 		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
+		![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/e9976e64-5eaf-4288-b6aa-6f76513f76e9)<br>
+	c. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues.<br>
+	d. Close the browser, reopen in private mode, log into each of your other accounts and repeat the steps A to C above.<br>
+	e. The token will be converted to an encrypted string when script is next run.<br>
+	f. You will need to redo this step if you add/remove MFA to your account.<br>
+
 
 Make sure to save it and close the file :)
 
@@ -187,7 +190,6 @@ Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ e
 
 All other config options below this are strictly optional:<br>
 - Set 'DefaultRegion' to your preferred default region if you just want to mash enter instead of choosing the region. Default is 1 for NA.
-- Set 'AuthenticationMethod' to "Token" if you want to authenticate via a Token instead of parameters. Requires additional setup (see [Setup Your Accounts](#3-setup-your-accounts) above). Default is "Parameter".
 - Set 'EnableBatchFeature' to True if you want the ability to launch accounts in batches. You must also define the batches in your accounts.csv file. Disabled by default.
 - Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False. Disabled by default.
 - Set 'CheckForNextTZ' to True if you want to enable the web request to find NextTZ details. Enabled by default.
@@ -310,7 +312,7 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
 **A1:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.<br>
-**A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#3-setup-your-accounts)) and enable in config.xml by changing 'AuthenticationMethod' option from "Parameter" to "Token".
+**A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#3-setup-your-accounts)).
 
 **Q:** I would like to say "Thankyou". How do I do that?<br>
 **A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks. It's rewarding to me to know that this is helping people :)<br>
@@ -331,12 +333,14 @@ The script is essentially launching the game the same way you would if you had s
 So the real question is, regardless of this script, is using procexp or another method to kill the "check for other instances" handle against ToS? Stricly speaking yes and this topic has been broached in Blizzard forums many times without an official response either for or against.
 If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances' handle?" which to that I'm confident the answer is no. If I wasn't confident, this script wouldn't exist and people wouldn't be using procexp/handle.exe to multibox through traditional methods. Given the widespread use of procexp/handle being used to multibox, this method (and therefore also this script), is considered safe.
 
-## Notes about the Window title rename (SetText.exe)
+## Notes about the Window title rename (SetTextv2.exe)
 
-The script will generate a file called SetText.exe if it doesn't exist.
+The script will generate a file called SetTextv2.exe if it doesn't exist.
 This is used to rename the Game Windows so that you and the script can tell each instance apart.
 To compile the .exe this requires DotNet4.0. If you don't have it the script will prompt you to download this from Microsoft.
-~~A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy.~~ A submission has since been sent to Microsoft and submission has been cleared :)
+~~A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy.~~ <br>
+~~A submission has since been sent to Microsoft and submission has been cleared :)~~ <br>
+I have since made a new version of SetText so that it can rename Windows based on process ID (instead of looking for any window matching Diablo II) to prevent any issues with folk who launch an instance via Battlenet as well as the script.
 
 If you have a 3rd Party Anti-Virus product installed and it kicks up a fuss, you may need to manually add an exception to the .\SetText\ folder location.
 
@@ -346,10 +350,10 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 3. This will open the command prompt with it set in the path of where you've saved the script.
 4. Next copy and paste the following into CMD:
 	SET var=%cd%
-	"C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" /target:winexe /out:"%var%\SetText.exe" "%var%\SetText.bas" /verbose
+	"C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" /target:winexe /out:"%var%\SetText.exe" "%var%\SetTextv2.bas" /verbose
 5. This should compile SetText.exe. This is used to give the Diablo windows a unique name once it's initialized.
 
-See this site for more information on what this does: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
+See this site for more information on what this does, this contains the original version and the updated version that I've made: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
 If there's something you want to see added or improved then let me know. Future updates may include:<br>
