@@ -62,7 +62,7 @@
 	Enter "Close" to be only alarmed when status is 4/6, 5/6 or has just walked.
 	Enter "Imminent" to be only alarmed when status is 5/6 or has just walked.
 	Recommend setting to "All"-->
-	<DCloneAlarmLevel>Close</DCloneAlarmLevel>
+	<DCloneAlarmLevel>All</DCloneAlarmLevel>
 
 	<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->
 	<DCloneAlarmVoice>Paladin</DCloneAlarmVoice>
