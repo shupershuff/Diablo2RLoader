@@ -20,6 +20,7 @@ Servers:
  
 Changes since 1.9.0 (next version edits):
 Added Token based authentication. There are some setup steps and drawbacks to using this method but this can help when Blizzard Auth servers don't respond to authentication when launching via parameters.
+Added capability to configure accounts for Parameter based auth but being able to temporarily force Token authentication (useful for connecting to a region when it's auth is down such as Asia right now).
 Added notification capability so if I notice one of the auth servers going down I can advise users directly.
 Added a new version of the SetText source code to enable renaming D2r windows based on processID. This prevents issues for people who load an account from Battle.net in addition to using the script.
 Changed Current and Next TZ source to D2Emu.com for faster and more accurate results (no more OCR delays or inaccuracies).
@@ -30,9 +31,6 @@ Fixed unhandled DClone errors for timeouts.
 Fixed DClone alarm from alarming twice when detecting changes from 6/6 to 1/6 on some sources.
 Minor tidy ups.
 
-##########TEST IMMEDIATELY AFTER RELEASE, test if settextv2.bas is downloaded and extracted.
-#do before release, delete all .zip files in other releases.
-
 1.10.1+ to do list
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
 To reduce lines, add repeated commands into functions
@@ -42,7 +40,7 @@ Fix whatever I broke or poorly implemented in 1.10.0 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.9.2"
+$CurrentVersion = "1.10.0"
 
 ###########################################################################################################################################
 # Script itself
@@ -626,7 +624,6 @@ $BooleanConfigs =
 "ForceWindowedMode",
 "SettingSwitcherEnabled",
 "TrackAccountUseTime"
-
 $AvailableConfigs = $AvailableConfigs + $BooleanConfigs
 
 if ($Script:Config.CheckForNextTZ -ne $true -and $Script:Config.CheckForNextTZ -ne $false){#if CheckForNextTZ config is invalid, set to false
@@ -803,8 +800,7 @@ Function ImportCSV {
 				}				
 				# Export the updated CSV data back to the file
 				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-			}
-			
+			}	
 			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "CustomLaunchArguments" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If CustomLaunchArguments column doesn't exist, add it
 				# Column does not exist, so add it to the CSV data
 				$Script:AccountOptionsCSV | ForEach-Object {
@@ -1126,6 +1122,9 @@ Function Inventory {#Info screen
 	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.	
 	write-host "  $X[4mYour Script Version:$X[0m v$CurrentVersion"
 	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion"
+	if($Script:ForceAuthToken -ne $null){
+		write-host "  $X[4mForceAuthToken:$X[0m $Script:ForceAuthToken"
+	}
 	if($Script:LatestVersionCheck -eq $null -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
 		try {
 			$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
@@ -1170,6 +1169,7 @@ Function Inventory {#Info screen
 			Write-Host "  AuthenticationMethod column in accounts.csv" -foregroundcolor green
 		}
 		start-sleep -milliseconds 5400
+		Write-Host
 	}
 }
 
@@ -1659,7 +1659,6 @@ Function DClone {# Display DClone Status.
 			[VOID]$DCloneNonLadderTable.Add($DCloneNonLadderInfo)
 		}
 		if ($True -eq $DisableOutput){	
-			#$taglist = "SCL-NA, SCL-EU, HC-EU, HC-KR"#"SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR"
 			if ($taglist -match $Tag ){#if D Dclone region and server matches what's in config, check for changes.
 				#Write-Host " Tag $tag in taglist" #debug
 				if ($DCloneChangesArray | where-object {$_.Tag -eq $Tag}){
@@ -1896,96 +1895,6 @@ Function TerrorZone {
 		Write-Host
 		Write-Host "  Information Retrieved at: " $TimeDataObtained
 		Write-Host "  TZ info courtesy of:       $TZProvider"
-		Write-Host
-		PressTheAnyKey
-	}
-}
-Function TerrorZoneOld {
-	# Get the current time data was pulled
-	$TimeDataObtained = (Get-Date -Format 'h:mmtt')
-	#Find Current TZ
-	Write-Host "  Finding Current TZ Name..."
-	$FlyURI = "https://d2rapi.fly.dev/" #Get TZ from d2rapi.fly.dev
-	$D2FlyTZResponse = Invoke-WebRequest -Uri $FlyURI -Method GET -header $headers
-	$CurrentTZ = ($D2FlyTZResponse | Select-String -Pattern '(?<=<\/a> - )(.*?)(?=<br>)' -AllMatches | ForEach-Object { $_.Matches.Value })[0]	
-	$CurrentTZProvider = "d2rapi.fly.dev"
-	
-	if ($CheckForNextTZ -ne $False){ #Find Next TZ image and convert to Text.
-		Write-Host "  Finding Next TZ Name..."
-		$NextTZProvider = "thegodofpumpkin"
-		$75988Pool = @(#choose from pool of various connection details for OCR.Space to reduce chances of the free limit being reached. Helps future proof script if it ever becomes popular.
-			"75988770481418K",
-			"75988177170718K",
-			"75988024702278K",
-			"75988372514768K",
-			"75988875571688K",
-			"75988639433138K",
-			"75988074942078K",
-			"75988074727148K",
-			"75988080905848K",
-			"75988156278288K"
-		)
-		$tokreg = $75988Pool | Get-Random
-		$script:D2ROCRref = $Null
-		for ($i = $tokreg.Length - 1; $i -ge 0; $i--) {
-			$script:D2ROCRref += $tokreg[$i]
-		}
-		$Script:OCRAttempts = 0
-		do { ## Try each OCR engine until success. I've noticed that OCR.Space engines sometimes go down causing the script not being able to detect current TZ. This gives it a bit more reliability, albeit at the cost of time for each additional attempt.
-			$Script:OCRAttempts ++
-			$Engine = (2,1,3)[$Script:OCRAttempts-1] #try engines in order of the best quality: Engine 2, then 1 then 3.
-			$NextTZOCR = WebRequestWithTimeOut -InitiatingFunction "TZ_OCR" -ScriptBlock {
-				param ($EngineNumber) #Run the scriptblock with $EngineNumber as a parameter. This way we can insert the variable $Engine into the scriptblock. It's not possible to insert this variable into the script block any other way.
-				(((Invoke-WebRequest -Uri ("https://api.ocr.space/parse/imageurl?apikey=" + $Using:D2ROCRref + "&filetype=png&isCreateSearchablePdf=false&OCREngine=" + $EngineNumber + "&scale=true&url=https://thegodofpumpkin.com/terrorzones/terrorzone.png") -ErrorAction Stop).Content | ConvertFrom-Json).ParsedResults.ParsedText)
-			} -TimeoutSeconds 13 #allow up to 13 seconds per request. Standard requests are around 3 seconds but as it's a free service it can sometimes be slow. Most of the time when it takes longer than 10 seconds to retrieve OCR it fails. Default timeout from OCR.Space (when an engine is down) is actually 30 seconds before an error is thrown.
-			if ($SuccessfulEngine -ne $null){
-					$NextTZOCR = $NextTZOCR.replace(": :","::") # Prevents issues if OCR mistakenly reads "::" as ": :" eg: Next TerrorZone(s) : : Barracks / Jail 1 / Jail 2 / Jail 3
-				if ($SuccessfulEngine -eq 2){#For Engine 2
-					$NextTZ = [regex]::Match($NextTZOCR.Replace("`n", ""), "(?<=Next TerrorZone(?:\s)?(?:\(s\))?(?:\s)?(?:\.|::) ).*").Value #Regex for engine 2
-				} Elseif ($SuccessfulEngine -eq 1){#For Engine 1
-					$NextTZ = ($NextTZOCR.trim() -split "`n")[-1].replace("Next TerrorZone(s)","").replace(".","").replace(":","").trim()  #Regex for engine 1
-				} Elseif ($SuccessfulEngine -eq 3) {#For Engine 3
-					$NextTZ = $nexttzocr -replace "\r?\n", " " -replace "(?s).*Next TerrorZone\Ss\S\s","" #Regex for engine 3
-				}
-			}
-			$Script:SuccessfulEngine = $Null
-			if ($OCRSuccess -eq $False){
-				$FailMessage = "Was unable to pull next TZ details :("
-			}
-			if ($NextTZ -eq ""){#if next tz variable is empty due to OCR not working.
-				$FailMessage = "OCR failure, couldn't read next TZ details :("
-				$Script:OCRSuccess = $False
-				if ($Script:OCRAttempts -ne 3){
-					Write-Host "   First Crack failed, having attempt number" ($Script:OCRAttempts + 1)
-					$TryAgain = $True
-				}
-				Else {
-					$TryAgain = $False
-				}
-			}
-		} until ($true -eq $Script:OCRSuccess -or ($Script:OCRAttempts -eq 3 -and $OCRSuccess -eq $false -and $TryAgain -ne $true))
-	}
-	if ($Script:OCRSuccess -eq $False -or $CheckForNextTZ -eq $False){# Messages if things are unsuccessful pulling Next TZ
-		Write-Host
-		Write-Host "   Current TZ is: "  -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta #print next tz. The regex code helps format the string into an indented new line for longer TZ's.
-		if ($CheckForNextTZ -ne $False){
-			$FailMessage += "`n                             Attempts made: $Script:OCRAttempts`n                             Token used:      $tokreg"
-			Write-Host "   Next TZ info unavailable: $FailMessage" -ForegroundColor Red
-		}
-		Write-Host
-		Write-Host "  Information Retrieved at: " $TimeDataObtained
-		Write-Host "  Current TZ pulled from:    $CurrentTZProvider"
-		Write-Host
-		PressTheAnyKey
-	}
-	else {# Messages if things are succesful pulling Next TZ
-		Write-Host
-		Write-Host "   Current TZ is:  " -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
-		Write-Host "   Next TZ is:     " -nonewline;Write-Host ($NextTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
-		Write-Host
-		Write-Host "  Information Retrieved at: " $TimeDataObtained
-		Write-Host "  Current TZ pulled from:    $CurrentTZProvider"
-		Write-Host "  Next TZ pulled from:       $NextTZProvider"
 		Write-Host
 		PressTheAnyKey
 	}
@@ -2800,8 +2709,6 @@ Function Processing {
 			}
 			#Rename the Diablo Game window for easier identification of which account and region the game is.
 			$rename = ($Script:AccountID + " - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")" +" - Diablo II: Resurrected")
-			#$Command = ('"'+ $WorkingDirectory + '\SetText\SetText.exe" "Diablo II: Resurrected" "' + $rename +'"')
-			#$Command = ('"'+ $WorkingDirectory + '\SetText\SetTextv2.exe" /WindowToRename "Diablo II: Resurrected" "' + $rename +'"')
 			$Command = ('"'+ $WorkingDirectory + '\SetText\SetTextv2.exe" /PID ' + $process.id + ' "' + $rename + '"')
 			try {
 				cmd.exe /c $Command
@@ -2838,7 +2745,6 @@ Function Processing {
 			}
 			Start-Sleep -milliseconds 1000
 			$Script:ScriptHasBeenRun = $true
-			cls
 		}
 	}
 }
