@@ -1,7 +1,7 @@
 **Notice about Asia AKA KR Auth Issues**<br>
 I'm aware of [issues](https://github.com/shupershuff/Diablo2RLoader/issues/28) with Blizzards Authentication servers not authenticating on kr.actual.battle.net.
 This has happened in the past but has historically been resolved by Blizzard within 8 hours or so.<br>
-I have an alternate authentication solution (essentially the same as opening via the bnet client) that can optionally be used in place of username and password which can be seen in the latest update.
+I have an alternate authentication solution (essentially the same as opening via the bnet client) that can optionally be used in place of username and password which can be seen in the latest update. See Setup instructions below.
 
 **Notice about Update Issues for v1.8.1 through to v1.8.3**<br>
 In v1.8.1 and v1.8.2 there was an issue that didn't present itself until the script was run on a day of the month that's a single digit.<br>
@@ -37,6 +37,9 @@ If you want to use additional scripts, programs or mods to achieve any of the ab
 
 This is a labour of love, for a game I love, for what I feel is a pretty good gaming community :)<br>
 This Readme is a bit wordy sorry, I've tried to capture all the information that anyone might ever ask for.<br>
+
+I've put several 100's of hours into making this, so if you like it, consider buying me a beer at https://www.buymeacoffee.com/shupershuff<br>
+Cheers!
 
 Script Screenshot:<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50dfcb19-8ef1-4e6f-8cde-35c1f92cbec6)<br>
@@ -163,12 +166,12 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 7. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
 9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
-10. OPTIONAL, if you want to be able to use Token based authentication, you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
+10. OPTIONAL, if you want to be able to use Token based authentication (eg if you have MFA enabled on your account or a one of Blizzards Auth servers are down and you can't connect), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
 	a. Log in with your credentials and approve MFA request (if enabled).<br>
 	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
 		![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/e9976e64-5eaf-4288-b6aa-6f76513f76e9)<br>
-	c. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues.<br>
+	c. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues. Generally speaking you will have the best experience launching with parameters. You can toggle the script to temporarily use auth tokens instead of parameters from the info menu.<br>
 	d. Close the browser, reopen in private mode, log into each of your other accounts and repeat the steps A to C above.<br>
 	e. The token will be converted to an encrypted string when script is next run.<br>
 	f. You will need to redo this step if you add/remove MFA to your account.<br>
@@ -315,7 +318,7 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 **A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#3-setup-your-accounts)).
 
 **Q:** I would like to say "Thankyou". How do I do that?<br>
-**A:** Please pay my entire mortgage. Thanks in advance. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks. It's rewarding to me to know that this is helping people :)<br>
+**A:** Please pay my entire mortgage. Thanks in advance. Buy me a beer here https://www.buymeacoffee.com/shupershuff. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks :)<br>
 
 **Q:** I have suggestions and/or issues with this, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
@@ -378,7 +381,7 @@ Happy for you to make any modifications this script for your own needs providing
 - Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
-- Thanks to TheGodOfPumpkin for Next TZ source. Full Chur!
+- Thanks to Mysterio from D2Emu.com for providing TZ source API.
 - Thanks to Shalzuth (https://d2rapi.fly.dev), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to https://ocr.space/OCRAPI for their free OCR API
 - Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
