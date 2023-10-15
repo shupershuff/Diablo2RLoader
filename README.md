@@ -38,7 +38,7 @@ If you want to use additional scripts, programs or mods to achieve any of the ab
 This is a labour of love, for a game I love, for what I feel is a pretty good gaming community :)<br>
 This Readme is a bit wordy sorry, I've tried to capture all the information that anyone might ever ask for.<br>
 
-I've put several 100's of hours into making this, so if you like it, consider buying me a beer at https://www.buymeacoffee.com/shupershuff<br>
+I've put several 100's of hours into making this, so if you like it, consider buying me a beer at https://www.buymeacoffee.com/shupershuff or here [https://github.com/sponsors/shupershuff](https://github.com/sponsors/shupershuff?frequency=one-time&sponsor=shupershuff&amount=5).<br>
 Cheers!
 
 Script Screenshot:<br>
@@ -287,6 +287,13 @@ I've noted that with my hardware running 4 instances is generally not fun graphi
 
 ## FAQ / Common Issues
 
+**Q:** I would like to say "Thankyou". How do I do that?<br>
+**A:** Please pay my entire mortgage. Thanks in advance. Buy me a beer here https://www.buymeacoffee.com/shupershuff.<br>
+Or here [https://github.com/sponsors/shupershuff](https://github.com/sponsors/shupershuff?frequency=one-time&sponsor=shupershuff&amount=5).<br>
+Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510).<br>
+Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ).<br>
+Or just a message to say thanks :)<br>
+
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
 **A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
 
@@ -316,9 +323,6 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
 **A1:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.<br>
 **A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#3-setup-your-accounts)).
-
-**Q:** I would like to say "Thankyou". How do I do that?<br>
-**A:** Please pay my entire mortgage. Thanks in advance. Buy me a beer here https://www.buymeacoffee.com/shupershuff. Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510). Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Or just a message to say thanks :)<br>
 
 **Q:** I have suggestions and/or issues with this, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
