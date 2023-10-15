@@ -27,6 +27,7 @@ Script now works if one game instance has been launched outside of this script v
 Improved Game Window name by adjusting to show more useful information first (ID - Acct Label (region) - Diablo II: Resurrected).
 Improved DClone checker by adding 1 second to DClone timeout as 2 seconds was a bit tight and caused errors.
 Fixed unhandled DClone errors for timeouts.
+Fixed DClone alarm from alarming twice when detecting changes from 6/6 to 1/6 on some sources.
 Minor tidy ups.
 
 ##########TEST IMMEDIATELY AFTER RELEASE, test if settextv2.bas is downloaded and extracted.
@@ -41,7 +42,7 @@ Fix whatever I broke or poorly implemented in 1.10.0 :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.9.1"
+$CurrentVersion = "1.9.2"
 
 ###########################################################################################################################################
 # Script itself
@@ -564,36 +565,6 @@ if ($Script:Config.DCloneAlarmVoice -eq $Null){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-if ($Script:Config.AuthenticationMethod -eq $Null){
-	Write-Host
-	Write-Host " Config option 'AuthenticationMethod' missing from config.xml" -foregroundcolor Yellow
-	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
-	Write-Host " This config allows you to use alternative authentication methods." -foregroundcolor Yellow
-	Write-Host " You can change this if Blizzard Auth servers are having issues." -foregroundcolor yellow
-	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
-	Write-Host
-	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
-	$Pattern = "</DefaultRegion>"
-	$Replacement = "</DefaultRegion>`n`n`t<!--Choose the authentication method you want the script to use.`n`t"
-	$Replacement +=	"Options are Token and Parameter. Parameter uses standard UserName Password parameters.`n`t"
-	$Replacement +=	"With the token option, it's not possible to launch all accounts at once or use the batching feature`n`t"
-	$Replacement +=	"as you must make sure you get to the character select screen before launching another instance.`n`t"
-	$Replacement +=	"Token option requires additional setup steps but is useful when Blizzard auth servers are having issues.`n`t"
-	$Replacement +=	"See Readme for more details. Default and recommended option is Parameter-->`n`t"
-	$Replacement +=	"<AuthenticationMethod>Parameter</AuthenticationMethod>" #add option to config file if it doesn't exist.
-	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-	Start-Sleep -milliseconds 1500
-	ImportXML
-	PressTheAnyKey
-}
-if ($Script:Config.AuthenticationMethod -ne "Token" -and $Script:Config.AuthenticationMethod -ne "Parameter"){
-		Write-host
-		Write-host " Error: AuthenticationMethod in config has an invalid option set." -Foregroundcolor red
-		Write-host " Open config.xml and set this to either Parameter or Token." -Foregroundcolor red
-		Write-host
-		PressTheAnyKeyToExit
-}
 
 if ($Script:Config.DCloneAlarmList -ne ""){
 	$ValidVoiceOptions = 
@@ -819,7 +790,7 @@ Function ImportCSV {
 				# Export the updated CSV data back to the file
 				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
 			}
-			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "TokenIsSecureString" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.7.0. If batch column doesn't exist, add it
+			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "TokenIsSecureString" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.10.0. If token columns don't exist, add them.
 				# Column does not exist, so add it to the CSV data
 				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "Token" -NotePropertyValue $Null}
@@ -827,6 +798,9 @@ Function ImportCSV {
 				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "TokenIsSecureString" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "TokenIsSecureString" -NotePropertyValue $Null}
 				}
+				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
+					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "AuthenticationMethod" -NotePropertyValue "Parameter"}
+				}				
 				# Export the updated CSV data back to the file
 				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
 			}
@@ -855,6 +829,17 @@ Function ImportCSV {
 			}
 			#Secure any plain text tokens. Ask for tokens on accounts that don't have any if Config is configured to use Token Authentication.
 			$NewCSV = Foreach ($Entry in $Script:AccountOptionsCSV) {
+				if 	($Entry.AuthenticationMethod -eq ""){
+					$Entry.AuthenticationMethod = "Parameter"
+					$UpdateAccountsCSV = $True
+				}
+				if ($Entry.AuthenticationMethod -ne "Token" -and $Entry.AuthenticationMethod -ne "Parameter"){
+					Write-host
+					Write-host (" Error: AuthenticationMethod in accounts.csv for " + $Entry.AccountLabel + " is invalid.") -Foregroundcolor red
+					Write-host " Open accounts.csv and set this to either 'Parameter' or 'Token'." -Foregroundcolor red
+					Write-host
+					PressTheAnyKeyToExit
+				}	
 				if ($Entry.TokenIsSecureString.length -gt 0 -and $Entry.TokenIsSecureString -ne $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
 					$Entry
 				}
@@ -868,7 +853,7 @@ Function ImportCSV {
 					$Entry
 					$TokensUpdated = $true
 				}
-				if ($Entry.Token.length -eq 0 -and $Script:Config.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
+				if ($Entry.Token.length -eq 0 -and $Entry.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
 					Write-Host
 					Write-Host (" The account " + $Entry.AccountLabel + " doesn't yet have a Token defined.") -foregroundcolor yellow
 					Write-Host " See the readme for how to obtain Auth token." -foregroundcolor yellow
@@ -916,7 +901,7 @@ Function ImportCSV {
 					}
 				}
 			}
-			if ($PWsUpdated -eq $true -or $TokensUpdated -eq $True){#if CSV needs to be updated
+			if ($PWsUpdated -eq $true -or $TokensUpdated -eq $True -or $UpdateAccountsCSV -eq $True){#if CSV needs to be updated
 				Try {
 					$NewCSV | Export-CSV "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #update CSV file
 					if ($TokensUpdated -eq $True){
@@ -1136,13 +1121,11 @@ Function Inventory {#Info screen
 	write-host
 	write-host ("  Chance to find $X[38;2;65;105;225;22mMagic$X[0m quality quote or better: " + [math]::Round((($QualityArraySum - $NormalProbability + 1) * (1/$QualityArraySum) * 100),2) + "%" )
 	write-host
-	write-host ("  D2r Game Version:    " + (Get-Command "$GamePath\D2R.exe").FileVersionInfo.FileVersion)
-	write-host ("  Script Auth Method:  " + $Script:Config.AuthenticationMethod)
-	write-host "  Script Install Path: " -nonewline
+	write-host ("  $X[4mD2r Game Version:$X[0m    " + (Get-Command "$GamePath\D2R.exe").FileVersionInfo.FileVersion)
+	write-host "  $X[4mScript Install Path:$X[0m " -nonewline
 	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.	
-	write-host
-	write-host "  Your Script Version: v$CurrentVersion"
-	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/tag/v$CurrentVersion"
+	write-host "  $X[4mYour Script Version:$X[0m v$CurrentVersion"
+	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion"
 	if($Script:LatestVersionCheck -eq $null -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
 		try {
 			$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
@@ -1157,19 +1140,37 @@ Function Inventory {#Info screen
 	
 	if ($Null -ne $Script:LatestVersion -and $Script:LatestVersion -gt $Script:CurrentVersion) {
 		write-host
-		write-host "  Latest Script Version: v$LatestVersion" -foregroundcolor yellow
+		write-host "  $X[4mLatest Script Version:$X[0m v$LatestVersion" -foregroundcolor yellow
 		write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/latest" -foregroundcolor yellow
 	}
 	write-host
 	if ($Script:NotificationsAvailable -eq $True){
+		write-host "  -------------------------------------------------------------------------"
 		write-host "  $X[38;2;255;165;000;48;2;1;1;1;4mNotification:$X[0m" -nonewline
 		Notifications -check $False
 		$Script:NotificationHasBeenChecked = $True
-		write-host
-
+		write-host "  -------------------------------------------------------------------------"
 	}
 	write-host
-	PressTheAnyKey
+	Write-Host "  Press '$X[38;2;255;165;000;22mt$X[0m' to temporarily force token based authentication for configured "
+	write-host "  accounts. Otherwise, press any other key to return to main menu... " -nonewline
+	$InventoryOption = readkey
+	Write-Host;Write-Host
+	if ($InventoryOption -eq "t"){
+		if($Script:ForceAuthToken -ne $True){
+			$Script:ForceAuthToken = $True
+			Write-Host "  ForceAuthToken Enabled." -foregroundcolor yellow
+			Write-Host "  For authentication, script will now force usage of AuthTokens (where " -foregroundcolor green
+			Write-Host "  accounts have been configured)." -foregroundcolor green
+		}
+		else {
+			$Script:ForceAuthToken = $False
+			Write-Host "  ForceAuthToken Disabled." -foregroundcolor yellow
+			Write-Host "  For authentication, script will now use what's configured in the " -foregroundcolor green
+			Write-Host "  AuthenticationMethod column in accounts.csv" -foregroundcolor green
+		}
+		start-sleep -milliseconds 5400
+	}
 }
 
 Function Notifications {
@@ -1219,7 +1220,6 @@ Function Notifications {
 		}
 	}
 	if ($Check -eq $True -and $Script:NotificationHasBeenChecked -eq $False -and $Script:NotificationsAvailable -eq $True){#only show message if user hasn't seen notification yet.
-		write-host
 		write-host "  $X[38;2;255;165;000;48;2;1;1;1;4mNotification available. See Info screen for details.$X[0m"
 	}
 }
@@ -1666,7 +1666,7 @@ Function DClone {# Display DClone Status.
 					foreach ($Item in $DCloneChangesArray | where-object {$_.Tag -eq $Tag}) {#for each tag specified in config.xml...
 						$item.VoiceAlarmStatus = $False 
 						$item.TextAlarmStatus = $False 
-						if ($item.OldStatus -ne $Status.progress){
+						if ($item.Status -ne $Status.progress){
 							if ($Status.progress -ge 5 -and ($DCloneAlarmLevel -match 5)) {#if D Clone walk is imminent
 								$item.VoiceAlarmStatus = $True
 							}
@@ -1676,8 +1676,11 @@ Function DClone {# Display DClone Status.
 							elseif ($DCloneAlarmLevel -match $Status.progress){#if User has configured alarms to happen for lower D Clone status levels (2,3,4)
 								$item.VoiceAlarmStatus = $True
 							}
-							$item.TextAlarmStatus = $True 
-							$item.OldStatus = $Status.progress
+							$item.TextAlarmStatus = $True
+							if ($item.Status -ne "" -and $item.Status -ne $null){
+								$item.PreviousStatus = $item.Status
+							}
+							$item.Status = $Status.progress
 							$item.LastUpdate = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
 						}
 						elseif ($Status.progress -eq 5){#if status hasn't changed, but status is 5 (imminent), show alarm text on main menu
@@ -1702,7 +1705,7 @@ Function DClone {# Display DClone Status.
 							$VoiceAlarmStatus = $False
 							$TextAlarmStatus = $False
 						}
-						$DCloneChangesArray += [PSCustomObject]@{Tag = $Tag; OldStatus = $Status.progress; VoiceAlarmStatus = $VoiceAlarmStatus; TextAlarmStatus = $TextAlarmStatus; LastUpdate = $null}
+						$DCloneChangesArray += [PSCustomObject]@{Tag = $Tag; PreviousStatus = $null; Status = $Status.progress; VoiceAlarmStatus = $VoiceAlarmStatus; TextAlarmStatus = $TextAlarmStatus; LastUpdate = $null}
 					}
 					Catch {#if script is refreshed too quick and $DCloneChangesArray gets corrupted, reset it.
 						$DCloneChangesArray = $null
@@ -1786,17 +1789,17 @@ Function DCloneVoiceAlarm {
 		else {
 			$DCloneRegion = "Europe"
 		}
-		if ($Item.OldStatus -eq 5){#change to 5
+		if ($Item.Status -eq 5){
 			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone is about to walk in $DCloneRegion on $CoreText $LadderText ($($item.tag))!$X[0m"
 			$Message = ("D Clone Imminent! DClone is about to walk in $DCloneRegion on " + $CoreText + " " + $LadderText)
 		}
-		Elseif ($Item.OldStatus -eq 1 -or $Item.OldStatus -eq 6){
+		Elseif (($Item.Status -eq 1 -and $Item.PreviousStatus -ne 6) -or $Item.Status -eq 6){#check if status has just changed to 6 or it has changed to 1 from any number other than 6 (to prevent duplicate alarms.
 			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone has just walked in $DCloneRegion on $CoreText $LadderText ($($item.tag)).$X[0m"
 			$Message = ("D Clone Has just walked in $DCloneRegion on " + $CoreText + " " + $LadderText)
 		}
-		Elseif ($Script:DCloneAlarmLevel -match $Item.OldStatus) {
-			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone Update! DClone is now $($Item.OldStatus)/6 in $DCloneRegion on $CoreText $LadderText ($($item.tag))$X[0m"
-			$Message = ("D Clone is now " + $Item.OldStatus + " out of 6 in $DCloneRegion on " + $CoreText + " " + $LadderText)
+		Elseif ($Script:DCloneAlarmLevel -match $Item.Status) {
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone Update! DClone is now $($Item.Status)/6 in $DCloneRegion on $CoreText $LadderText ($($item.tag))$X[0m"
+			$Message = ("D Clone is now " + $Item.Status + " out of 6 in $DCloneRegion on " + $CoreText + " " + $LadderText)
 		}
 		if ($item.VoiceAlarmStatus -eq $True){
 			$voice.speak("$Message") | out-null
@@ -2218,6 +2221,7 @@ Function Menu {
 			}
 		}
 	}
+	$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv" #Import accounts.csv again in case someone has updated Auth Method without closing the script.
 	if ($Script:OpenAllAccounts -eq $True){
 		Write-Host
 		Write-Host " Opening all accounts..."
@@ -2464,12 +2468,14 @@ Function ChooseAccount {
 					Else {
 						$Script:DCloneChangesCSV = ""#if menu is refreshed too quick
 					}
+					$script:counting ++
 					remove-job * -force
 					$Script:DCloneJob = Start-Job -ScriptBlock {
 						Invoke-Expression "function Dclone {$using:GetDCloneFunc}"
 						Invoke-Expression "function WebRequestWithTimeOut {$Using:GetWebRequestFunc}"
 						Dclone -DisableOutput $True -D2CloneTrackerSource $Using:D2CloneTrackerSource -TagList $Using:Config.DCloneAlarmList -DCloneChanges $using:DCloneChangesCSV -DCloneAlarmLevel $Using:DCloneAlarmLevel
 					} #check for dclone status
+					
 				}
 				catch {
 					Write-Host
@@ -2618,7 +2624,7 @@ Function Processing {
 				$Script:AccountID = "1"
 			}
 		}
-		if ($Script:Config.AuthenticationMethod -eq "Token"){
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or ($Script:ForceAuthToken -eq $True -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){
 			$Script:Token = $Script:AccountChoice.Token.tostring()
 			$EncryptedToken = $Script:Token | ConvertTo-SecureString
 			$Tokenobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedToken)
@@ -2644,7 +2650,7 @@ Function Processing {
 		}	
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
-		if ($Script:Config.AuthenticationMethod -eq "Parameter"){
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -and $Script:ForceAuthToken -ne $True){
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW +" -address " + $Script:Region + " " + $Script:AccountChoice.CustomLaunchArguments).tostring()
 		}
 		else {
@@ -2807,8 +2813,9 @@ Function Processing {
 				Write-Host " Couldn't rename window :(" -foregroundcolor red
 				PressTheAnyKey
 			}
-			if ($Script:Config.AuthenticationMethod -eq "Token"){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
+			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or ($Script:ForceAuthToken -eq $True -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
 				$CurrentTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
+				write-host " Launched Game using an $X[38;2;165;146;99;4mAuthentication Token$X[0m."
 				write-host " Waiting for you to get to Character select screen..." -foregroundcolor yellow
 				write-host " $X[38;2;255;255;0;4mDO NOT OPEN OR CLOSE ANOTHER GAME INSTANCE UNTIL THIS YOU'VE DONE THIS.$X[0m"
 				do {
@@ -2831,10 +2838,10 @@ Function Processing {
 			}
 			Start-Sleep -milliseconds 1000
 			$Script:ScriptHasBeenRun = $true
+			cls
 		}
 	}
 }
-
 ImportCSV
 cls
 SetQualityRolls
