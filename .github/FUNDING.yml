@@ -11,4 +11,6 @@ github: shupershuff
 #otechie: # Replace with a single Otechie username
 #lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cloud-foundry
 custom: https://www.buymeacoffee.com/shupershuff
-custom: https://paypal.me/Shupershuff
+custom: 
+  - name: Paypal
+    url: https://paypal.me/Shupershuff
