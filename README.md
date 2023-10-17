@@ -42,9 +42,9 @@ I've put several 100's of hours into making this, so if you like it, consider bu
 Cheers!
 
 Script Screenshot:<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50dfcb19-8ef1-4e6f-8cde-35c1f92cbec6)<br>
+![ScriptMainMenu](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50dfcb19-8ef1-4e6f-8cde-35c1f92cbec6)<br>
 What your windows will look like:<br>
-![GameWindows](https://user-images.githubusercontent.com/63577525/233829532-f81afad2-4806-4d6a-bb9e-817c25758346.png)
+![GameWindows](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/62129f82-bde4-4744-83f2-cc69d873988a)
 ## But I don't want to use your script you dodgy internet human
 WORK IN PROGRESS<br>
 Not everyone wants to use a random script or an app and that's understandable.<br>
