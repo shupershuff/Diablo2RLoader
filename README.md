@@ -63,6 +63,7 @@ Optionally you can also have the game launch using custom settings.json for each
 ## Other Features
 **Open All accounts at once**<br>
 Time is precious so work smarter not harder by opening all your accounts at once to maximise your free time to actually play the game instead of clicking through menus.<br>
+Note that if you've configured your account(s) or a region(s) to launch the game using an Authentication Token instead of parameters, you will need to wait for each game to reach the character selection screen before the next instance can launch.
 
 **Batch Open Accounts**<br>
 Rather than open all accounts, you can open a group of accounts. This feature is designed for you creatures that have several accounts but only want to launch a subset of these, for example only launch the 3 accounts you primarily play from.<br>
@@ -77,7 +78,7 @@ You can enable both of these features at the same time. See [Setup Steps](#setup
 
 **Statistics - Track your playtime**<br>
 It was too technically difficult for Blizzard to track time played for D2r within their Battlenet Client so you can use my janky one instead.<br>
-Time per account can be seen from the main menu. Total time the script has ran for can be seen by going into the info screen ('i').
+Time per account can be seen from the main menu. Total time the script has ran for with D2r running can be seen by going into the info screen ('i').
 Now you can look back on your D2r playtime and think back on all of the productive things you should've done, but didn't.<br>
 
 Other misc stats and info can be seen on the info screen. Statistics are recorded locally to stats.csv and accounts.csv in your script folder.<br>
@@ -86,9 +87,12 @@ Other misc stats and info can be seen on the info screen. Statistics are recorde
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
+Data courtesy of D2emu.com<br>
+
 **Check DClone Status**<br>
 You can also manually check the current DClone status by pressing 'd'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/f6f2c934-7fce-47db-a052-97e42874d9be)<br>
+Data courtesy of d2rapi.fly.dev, d2runewizard.com and diablo2.io. That's right, you can choose your source!<br>
 
 **Alarms for DClone Walk status changes**<br>
 If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.<br>
@@ -108,6 +112,8 @@ https://github.com/shupershuff/Diablo2RLoader/assets/63577525/56bd87d5-157f-4119
 If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
 That way instead of providing any real value in terms of damage, you can provide entertainment value instead.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ba83409-eeba-4ae6-ba1e-b68d03e850e3)<br>
+Jokes courtesy of v2.jokeapi.dev and official-joke-api.appspot.com<br>
+
 **Launch Parameters**<br>
 You can run the script using launch parameters instead.<br>
 This is ideal if you want to create a desktop shortcut to open a set of accounts, or if you're a super nerd and you want to launch the accounts from a scheduled task or from Home Assistant so that your game is ready to go when you get home from work :)<br>
@@ -364,11 +370,9 @@ See this site for more information on what this does, this contains the original
 
 # What's Next #
 If there's something you want to see added or improved then let me know. Future updates may include:<br>
-* Alternative Authentication methods (tokens, launch via bnet)
-* Ability to use with MFA enabled accounts/Ability to use both script and launch manually via bnet.
+* Remove toggleable ForceAuthToken within the script and replace with a config to specify region(s) to force AuthToken connection method. Useful when one region is down.
 * Possibly add the ability to mute minimised windows (as long as it can be done within windows without additional software)
 * Ability to skip intro
-* Ability to sent outage notifications to end users
 * Fixing anything I broke in the last release.
 * Adding whatever features you fools ask for.
 * Perhaps make a GUI *if* there's enough interest. Probably not though as there would be a lot of brain activity involved. Pay my mortgage and we'll perhaps maybe talk... probably.
@@ -383,11 +387,12 @@ Happy for you to make any modifications this script for your own needs providing
 - Handle64 tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
 - Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
+  - After using the above for several months, I built my own to work with Process ID. Posted to the thread above.
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
-- Thanks to Mysterio from D2Emu.com for providing TZ source API.
+- Thanks to Mysterio from [D2Emu.com}(https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
 - Thanks to Shalzuth (https://d2rapi.fly.dev), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
-- Thanks to https://ocr.space/OCRAPI for their free OCR API
+- Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
 - Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
