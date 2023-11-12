@@ -75,7 +75,7 @@ if ($Null -ne $ManualSettingSwitcher){
 	$Script:AskForSettings = $True
 }
 #check if username was passed through via parameter
-if ($ScriptArguments -ne $Null){
+if ($Null -ne $ScriptArguments){
 	$Script:ParamsUsed = $true
 }
 Else {
@@ -151,7 +151,7 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
         Write-Host -NoNewLine $message
     }
     $Counter = $timeOutSeconds * 1000 / 250
-	$IgnoreKeyList = @(9,13,16,17,18,20,32,91,192) #Ignore Tab,Enter,Shift,Ctrl,Alt,Caps,Space,Windows Key,Tilde
+	# $IgnoreKeyList = @(9,13,16,17,18,20,32,91,192) #Ignore Tab,Enter,Shift,Ctrl,Alt,Caps,Space,Windows Key,Tilde
     while ($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)) {
         if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
             $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
@@ -191,12 +191,12 @@ Function PressTheAnyKeyToExit {#Used instead of Pause so folk can hit any key to
 }
 
 if ((Test-Path -Path "$Script:WorkingDirectory\Stats.csv") -ne $true){#Create Stats CSV if it doesn't exist
-	$CreateStatCSV = {} | Select "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
-	write-host " Stats.csv created!"
+    $CreateStatCSV = {} | Select-Object "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
+	write-host " Stats.csv created! $CreateStatCSV"
 }
 do {
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv" #Get current stats csv details
-	if ($CurrentStats -ne $null){
+	if ($null -ne $CurrentStats){
 		#Todo: In the Future add CSV validation checks
 		$StatsCSVImportSuccess = $True
 	}
@@ -240,12 +240,12 @@ elseif ($CurrentStats.LastUpdateCheck -eq "" -or $CurrentStats.LastUpdateCheck -
 if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.dd HH:mm:ss')){# Compare current date and time to LastUpdateCheck date & time.
 	try {
 		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
-		$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
+		$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
 		$Script:LatestVersion = [version[]]$ReleaseInfo.Name.Trim('v')
 		if ($Script:LatestVersion -gt $Script:CurrentVersion) {
 			Write-Host
 			Write-Host " Update available! See Github for latest version and info" -foregroundcolor Yellow -nonewline
-			if ([version[]]$CurrentVersion -in ($Releases.Name.Trim('v') | sort -desc)[2..$releases.count]){
+			if ([version[]]$CurrentVersion -in ($Releases.Name.Trim('v') | Sort-Object -desc)[2..$releases.count]){
 				Write-Host ".`n There have been several releases since your version." -foregroundcolor Yellow
 				Write-Host " Checkout Github releases for fixes/features added. " -foregroundcolor Yellow
 				Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/$X[0m"
@@ -254,20 +254,20 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 			}
 			Write-Host
 			$ReleaseInfo.body -split "`n" | ForEach-Object {
-				$_ = " " + $_
-				if ($_[1] -eq "-") {#for any line starting with a dash
-					 $DashFormat = ($_ -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
+				$line = " " + $_
+				if ($line[1] -eq "-") {#for any line starting with a dash
+					 $DashFormat = ($line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
 					 $DashFormat -split "`n" | ForEach-Object {
-						if ($_[1] -eq "-") {#for any line starting with a dash
-							$_
+						if ($line[1] -eq "-") {#for any line starting with a dash
+							$line
 						}
 						else {
-							($_ -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
+							($line -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
 						}
 					}
 				}
 				else {
-					($_ -replace "(.{1,75})(\s+|$)", "`$1`n ").trimend()
+					($line -replace "(.{1,75})(\s+|$)", "`$1`n ").trimend()
 				}
 			}
 			Write-Host; Write-Host
@@ -296,7 +296,7 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 				$ZipURL = $ReleaseInfo.zipball_url #get zip download URL	
 				$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
 				Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
-				if ($releaseinfo.assets.browser_download_url -ne $Null){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.				
+				if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.				
 					Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -OutFile $null | out-null #identify the latest file only.
 				}
 				$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
@@ -330,11 +330,11 @@ if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.bas')) -ne $True){
 			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
 		}
 		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
-		$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
+		$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
 		$ZipURL = $ReleaseInfo.zipball_url #get zip download URL	
 		$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
 		Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
-		if ($releaseinfo.assets.browser_download_url -ne $Null){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.				
+		if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.				
 			Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -OutFile $null | out-null #identify the latest file only.
 		}
 		$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
@@ -374,7 +374,7 @@ if (Select-String -path $Script:WorkingDirectory\Config.xml -pattern "multiple g
 	write-host " Corrected the description for GamePath in config.xml." -foregroundcolor Green
 	Start-Sleep -milliseconds 1500
 }
-if ($Script:Config.CommandLineArguments -ne $Null){#remove this config option as arguments are now stored in accounts.csv so that different arguments can be set for each account
+if ($Null -ne $Script:Config.CommandLineArguments){#remove this config option as arguments are now stored in accounts.csv so that different arguments can be set for each account
 	Write-Host
 	Write-Host " Config option 'CommandLineArguments' is being moved to accounts.csv" -foregroundcolor Yellow
 	Write-Host " This is to enable different CMD arguments per account." -foregroundcolor Yellow
@@ -384,12 +384,12 @@ if ($Script:Config.CommandLineArguments -ne $Null){#remove this config option as
 	$NewXML = $NewXML -replace $Pattern, ""
 	$NewXML = $NewXML -replace ";;","`r`n"
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-	$AddCMDArgsToCSV = $True
+	# $AddCMDArgsToCSV = $True
 	$Script:OriginalCommandLineArguments = $Script:Config.CommandLineArguments
 	Write-Host " CommandLineArguments has been removed from config.xml" -foregroundcolor green
 	Start-Sleep -milliseconds 1500
 }
-if ($Script:Config.CheckForNextTZ -eq $Null){
+if ($Null -eq $Script:Config.CheckForNextTZ){
 	Write-Host
 	Write-Host " Config option 'CheckForNextTZ' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -405,7 +405,7 @@ if ($Script:Config.CheckForNextTZ -eq $Null){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-if ($Script:Config.ManualSettingSwitcherEnabled -eq $Null){#not to be confused with the AutoSettingSwitcher.
+if ($Null -eq $Script:Config.ManualSettingSwitcherEnabled){#not to be confused with the AutoSettingSwitcher.
 	Write-Host
 	Write-Host " Config option 'ManualSettingSwitcherEnabled' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -424,7 +424,7 @@ if ($Script:Config.ManualSettingSwitcherEnabled -eq $Null){#not to be confused w
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-if ($Script:Config.TrackAccountUseTime -eq $Null){
+if ($Null -eq $Script:Config.TrackAccountUseTime){
 	Write-Host
 	Write-Host " Config option 'TrackAccountUseTime' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -441,7 +441,7 @@ if ($Script:Config.TrackAccountUseTime -eq $Null){
 	ImportXML
 	PressTheAnyKey
 }
-if ($Script:Config.EnableBatchFeature -eq $Null){
+if ($Null -eq $Script:Config.EnableBatchFeature){
 	Write-Host
 	Write-Host " Config option 'EnableBatchFeature' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -457,7 +457,7 @@ if ($Script:Config.EnableBatchFeature -eq $Null){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-if ($Script:Config.DisableOpenAllAccountsOption -eq $Null){
+if ($Null -eq $Script:Config.DisableOpenAllAccountsOption){
 	Write-Host
 	Write-Host " Config option 'DisableOpenAllAccountsOption' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -473,7 +473,7 @@ if ($Script:Config.DisableOpenAllAccountsOption -eq $Null){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-if ($Script:Config.DCloneTrackerSource -eq $Null){
+if ($Null -eq $Script:Config.DCloneTrackerSource){
 	Write-Host
 	Write-Host " Config option 'DCloneTrackerSource' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -492,7 +492,7 @@ if ($Script:Config.DCloneTrackerSource -eq $Null){
 	ImportXML
 	PressTheAnyKey
 }
-if ($Script:Config.DCloneAlarmLevel -eq $Null){
+if ($Null -eq $Script:Config.DCloneAlarmLevel){
 	Write-Host
 	Write-Host " Config option 'DCloneAlarmLevel' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -514,7 +514,7 @@ if ($Script:Config.DCloneAlarmLevel -eq $Null){
 	ImportXML
 	PressTheAnyKey
 }
-if ($Script:Config.DCloneAlarmList -eq $Null){
+if ($Null -eq $Script:Config.DCloneAlarmList){
 	Write-Host
 	Write-Host " Config option 'DCloneAlarmList' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -547,7 +547,7 @@ if ($Null -ne $Script:Config.DCloneAlarmList -and $Script:Config.DCloneAlarmList
 		}
 	}
 }
-if ($Script:Config.DCloneAlarmVoice -eq $Null){
+if ($Null -eq $Script:Config.DCloneAlarmVoice){
 	Write-Host
 	Write-Host " Config option 'DCloneAlarmVoice' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -655,7 +655,7 @@ else {
 	$Script:GamePath = $Config.GamePath
 }
 foreach ($ConfigCheck in $BooleanConfigs){#validate all configs that require "True" or "False" as the setting.
-	if ($Config.$ConfigCheck -ne $Null -and ($Config.$ConfigCheck -ne $true -and $Config.$ConfigCheck -ne $false)){#if config is invalid
+	if ($Null -ne $Config.$ConfigCheck -and ($Config.$ConfigCheck -ne $true -and $Config.$ConfigCheck -ne $false)){#if config is invalid
 		Write-Host " Config option '$ConfigCheck' is invalid." -foregroundcolor yellow 
 		Write-Host " Ensure this is set to either True or False." -foregroundcolor yellow
 		Write-Host;	PressTheAnyKey
@@ -754,13 +754,13 @@ Function ValidateTokenInput {
 			}
 		}
 	}
-	until ($extractedInfo -ne $null)
+	until ($null -ne $extractedInfo)
 }
 
 #Import Account CSV
 Function ImportCSV {
 	do {
-		if ($Script:AccountUsername -eq $Null){#If no parameters sent to script.
+		if ($Null -eq $Script:AccountUsername){#If no parameters sent to script.
 			try {
 				$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv" #import all accounts from csv
 			}
@@ -770,7 +770,7 @@ Function ImportCSV {
 				PressTheAnyKeyToExit
 			}
 		}
-		if ($Script:AccountOptionsCSV -ne $Null){
+		if ($Null -ne $Script:AccountOptionsCSV){
 			#check Accounts.csv has been updated and doesn't contain the example account.
 			if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
 				Write-Host
@@ -1051,7 +1051,7 @@ function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 }
 
 Function Inventory {#Info screen
-	cls
+	Clear-Host
 	Write-Host
 	Write-Host "          Stay a while and listen! Here's your D2r Loader info." -foregroundcolor yellow
 	write-host;	write-host
@@ -1063,7 +1063,7 @@ Function Inventory {#Info screen
 	$Script:QualityArray | ForEach-Object {
 		$QualityArraySum += $_.Probability
 	}
-	$NormalProbability = ($QualityArray | where-object {$_.type -eq "Normal"} | Select Probability).probability
+	$NormalProbability = ($QualityArray | where-object {$_.type -eq "Normal"} | Select-Object Probability).probability
 	write-host
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"	
 	$Line1 = "                    --------------------------------"
@@ -1083,7 +1083,7 @@ Function Inventory {#Info screen
 	$Line15 = ("                   |  $X[38;2;255;0;255;22mPerfect Gems:$X[0m            " + $(if ($CurrentStats.PerfectGems -eq "") {"0"} else {$CurrentStats.PerfectGems}))
 	$Line16 = "                    --------------------------------"
 	$Lines = @($Line1,$Line2,$Line3,$Line4,$Line5,$Line6,$Line7,$Line8,$Line9,$Line10,$Line11,$Line12,$Line13,$Line14,$Line15,$Line16)
-	$LongestObject = $null
+	# $LongestObject = $null
 	# Loop through each object in the array to find longest line (for formatting)
 	foreach ($Line in $Lines) {
 		if (($Line -replace '\[.*?22m', '' -replace '\[0m','').Length -gt $LongestLine) {
@@ -1095,7 +1095,7 @@ Function Inventory {#Info screen
 		$Dash = ""
 		write-host $Line -nonewline
 		if (($Line -replace '\[.*?22m', '' -replace '\[0m','').Length -lt $LongestLine + 2){
-			if ($line -notmatch "-"){
+			if ($Line -notmatch "-"){
 				while ((($Line -replace '\[.*?22m', '' -replace '\[0m','').Length + $Indent.length) -lt ($LongestLine + 2)){
 					$Indent = $Indent + " "
 				}
@@ -1122,13 +1122,13 @@ Function Inventory {#Info screen
 	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.	
 	write-host "  $X[4mYour Script Version:$X[0m v$CurrentVersion"
 	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion"
-	if($Script:ForceAuthToken -ne $null){
+	if($null -ne $Script:ForceAuthToken){
 		write-host "  $X[4mForceAuthToken:$X[0m $Script:ForceAuthToken"
 	}
-	if($Script:LatestVersionCheck -eq $null -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
+	if($null -eq $Script:LatestVersionCheck -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
 		try {
 			$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
-			$ReleaseInfo = ($Releases | sort id -desc)[0] #find release with the highest ID.
+			$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
 			$Script:LatestVersionCheck = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
 			$Script:LatestVersion = [version[]]$ReleaseInfo.Name.Trim('v')
 		}
@@ -1202,20 +1202,20 @@ Function Notifications {
 	Elseif ($Check -eq $False) {
 		write-host
 		$Notifications.notification -split "`n" | ForEach-Object {
-			$_ = " " + $_
-			if ($_[1] -eq "-") {#for any line starting with a dash
-				 $DashFormat = ($_ -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
+			$line = " " + $line
+			if ($line[1] -eq "-") {#for any line starting with a dash
+				 $DashFormat = ($line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
 				 $DashFormat -split "`n" | ForEach-Object {
-					if ($_[1] -eq "-") {#for any line starting with a dash
-						" " + $_
+					if ($line[1] -eq "-") {#for any line starting with a dash
+						" " + $line
 					}
 					else {
-						($_ -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend() 
+						($line -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend() 
 					}
 				}
 			}			
 			else {
-				($_ -replace "(.{1,74})(\s+|$)", " `$1`n ").trimend()
+				($line -replace "(.{1,74})(\s+|$)", " `$1`n ").trimend()
 			}
 		}
 	}
@@ -1566,7 +1566,7 @@ Function DClone {# Display DClone Status.
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -ScriptBlock {
 				Invoke-RestMethod -Uri $using:URI -Method GET
 			} -TimeoutSeconds 3
-			$CurrentStatus = $D2RDCloneResponse.PSObject.Properties | select @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.value + 1)}} #| sort server #add +1 as this source counts status from 0
+			$CurrentStatus = $D2RDCloneResponse.PSObject.Properties | Select-Object @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.value + 1)}} #| sort server #add +1 as this source counts status from 0
 		}
 		Catch {#catch commands captured in WebRequestWithTimeOut function
 		}
@@ -1588,7 +1588,7 @@ Function DClone {# Display DClone Status.
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -Headers -$headers -ScriptBlock {
 				Invoke-RestMethod -Uri $using:URI -Method GET -Headers $using:Headers
 			} -TimeoutSeconds 3
-			$CurrentStatus = $D2RDCloneResponse.servers | select @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} #| sort server
+			$CurrentStatus = $D2RDCloneResponse.servers | Select-Object @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} #| sort server
 		}
 		Catch {#catch commands captured in WebRequestWithTimeOut function	
 		}
@@ -1602,7 +1602,7 @@ Function DClone {# Display DClone Status.
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -ScriptBlock {
 				Invoke-RestMethod -Uri $using:URI -Method GET -Headers $using:Headers
 			} -TimeoutSeconds 3
-			$CurrentStatus = $D2RDCloneResponse | select @{Name='Server'; Expression={$_.region}},@{Name='Ladder'; Expression={$_.ladder}},@{Name='Core'; Expression={$_.hc}},@{Name='Progress'; Expression={$_.progress}}
+			$CurrentStatus = $D2RDCloneResponse | Select-Object @{Name='Server'; Expression={$_.region}},@{Name='Ladder'; Expression={$_.ladder}},@{Name='Core'; Expression={$_.hc}},@{Name='Progress'; Expression={$_.progress}}
 		}
 		Catch {#catch commands captured in WebRequestWithTimeOut function
 		}
@@ -1618,7 +1618,7 @@ Function DClone {# Display DClone Status.
 		}
 		Return
 	}
-	if ($DCloneErrorMessage -ne $null){
+	if ($null -ne $DCloneErrorMessage){
 		Write-host $DCloneErrorMessage -Foregroundcolor red
 		if ($DisableOutput -ne $True){
 			Write-host
@@ -1629,7 +1629,7 @@ Function DClone {# Display DClone Status.
 	}
 	$DCloneLadderTable = New-Object -TypeName System.Collections.ArrayList
 	$DCloneNonLadderTable = New-Object -TypeName System.Collections.ArrayList
-	if ($DCloneChanges -eq "" -or $DCloneChanges -eq $null){
+	if ($DCloneChanges -eq "" -or $null -eq $DCloneChanges){
 		$DCloneChangesArray = New-Object -TypeName System.Collections.ArrayList
 	}
 	Else {
@@ -1676,7 +1676,7 @@ Function DClone {# Display DClone Status.
 								$item.VoiceAlarmStatus = $True
 							}
 							$item.TextAlarmStatus = $True
-							if ($item.Status -ne "" -and $item.Status -ne $null){
+							if ($item.Status -ne "" -and $null -ne $item.Status){
 								$item.PreviousStatus = $item.Status
 							}
 							$item.Status = $Status.progress
@@ -1688,7 +1688,7 @@ Function DClone {# Display DClone Status.
 						elseif ($Status.progress -lt 5 -and $item.LastUpdate -gt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#if status is less than 5 and has changed within the last 5 minutes, enable text alarm
 							$item.TextAlarmStatus = $True
 						}
-						elseif ($item.LastUpdate -ne $null -and $item.LastUpdate -lt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#after 5 minutes remove the text alarm
+						elseif ($null -ne $item.LastUpdate -and $item.LastUpdate -lt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#after 5 minutes remove the text alarm
 							$item.LastUpdate = $null 
 							$item.TextAlarmStatus = $False
 						}
@@ -1716,8 +1716,8 @@ Function DClone {# Display DClone Status.
 		}
 	}
 	if ($True -ne $DisableOutput){
-		$DCloneLadderTable = $DCloneLadderTable | sort LadderServer
-		$DCloneNonLadderTable = $DCloneNonLadderTable | sort NonLadderServer
+		$DCloneLadderTable = $DCloneLadderTable | Sort-Object LadderServer
+		$DCloneNonLadderTable = $DCloneNonLadderTable | Sort-Object NonLadderServer
 		$Count = 0
 		Do {
 			if ($Count -eq 0){
@@ -1754,7 +1754,7 @@ Function DClone {# Display DClone Status.
 		Until ($Count -eq 6)
 		PressTheAnyKey
 	}
-	Elseif ($Taglist -ne "" -and $DCloneChangesArray -ne $null){#Else if Output is disabled and taglist has been specified, output dclone changes for alarm
+	Elseif ($Taglist -ne "" -and $null -ne $DCloneChangesArray){#Else if Output is disabled and taglist has been specified, output dclone changes for alarm
 		$DCloneChangesArray | ConvertTo-Csv -NoTypeInformation
 	}
 }
@@ -1763,8 +1763,8 @@ Function DCloneVoiceAlarm {
 	$voice = New-Object -ComObject Sapi.spvoice
 	$voice.rate = -2 #How quickly the voice message should be
 	Write-Host
-	if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man" -or $Script:Config.DCloneAlarmVoice -eq "Paladin"){$voice.voice = $voice.getvoices() | where {$_.id -like "*David*"}}
-	elseif ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman" -or $Script:Config.DCloneAlarmVoice -eq "Amazon"){$voice.voice = $voice.getvoices() | where {$_.id -like "*ZIRA*"}}
+	if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man" -or $Script:Config.DCloneAlarmVoice -eq "Paladin"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}}
+	elseif ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman" -or $Script:Config.DCloneAlarmVoice -eq "Amazon"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
 	else {break}# If specified voice doesn't exist
 	foreach ($Item in ($Script:DCloneChangesCSV | ConvertFrom-Csv) | where-object {$_.VoiceAlarmStatus -Match "True" -or $_.TextAlarmStatus -Match "True"}) {
 		if ($item.tag -match "l"){#if mode contains "L"
@@ -1804,7 +1804,7 @@ Function DCloneVoiceAlarm {
 			$voice.speak("$Message") | out-null
 		}
 	}
-	if ($Message -ne $null){
+	if ($null -ne $Message){
 		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mD Clone status provided by $D2CloneTrackerSource$X[0m"
 	}
 }
@@ -1905,11 +1905,11 @@ Function Killhandle {#kudos the info in this post to save me from figuring it ou
 	$proc_id_populated = ""
 	$handle_id_populated = ""
 	foreach($Line in Get-Content $PSScriptRoot\d2r_handles.txt) {
-		$proc_id = $Line | Select-String -Pattern '^D2R.exe pid\: (?<g1>.+) ' | %{$_.Matches.Groups[1].value}
+		$proc_id = $Line | Select-String -Pattern '^D2R.exe pid\: (?<g1>.+) ' | ForEach-Object{$_.Matches.Groups[1].value}
 		if ($proc_id){
 			$proc_id_populated = $proc_id
 		}
-		$script:handle_id = $Line | Select-String -Pattern '^(?<g2>.+): Event.*DiabloII Check For Other Instances' | %{$_.Matches.Groups[1].value}
+		$script:handle_id = $Line | Select-String -Pattern '^(?<g2>.+): Event.*DiabloII Check For Other Instances' | ForEach-Object{$_.Matches.Groups[1].value}
 		if ($handle_id){
 			$handle_id_populated = $handle_id
 		}
@@ -1926,7 +1926,7 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 		$Script:ActiveIDs = $Null
 		$D2rRunning = $false
 		$Script:ActiveIDs = New-Object -TypeName System.Collections.ArrayList
-		$Script:ActiveIDs = (Get-Process | Where {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,1) #find all diablo 2 game windows and pull the account ID from the title
+		$Script:ActiveIDs = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,1) #find all diablo 2 game windows and pull the account ID from the title
 		$Script:D2rRunning = $true
 		#Write-Host "Running Instances."
 	}
@@ -2003,7 +2003,7 @@ Function DisplayActiveAccounts {
 			}
 		}
 		if ($AccountOption.id -in $Script:ActiveAccountsList.id){#if account is currently active
-			$Windowname = (Get-Process | Where {$_.processname -eq "D2r" -and $_.MainWindowTitle -match ($AccountOption.id + "*Diablo II: Resurrected")} | Select-Object MainWindowTitle).mainwindowtitle #Check active game instances to see which accounts are active. As this is based on checking window titles, this will only work for accounts opened from the script
+			$Windowname = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match ($AccountOption.id + "*Diablo II: Resurrected")} | Select-Object MainWindowTitle).mainwindowtitle #Check active game instances to see which accounts are active. As this is based on checking window titles, this will only work for accounts opened from the script
 			$CurrentRegion = [regex]::Match($WindowName, $Pattern).value #Check which region aka realm the active account is connected to.
 			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
 			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
@@ -2017,7 +2017,7 @@ Function DisplayActiveAccounts {
 }
 
 Function Menu {
-	cls
+	Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
 		Write-Host "Account previously opened was:" -foregroundcolor yellow -backgroundcolor darkgreen
@@ -2035,7 +2035,7 @@ Function Menu {
 	Notifications -check $True
 	BannerLogo
 	QuoteRoll
-	if ($Batch -eq $Null -and $Script:OpenAllAccounts -ne $True){#go through normal account selection screen if script hasn't been launched with parameters that already determine this.
+	if ($Null -eq $Batch -and $Script:OpenAllAccounts -ne $True){#go through normal account selection screen if script hasn't been launched with parameters that already determine this.
 		ChooseAccount
 	}
 	Else {
@@ -2048,7 +2048,7 @@ Function Menu {
 			}
 		}
 	}
-	if ($Batch -ne $Null -or $Script:OpenBatches -eq $true){#if batch has been passed through parameter or if batch wass been selected from the menu.
+	if ($Null -ne $Batch -or $Script:OpenBatches -eq $true){#if batch has been passed through parameter or if batch wass been selected from the menu.
 		$Script:AcceptableBatchIDs = $Null #reset value
 		foreach ($ID in $Script:AccountOptionsCSV){
 			if ($ID.id -in $Script:AcceptableValues){#Find batch values to choose from based on accounts that aren't already open.
@@ -2056,9 +2056,9 @@ Function Menu {
 				$Script:AcceptableBatchIDs = $Script:AcceptableBatchIDs + ($ID.id).split(',') #collate acceptable options of account ID's
 			}
 		}
-		$AcceptableBatchValues = @($AcceptableBatchValues | where-object {$_ -ne ""} | Select-Object -Unique | Sort) #Unique list of available batches that can be opened. @ converts this from a PSObject into an array which fixes the issue of -notin not working on PSobjects with only 1 item.
+		$AcceptableBatchValues = @($AcceptableBatchValues | where-object {$_ -ne ""} | Select-Object -Unique | Sort-Object) #Unique list of available batches that can be opened. @ converts this from a PSObject into an array which fixes the issue of -notin not working on PSobjects with only 1 item.
 		do {
-			if ($Batch -ne $Null -and $Batch -notin $AcceptableBatchValues){#if batch specified in the parameter isn't valid
+			if ($Null -ne $Batch -and $Batch -notin $AcceptableBatchValues){#if batch specified in the parameter isn't valid
 				$Script:BatchToOpen = $Batch
 				$Batch = $Null
 				DisplayActiveAccounts
@@ -2069,7 +2069,7 @@ Function Menu {
 				start-sleep -milliseconds 5000
 				exit
 			}
-			if ($Batch -ne $Null -and $Batch -in $AcceptableBatchValues){#if batch is valid, set variable so that loop can be exited.
+			if ($Null -ne $Batch -and $Batch -in $AcceptableBatchValues){#if batch is valid, set variable so that loop can be exited.
 				$Script:BatchToOpen = $Batch
 			}
 			Else {
@@ -2086,7 +2086,7 @@ Function Menu {
 						Write-Host "$X[38;2;255;165;000;22m$Value$X[0m"
 					}
 				}
-				if ($Batch -eq $Null){
+				if ($Null -eq $Batch){
 					Write-Host " Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 				}
 				$Script:BatchToOpen = readkey
@@ -2278,7 +2278,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
-				cls
+				Clear-Host
 				if ($Script:ScriptHasBeenRun -eq $true){
 					Write-Host "Account previously opened was:"  -foregroundcolor yellow -backgroundcolor darkgreen
 					$Lastopened = @(
@@ -2296,7 +2296,7 @@ Function ChooseAccount {
 			CheckActiveAccounts
 			DisplayActiveAccounts
 			if ($Script:Config.TrackAccountUseTime -eq $True){
-				$OpenD2LoaderInstances = Get-WmiObject -Class Win32_Process | Where-Object { $_.name -eq "powershell.exe" -and $_.commandline -match $Script:ScriptFileName} | select name,processid,creationdate | sort creationdate -descending
+				$OpenD2LoaderInstances = Get-WmiObject -Class Win32_Process | Where-Object { $_.name -eq "powershell.exe" -and $_.commandline -match $Script:ScriptFileName} | Select-Object name,processid,creationdate | Sort-Object creationdate -descending
 				if ($OpenD2LoaderInstances.length -gt 1){#If there's more than 1 D2loader.ps1 script open, close until there's only 1 open to prevent the time played accumulating too quickly.
 					foreach ($Process in $OpenD2LoaderInstances[1..($OpenD2LoaderInstances.count -1)]){
 						Stop-Process -id $Process.processid -force #Closes oldest running d2loader script
@@ -2306,7 +2306,7 @@ Function ChooseAccount {
 					#Add time for each account that's open
 					$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv"
 					$AdditionalTimeSpan = New-TimeSpan -Start $Script:StartTime -End (Get-Date) #work out elapsed time to add to accounts.csv	
-					foreach ($AccountID in $Script:ActiveAccountsList.id |sort){ #$Script:ActiveAccountsList.id				
+					foreach ($AccountID in $Script:ActiveAccountsList.id |Sort-Object){ #$Script:ActiveAccountsList.id				
 						$AccountToUpdate = $Script:AccountOptionsCSV | Where-Object {$_.ID -eq $accountID}
 						if ($AccountToUpdate) {
 							try {#get current time from csv and add to it
@@ -2367,7 +2367,7 @@ Function ChooseAccount {
 			$GetWebRequestFunc = $(Get-Command WebRequestWithTimeOut).Definition
 			if ($Script:Config.DCloneAlarmList -ne ""){#if DClone alarms should be checked on refresh	
 				try {
-					if ($Script:DCloneChangesCSV -ne $null){
+					if ($null -ne $Script:DCloneChangesCSV){
 						$Script:DCloneChangesCSV = Receive-Job $Script:DCloneJob
 						#$Script:DCloneChangesCSV #debugging
 						if($Script:DCloneChangesCSV -match "true"){#if any of the text contains True
@@ -2425,8 +2425,8 @@ Function ChooseAccount {
 								$Script:AcceptableBatchIDs = $Script:AcceptableBatchIDs + ($ID.id).split(',')
 							}
 						}
-						$AcceptableBatchValues = ($AcceptableBatchValues | where-object {$_ -ne ""} | Select-Object -Unique | Sort) #Unique list of available batches that can be opened
-						if ($AcceptableBatchValues -eq $Null){
+						$AcceptableBatchValues = ($AcceptableBatchValues | where-object {$_ -ne ""} | Select-Object -Unique | Sort-Object) #Unique list of available batches that can be opened
+						if ($Null -eq $AcceptableBatchValues){
 							$BatchOption = ""
 							$BatchMenuText = ""
 						}
@@ -2518,7 +2518,7 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 
 Function Processing {
 	if ($Script:RegionOption -ne "c"){
-		if (($Script:PW -eq "" -or $Script:PW -eq $Null) -and $Script:PWmanualset -eq 0){
+		if (($Script:PW -eq "" -or $Null -eq $Script:PW) -and $Script:PWmanualset -eq 0){
 			$Script:PW = $Script:AccountChoice.PW.tostring()
 		}
 		if (($Script:ConvertPlainTextPasswords -ne $false -and $Script:ParamsUsed -ne $true) -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){#Convert password if it's enabled in config and script is being run normally *OR* Convert password if script is being run from paramters using either -all batch or -all (but not if -username is used instead)
@@ -2528,7 +2528,7 @@ Function Processing {
 			$Script:PW = $PWobject.GetNetworkCredential().Password
 		}
 		else {
-			if ($Script:AccountID -eq $Null){
+			if ($Null -eq $Script:AccountID){
 				$Script:acct = $Script:AccountUsername
 				$Script:AccountID = "1"
 			}
@@ -2629,7 +2629,7 @@ Function Processing {
 				 $SettingsFileOption | Add-Member -MemberType NoteProperty -Name "FileName" -Value $file.Name
 				 [VOID]$SettingsFileOptions.Add($SettingsFileOption)
 			}
-			if ($SettingsFileOptions -ne $Null){# If settings files are found, IE the end user has set them up prior to running script.
+			if ($Null -ne $SettingsFileOptions){# If settings files are found, IE the end user has set them up prior to running script.
 				$SettingsFileOptions = $SettingsDefaultOptionArray + $SettingsFileOptions
 				Write-Host
 				Write-Host "  Settings options you can choose from are:"
@@ -2647,7 +2647,7 @@ Function Processing {
 							Write-Host " or $X[38;2;255;165;000;22m$Value$X[0m"
 						}
 					}
-					if ($ManualSettingSwitcher -eq $Null){#if not launched from parameters
+					if ($Null -eq $ManualSettingSwitcher){#if not launched from parameters
 						Write-Host "  Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 						$SettingsCancelOption = "c"
 					}
@@ -2728,7 +2728,7 @@ Function Processing {
 				do {
 					$NewTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 					$CompareCheck = Compare-Object $CurrentTokenRegValue $NewTokenRegValue
-					if ($CompareCheck -ne $Null){#if comparecheck has some value, this means it found differences, IE the reg value changed.
+					if ($Null -ne $CompareCheck){#if comparecheck has some value, this means it found differences, IE the reg value changed.
 						$CurrentTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 						$CurrentTokenRegValue = $NewTokenRegValue
 						$WebTokenChangeCounter++
@@ -2749,7 +2749,7 @@ Function Processing {
 	}
 }
 ImportCSV
-cls
+Clear-Host
 SetQualityRolls
 Menu
 
