@@ -1196,7 +1196,7 @@ Function Notifications {
 			$Script:LastNotificationCheck = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
 		}
 		Catch {
-			#Write-Host "  Couldn't check for notifications." -foregroundcolor Yellow #Commented out, for debug only. If this fails in production don't show any errors/warnings.
+			Write-Debug "  Couldn't check for notifications." -foregroundcolor Yellow # If this fails in production don't show any errors/warnings.
 		}
 	}
 	Elseif ($Check -eq $False) {
@@ -1569,6 +1569,7 @@ Function DClone {# Display DClone Status.
 			$CurrentStatus = $D2RDCloneResponse.PSObject.Properties | Select-Object @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.value + 1)}} #| sort server #add +1 as this source counts status from 0
 		}
 		Catch {#catch commands captured in WebRequestWithTimeOut function
+			Write-Debug "Problem connecting to $URI"
 		}
 	}
 	elseif ($D2CloneTrackerSource -eq "D2runewizard.com"){
@@ -1583,14 +1584,15 @@ Function DClone {# Display DClone Status.
 			"D2R-Platform" = "GitHub"
 			"D2R-Repo" = "https://github.com/shupershuff/Diablo2RLoader"
 		}
+		$URI = "https://d2runewizard.com/api/diablo-clone-progress/all?token=$D2RWref"
 		try {
-			$URI = "https://d2runewizard.com/api/diablo-clone-progress/all?token=$D2RWref"
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -Headers -$headers -ScriptBlock {
 				Invoke-RestMethod -Uri $using:URI -Method GET -Headers $using:Headers
 			} -TimeoutSeconds 3
 			$CurrentStatus = $D2RDCloneResponse.servers | Select-Object @{Name='Server'; Expression={$_.server}},@{Name='Progress'; Expression={$_.progress}} #| sort server
 		}
-		Catch {#catch commands captured in WebRequestWithTimeOut function	
+		Catch {#catch commands captured in WebRequestWithTimeOut function
+			Write-Debug "Problem connecting to $URI"
 		}
 	}
 	elseif ($D2CloneTrackerSource -eq "Diablo2.io"){
@@ -1605,6 +1607,7 @@ Function DClone {# Display DClone Status.
 			$CurrentStatus = $D2RDCloneResponse | Select-Object @{Name='Server'; Expression={$_.region}},@{Name='Ladder'; Expression={$_.ladder}},@{Name='Core'; Expression={$_.hc}},@{Name='Progress'; Expression={$_.progress}}
 		}
 		Catch {#catch commands captured in WebRequestWithTimeOut function
+			Write-Debug "Problem connecting to $URI"
 		}
 	}
 	Else {#if XML is invalid for D2CloneTrackerSource
@@ -1812,8 +1815,8 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 	param (
 		[ScriptBlock] $ScriptBlock,
 		[int] $TimeoutSeconds,
-		[String] $InitiatingFunction,
-		[String] $DCloneSource
+		[String] $InitiatingFunction
+		# [String] $DCloneSource # Unused
 	)
 	$Script:DCloneErrorMessage = $null
 	if ($InitiatingFunction -eq "DClone"){
@@ -1995,6 +1998,7 @@ Function DisplayActiveAccounts {
 			}
 			catch {#if account hasn't been opened yet.
 				$AcctPlayTime = "   0   "
+				Write-Debug "Account not opened yet."
 			}
 			if ($AcctPlayTime.length -lt 15){#formatting. Depending on the amount of characters for this variable push it out until it's 15 chars long.
 				while ($AcctPlayTime.length -lt 15){
