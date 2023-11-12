@@ -1,6 +1,6 @@
-<# 
+<#
 Author: Shupershuff
-Usage: 
+Usage:
 Happy for you to make any modifications this script for your own needs providing:
 - Any variants of this script are never sold.
 - Any variants of this script published online should always be open source.
@@ -17,7 +17,7 @@ Servers:
  NA - us.actual.battle.net
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
- 
+
 Changes since 1.9.0 (next version edits):
 Added Token based authentication. There are some setup steps and drawbacks to using this method but this can help when Blizzard Auth servers don't respond to authentication when launching via parameters.
 Added capability to configure accounts for Parameter based auth but being able to temporarily force Token authentication (useful for connecting to a region when it's auth is down such as Asia right now).
@@ -57,7 +57,7 @@ if ($Null -ne $AccountUsername){
 	$ScriptArguments = "-accountusername $AccountUsername"  #this passes the value back through to the script when it's relaunched as admin mode.
 }
 if ($Null -ne $PW){
-	$ScriptArguments += " -PW $PW"  
+	$ScriptArguments += " -PW $PW"
 }
 if ($Null -ne $Region){
 	$ScriptArguments += " -region $Region"
@@ -69,7 +69,7 @@ if ($Null -ne $All){
 if ($Null -ne $Batch){
 	$ScriptArguments += " -batch $Batch"
 	$Script:OpenBatches = $True
-} 
+}
 if ($Null -ne $ManualSettingSwitcher){
 	$ScriptArguments += " -ManualSettingSwitcher $ManualSettingSwitcher"
 	$Script:AskForSettings = $True
@@ -82,7 +82,7 @@ Else {
 	$Script:ParamsUsed = $false
 }
 #run script as admin
-if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments"  -Verb RunAs;exit } 
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments"  -Verb RunAs;exit }
 
 #set window size
 [console]::WindowWidth=77; #script has been designed around this width. Adjust at your own peril.
@@ -134,7 +134,7 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys) {#u
     }
     if (![string]::IsNullOrEmpty($message)) {
         Write-Host "" # newline
-    }       
+    }
     return $(
         if ($Null -eq $key -or $key.VirtualKeyCode -eq $EnterKey) {
             ""
@@ -565,7 +565,7 @@ if ($Null -eq $Script:Config.DCloneAlarmVoice){
 }
 
 if ($Script:Config.DCloneAlarmList -ne ""){
-	$ValidVoiceOptions = 
+	$ValidVoiceOptions =
 		"Amazon",
 		"Paladin",
 		"Woman",
@@ -614,7 +614,7 @@ $AvailableConfigs = #add to this if adding features.
 "CheckForNextTZ",
 "ShortcutCustomIconPath"
 
-$BooleanConfigs = 
+$BooleanConfigs =
 "ConvertPlainTextPasswords",
 "ManualSettingSwitcherEnabled",
 "DisableOpenAllAccountsOption",
@@ -656,7 +656,7 @@ else {
 }
 foreach ($ConfigCheck in $BooleanConfigs){#validate all configs that require "True" or "False" as the setting.
 	if ($Null -ne $Config.$ConfigCheck -and ($Config.$ConfigCheck -ne $true -and $Config.$ConfigCheck -ne $false)){#if config is invalid
-		Write-Host " Config option '$ConfigCheck' is invalid." -foregroundcolor yellow 
+		Write-Host " Config option '$ConfigCheck' is invalid." -foregroundcolor yellow
 		Write-Host " Ensure this is set to either True or False." -foregroundcolor yellow
 		Write-Host;	PressTheAnyKey
 	}
@@ -672,7 +672,7 @@ $CreateDesktopShortcut = $Config.CreateDesktopShortcut
 $Script:ConvertPlainTextPasswords = $Config.ConvertPlainTextPasswords
 
 #Check Windows Game Path for D2r.exe is accurate.
-if ((Test-Path -Path "$GamePath\d2r.exe") -ne $True){ 
+if ((Test-Path -Path "$GamePath\d2r.exe") -ne $True){
 	Write-Host " Gamepath is incorrect. Looks like you have a custom D2r install location!" -foregroundcolor red
 	Write-Host " Edit the GamePath variable in the config file." -foregroundcolor red
 	write-host
@@ -687,7 +687,7 @@ if ($CreateDesktopShortcut -eq $True){
 	$ShortcutFile = "$DesktopPath\D2R Loader.lnk"
 	$WScriptShell = New-Object -ComObject WScript.Shell
 	$Shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
-	$Shortcut.TargetPath = "powershell.exe" 
+	$Shortcut.TargetPath = "powershell.exe"
 	$Shortcut.Arguments = $TargetFile
 	if ($ShortcutCustomIconPath.length -eq 0){
 		$Shortcut.IconLocation = "$Script:GamePath\D2R.exe"
@@ -952,7 +952,7 @@ Function ImportCSV {
 	Catch {
 		Write-host "  Couldn't update stats.csv" -foregroundcolor yellow
 	}
-	#Make Backup of CSV. 
+	#Make Backup of CSV.
 	 # Added this in as I had BSOD on my PC and noticed that this caused the files to get corrupted.
 	Copy-Item -Path ($Script:WorkingDirectory + "\stats.csv") -Destination ($Script:WorkingDirectory + "\stats.backup.csv")
 	Copy-Item -Path ($Script:WorkingDirectory + "\accounts.csv") -Destination ($Script:WorkingDirectory + "\accounts.backup.csv")
@@ -996,7 +996,7 @@ Function SetQualityRolls {
 			$_.Probability = 192  # New probability value
 		}
 	}
-	$QualityHash = @{}; 
+	$QualityHash = @{};
 	foreach ($Object in $Script:QualityArray | select-object type,probability){#convert PSOobjects to hashtable for enumerator
 		$QualityHash.add($Object.type,$Object.probability) #add each PSObject to hash
 	}
@@ -1210,7 +1210,7 @@ Function Notifications {
 						" " + $line
 					}
 					else {
-						($line -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend() 
+						($line -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend()
 					}
 				}
 			}			
@@ -1441,30 +1441,30 @@ $Script:QuoteList =
 Function BannerLogo {
 	$BannerLogo = @"
 
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%%%%%%%%%%%%%%%%%%%  
-  %%%%%%%#%%%%%%%/%%%%%%%%%%%#%%%%%$Script:MOO%%%%##%%%%%%%%%#/##%%%%%%%%%%%%%%%%%%  
-  %%#(%/(%%%//(/*#%%%%%%%%%%%###%%%%#%%%%%###%%%%%###(*####%##%%%#%%*%%%%%%  
-  %%%( **/*///%%%%%%%%%###%%#(######%%#########%####/*/*.,#((#%%%#*,/%%%%%%  
-  %%%#*/.,*/,,*/#/%%%/(*#%%#*(%%(*/%#####%###%%%#%%%(///*,**/*/*(.&,%%%%%%%  
-  %%%%%%// % ,***(./*/(///,/(*,./*,*####%#*/#####/,/(((/.*.,.. (@.(%%%%%%%%  
-  %%%%%%%#%* &%%#..,,,,**,.,,.,,**///.*(#(*.,.,,*,,,,.,*, .&%&&.*%%%%%%%%%%  
-  %%%%%%%%%%%#.@&&%&&&%%%%&&%%,.(((//,,/*,,*.%&%&&&&&&&&%%&@%,#%%%%%%%%%%%%  
-  %%%%%%%%%%%%%(.&&&&&%&&&%(.,,*,,,,,.,,,,.,.*,%&&&%&&%&&&@*##%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%# @@@&&&&&(  @@&&@&&&&&&&&&*..,./(&&&&&&&&*####%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%# &@@&&&&&(*, @@@&.,,,,. %@@&&*.,(%&&&&&&&/%%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%#.&@@&&&&&(*, @@@@,((#&&%#.&@@&&.*#&&@&&&&/#%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%%*&@@@&&&&#*, @@@@,*(#%&&%#,@@@&@,(%&&&&&&(%%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%%*&@&&&%&&(,. @@@@,(%%%%%%#/,@@@& *#&&@&&%(%%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%%*&&&@&%&&(,. @@@@,%&%%%%%%(.@@@@ /#&&&&&&(%%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%%,&&&&&%%&(*, @@@@,&&&&&&&%//@@@@./%&&&&@&(%%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%(*&&&&&&&%(,, @@@@,%&&&#(/*.@@@@&./%&&&&@&(%%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%%,&&&&&&&%(,, @@@@,/##/(// @@&@@,/#&&&&&&&(%%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%(,&&&&&&&%(,, @@@@.*,,..*@@@&&*./#&&%&&&&&(%#%%#%%%%%%%%%%%  
-  %%%%%%%%%%%#%%#.&&&&&%%#* @@@&&&@@@&&%&&&% */*%&&%#&&&&&/((#%%%%%%%%%%%%%  
-  %%%%%%%%(#//*/.&&&#%#%#.@&& ..,,****,,*//((/*#%%%####%%%#/#/#%%%%%%%%%%%%  
-  %%%%%##***.,**////*(//,&.*/***.*/%%#%/%#*.***/*/***//**/(((/.,*(//*/(##%%  
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%#%%%%%%%/%%%%%%%%%%%#%%%%%$Script:MOO%%%%##%%%%%%%%%#/##%%%%%%%%%%%%%%%%%%
+  %%#(%/(%%%//(/*#%%%%%%%%%%%###%%%%#%%%%%###%%%%%###(*####%##%%%#%%*%%%%%%
+  %%%( **/*///%%%%%%%%%###%%#(######%%#########%####/*/*.,#((#%%%#*,/%%%%%%
+  %%%#*/.,*/,,*/#/%%%/(*#%%#*(%%(*/%#####%###%%%#%%%(///*,**/*/*(.&,%%%%%%%
+  %%%%%%// % ,***(./*/(///,/(*,./*,*####%#*/#####/,/(((/.*.,.. (@.(%%%%%%%%
+  %%%%%%%#%* &%%#..,,,,**,.,,.,,**///.*(#(*.,.,,*,,,,.,*, .&%&&.*%%%%%%%%%%
+  %%%%%%%%%%%#.@&&%&&&%%%%&&%%,.(((//,,/*,,*.%&%&&&&&&&&%%&@%,#%%%%%%%%%%%%
+  %%%%%%%%%%%%%(.&&&&&%&&&%(.,,*,,,,,.,,,,.,.*,%&&&%&&%&&&@*##%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%# @@@&&&&&(  @@&&@&&&&&&&&&*..,./(&&&&&&&&*####%%%%%%%%%%%%
+  %%%%%%%%%%%%%%# &@@&&&&&(*, @@@&.,,,,. %@@&&*.,(%&&&&&&&/%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%#.&@@&&&&&(*, @@@@,((#&&%#.&@@&&.*#&&@&&&&/#%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%*&@@@&&&&#*, @@@@,*(#%&&%#,@@@&@,(%&&&&&&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%*&@&&&%&&(,. @@@@,(%%%%%%#/,@@@& *#&&@&&%(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%*&&&@&%&&(,. @@@@,%&%%%%%%(.@@@@ /#&&&&&&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%,&&&&&%%&(*, @@@@,&&&&&&&%//@@@@./%&&&&@&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%(*&&&&&&&%(,, @@@@,%&&&#(/*.@@@@&./%&&&&@&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%,&&&&&&&%(,, @@@@,/##/(// @@&@@,/#&&&&&&&(%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%(,&&&&&&&%(,, @@@@.*,,..*@@@&&*./#&&%&&&&&(%#%%#%%%%%%%%%%%
+  %%%%%%%%%%%#%%#.&&&&&%%#* @@@&&&@@@&&%&&&% */*%&&%#&&&&&/((#%%%%%%%%%%%%%
+  %%%%%%%%(#//*/.&&&#%#%#.@&& ..,,****,,*//((/*#%%%####%%%#/#/#%%%%%%%%%%%%
+  %%%%%##***.,**////*(//,&.*/***.*/%%#%/%#*.***/*/***//**/(((/.,*(//*/(##%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 "@
 	if ($Script:PGemActivated -eq $True){
 		Write-Host "  $X[38;2;255;165;0;22m$BannerLogo$X[0m"
@@ -1663,8 +1663,8 @@ Function DClone {# Display DClone Status.
 				#Write-Host " Tag $tag in taglist" #debug
 				if ($DCloneChangesArray | where-object {$_.Tag -eq $Tag}){
 					foreach ($Item in $DCloneChangesArray | where-object {$_.Tag -eq $Tag}) {#for each tag specified in config.xml...
-						$item.VoiceAlarmStatus = $False 
-						$item.TextAlarmStatus = $False 
+						$item.VoiceAlarmStatus = $False
+						$item.TextAlarmStatus = $False
 						if ($item.Status -ne $Status.progress){
 							if ($Status.progress -ge 5 -and ($DCloneAlarmLevel -match 5)) {#if D Clone walk is imminent
 								$item.VoiceAlarmStatus = $True
@@ -1683,13 +1683,13 @@ Function DClone {# Display DClone Status.
 							$item.LastUpdate = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
 						}
 						elseif ($Status.progress -eq 5){#if status hasn't changed, but status is 5 (imminent), show alarm text on main menu
-							$item.TextAlarmStatus = $True 
+							$item.TextAlarmStatus = $True
 						}
 						elseif ($Status.progress -lt 5 -and $item.LastUpdate -gt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#if status is less than 5 and has changed within the last 5 minutes, enable text alarm
 							$item.TextAlarmStatus = $True
 						}
 						elseif ($null -ne $item.LastUpdate -and $item.LastUpdate -lt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#after 5 minutes remove the text alarm
-							$item.LastUpdate = $null 
+							$item.LastUpdate = $null
 							$item.TextAlarmStatus = $False
 						}
 					}
@@ -1825,7 +1825,7 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 		Start-Sleep -Milliseconds 10
 	}
 	if ($TimedJob.State -eq "Running") {
-		Stop-Job -Job $TimedJob 
+		Stop-Job -Job $TimedJob
 		if ($InitiatingFunction -eq "DClone"){
 			Write-Host
 			$Script:DCloneErrorMessage = "   Error: Couldn't connect to $D2CloneTrackerSource to check for DClone Status."
@@ -1835,7 +1835,7 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 		}
 	}
 	elseif ($TimedJob.State -eq "Completed") {
-		$result = Receive-Job -Job $TimedJob 
+		$result = Receive-Job -Job $TimedJob
 		#Write-Host "  Command completed successfully."
 		foreach ($Object in $result){#Remove Properties from Result Array inserted by the Start-Job command. This prevents skewed data for DClone status checks.
 			$Object.PSObject.Properties.Remove("RunspaceId")
@@ -1849,13 +1849,13 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 			Write-Host " Couldn't connect to DClone Source." -foregroundcolor red	
 		}
 	}
-	Remove-Job -Job $TimedJob 
+	Remove-Job -Job $TimedJob
 }
 Function TerrorZone {
 	# Get the current time data was pulled
 	$TimeDataObtained = (Get-Date -Format 'h:mmtt')	
 	$TZProvider = "D2Emu.com"
-	$TZURI = "https://www.d2emu.com/api/v1/tz"  
+	$TZURI = "https://www.d2emu.com/api/v1/tz"
 	$D2TZResponse = Invoke-RestMethod -Uri $TZURI
 	foreach ($Level in $D2TZResponse.current){
 		#Write-host "level ID is:" $Level
@@ -2025,7 +2025,7 @@ Function Menu {
 			[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$Script:LastRegion}
 		)
 		Write-Host " " -NoNewLine
-		Write-Host ("Account:  " + $Lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen 
+		Write-Host ("Account:  " + $Lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen
 		Write-Host " " -NoNewLine
 		Write-Host "Region:  " $Lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
 	}
@@ -2141,7 +2141,7 @@ Function Menu {
 				$Script:LastAccount = $true
 			}
 			Write-Host
-			Write-Host " Opening Account: $ID" 
+			Write-Host " Opening Account: $ID"
 			Processing
 		}
 		$Script:LastAccount = $False
@@ -2173,7 +2173,7 @@ Function Menu {
 					$Script:LastAccount = $true
 				}
 				Write-Host
-				Write-Host " Opening Account: $ID..." 
+				Write-Host " Opening Account: $ID..."
 				Processing
 			}
 			$Script:LastAccount = $False
@@ -2285,7 +2285,7 @@ Function ChooseAccount {
 						[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$Script:region}#Americas
 					)
 					Write-Host " " -NoNewLine
-					Write-Host ("Account:  " + $Lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen 
+					Write-Host ("Account:  " + $Lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen
 					Write-Host " " -NoNewLine
 					Write-Host "Region:  " $Lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
 				}
@@ -2390,7 +2390,7 @@ Function ChooseAccount {
 					Write-Host
 					Write-Host " Unable to check for DClone status via $D2CloneTrackerSource." -Foregroundcolor Red
 					Write-Host " Try restarting script or changing the source in config.xml." -Foregroundcolor Red
-				} 
+				}
 			}
 			do {
 				Write-Host
