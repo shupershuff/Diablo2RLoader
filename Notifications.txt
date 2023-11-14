@@ -1,6 +1,6 @@
 {
     "Notification":  "Authentication to Asia (KR) servers via Parameters is now (finally) working again!
-If you had configured your script to launch via Authtokens instead you can now switch back to using Parameters again!",
+If you had configured your script to launch via Authtokens instead, you can now switch back to using Parameters again!",
     "PublishDate":  "2023.11.14 17:18:07",
     "ExpiryDate":  "2023.11.21 17:18:07"
 }
