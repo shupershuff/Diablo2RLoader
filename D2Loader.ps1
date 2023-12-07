@@ -18,29 +18,23 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 
-Changes since 1.9.0 (next version edits):
-Added Token based authentication. There are some setup steps and drawbacks to using this method but this can help when Blizzard Auth servers don't respond to authentication when launching via parameters.
-Added capability to configure accounts for Parameter based auth but being able to temporarily force Token authentication (useful for connecting to a region when it's auth is down such as Asia right now).
-Added notification capability so if I notice one of the auth servers going down I can advise users directly.
-Added a new version of the SetText source code to enable renaming D2r windows based on processID. This prevents issues for people who load an account from Battle.net in addition to using the script.
-Changed Current and Next TZ source to D2Emu.com for faster and more accurate results (no more OCR delays or inaccuracies).
-Script now works if one game instance has been launched outside of this script via battlenet. This is for users who want to keep MFA enabled on one account and launch that account outside of the script.
-Improved Game Window name by adjusting to show more useful information first (ID - Acct Label (region) - Diablo II: Resurrected).
-Improved DClone checker by adding 1 second to DClone timeout as 2 seconds was a bit tight and caused errors.
-Fixed unhandled DClone errors for timeouts.
-Fixed DClone alarm from alarming twice when detecting changes from 6/6 to 1/6 on some sources.
-Minor tidy ups.
+Changes since 1.11.0 (next version edits):
+Added config for ForceAuthTokenForRegion
+Fixed Region display issues on Main menu when multiple regions are open.
+Fixed Diablo2.io displaying incorrectly.
+Replaced D2rapi.fly.dev with d2emu.com for dclone tracking.
+Many tidy ups to align with better coding practices.
+Removed unused variables.																								
 
-1.10.1+ to do list
+1.11.0+ to do list
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
 To reduce lines, add repeated commands into functions
-Unlikely - Possibly add Current and Next TZ status for Single player folk, but ONLY if it's an easy addition with an easy source.
 Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windows. Investigate how this could be done. Would need an agent to detect key combos, Possibly via AutoIT or Autohotkey. Likely not possible within powershell and requires a separate project.
-Fix whatever I broke or poorly implemented in 1.10.0 :)
+Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.10.0"
+$CurrentVersion = "1.11.0"
 
 ###########################################################################################################################################
 # Script itself
@@ -151,7 +145,6 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
         Write-Host -NoNewLine $message
     }
     $Counter = $timeOutSeconds * 1000 / 250
-	# $IgnoreKeyList = @(9,13,16,17,18,20,32,91,192) #Ignore Tab,Enter,Shift,Ctrl,Alt,Caps,Space,Windows Key,Tilde
     while ($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)) {
         if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
             $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
@@ -191,8 +184,8 @@ Function PressTheAnyKeyToExit {#Used instead of Pause so folk can hit any key to
 }
 
 if ((Test-Path -Path "$Script:WorkingDirectory\Stats.csv") -ne $true){#Create Stats CSV if it doesn't exist
-    $CreateStatCSV = {} | Select-Object "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
-	write-host " Stats.csv created! $CreateStatCSV"
+	$CreateStatCSV = {} | Select-Object "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
+	write-host " Stats.csv created!"
 }
 do {
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv" #Get current stats csv details
@@ -254,20 +247,20 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 			}
 			Write-Host
 			$ReleaseInfo.body -split "`n" | ForEach-Object {
-				$line = " " + $_
-				if ($line[1] -eq "-") {#for any line starting with a dash
-					 $DashFormat = ($line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
+				$Line = " " + $Line
+				if ($Line[1] -eq "-") {#for any line starting with a dash
+					 $DashFormat = ($Line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
 					 $DashFormat -split "`n" | ForEach-Object {
-						if ($line[1] -eq "-") {#for any line starting with a dash
-							$line
+						if ($Line[1] -eq "-") {#for any line starting with a dash
+							$Line
 						}
 						else {
-							($line -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
+							($Line -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
 						}
 					}
 				}
 				else {
-					($line -replace "(.{1,75})(\s+|$)", "`$1`n ").trimend()
+					($Line -replace "(.{1,75})(\s+|$)", "`$1`n ").trimend()
 				}
 			}
 			Write-Host; Write-Host
@@ -384,7 +377,6 @@ if ($Null -ne $Script:Config.CommandLineArguments){#remove this config option as
 	$NewXML = $NewXML -replace $Pattern, ""
 	$NewXML = $NewXML -replace ";;","`r`n"
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-	# $AddCMDArgsToCSV = $True
 	$Script:OriginalCommandLineArguments = $Script:Config.CommandLineArguments
 	Write-Host " CommandLineArguments has been removed from config.xml" -foregroundcolor green
 	Start-Sleep -milliseconds 1500
@@ -483,9 +475,9 @@ if ($Null -eq $Script:Config.DCloneTrackerSource){
 	Write-Host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 	$Pattern = "</TrackAccountUseTime>"
-	$Replacement = "</TrackAccountUseTime>`n`n`t<!--Options are d2rapi.fly.dev, D2runewizard.com and diablo2.io.`n`t"
-	$Replacement += "Default and recommended option is d2rapi.fly.dev as this pulls live data from the game as opposed to crowdsourced data.-->`n`t"
-	$Replacement += "<DCloneTrackerSource>d2rapi.fly.dev</DCloneTrackerSource>" #add option to config file if it doesn't exist.
+	$Replacement = "</TrackAccountUseTime>`n`n`t<!--Options are d2emu.com, D2runewizard.com and diablo2.io.`n`t"
+	$Replacement += "Default and recommended option is d2emu.com as this pulls live data from the game as opposed to crowdsourced data.-->`n`t"
+	$Replacement += "<DCloneTrackerSource>d2emu.com</DCloneTrackerSource>" #add option to config file if it doesn't exist.
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 	Start-Sleep -milliseconds 1500
@@ -563,7 +555,36 @@ if ($Null -eq $Script:Config.DCloneAlarmVoice){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-
+if ($Script:Config.ForceAuthTokenForRegion -eq $Null){
+	Write-Host
+	Write-Host " Config option 'ForceAuthTokenForRegion' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " This config allows you to force AuthToken based authentication for any." -foregroundcolor Yellow
+	Write-Host " regions specified in config. Useful for when Blizzard have bricked." -foregroundcolor Yellow
+	Write-Host " their authentication servers on a particular region." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = "</DCloneAlarmVoice>"
+	$Replacement = "</DCloneAlarmVoice>`n`n`t<!--Select regions which should be forced to use Tokens over parameters. (overrides config in accounts.csv).`n`t"
+	$Replacement += "Only use this if connecting via Parameters is down for a particular region. Valid options are NA, EU, KR-->`n`t"
+	$Replacement +=	"<ForceAuthTokenForRegion></ForceAuthTokenForRegion>" #add option to config file if it doesn't exist.
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	PressTheAnyKey
+}
+$XML = Get-Content "$Script:WorkingDirectory\Config.xml" -raw
+$Pattern = "d2rapi.fly.dev"
+if ($Null -ne (Select-Xml -Content $xml -XPath "//*[contains(.,'$pattern')]")){
+	Write-Host
+	Write-Host " Replaced 'd2rapi.fly.dev' in config with 'd2emu.com'." -foregroundcolor Yellow
+	$Replacement = "d2emu.com"
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	PressTheAnyKey
+}
 if ($Script:Config.DCloneAlarmList -ne ""){
 	$ValidVoiceOptions =
 		"Amazon",
@@ -1083,7 +1104,6 @@ Function Inventory {#Info screen
 	$Line15 = ("                   |  $X[38;2;255;0;255;22mPerfect Gems:$X[0m            " + $(if ($CurrentStats.PerfectGems -eq "") {"0"} else {$CurrentStats.PerfectGems}))
 	$Line16 = "                    --------------------------------"
 	$Lines = @($Line1,$Line2,$Line3,$Line4,$Line5,$Line6,$Line7,$Line8,$Line9,$Line10,$Line11,$Line12,$Line13,$Line14,$Line15,$Line16)
-	# $LongestObject = $null
 	# Loop through each object in the array to find longest line (for formatting)
 	foreach ($Line in $Lines) {
 		if (($Line -replace '\[.*?22m', '' -replace '\[0m','').Length -gt $LongestLine) {
@@ -1168,7 +1188,7 @@ Function Inventory {#Info screen
 			Write-Host "  For authentication, script will now use what's configured in the " -foregroundcolor green
 			Write-Host "  AuthenticationMethod column in accounts.csv" -foregroundcolor green
 		}
-		start-sleep -milliseconds 5400
+		start-sleep -milliseconds 4000
 		Write-Host
 	}
 }
@@ -1202,20 +1222,20 @@ Function Notifications {
 	Elseif ($Check -eq $False) {
 		write-host
 		$Notifications.notification -split "`n" | ForEach-Object {
-			$line = " " + $line
-			if ($line[1] -eq "-") {#for any line starting with a dash
-				 $DashFormat = ($line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
+			$Line = " " + $Line
+			if ($Line[1] -eq "-") {#for any line starting with a dash
+				 $DashFormat = ($Line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
 				 $DashFormat -split "`n" | ForEach-Object {
-					if ($line[1] -eq "-") {#for any line starting with a dash
-						" " + $line
+					if ($Line[1] -eq "-") {#for any line starting with a dash
+						" " + $Line
 					}
 					else {
-						($line -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend()
+						($Line -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend()
 					}
 				}
 			}			
 			else {
-				($line -replace "(.{1,74})(\s+|$)", " `$1`n ").trimend()
+				($Line -replace "(.{1,74})(\s+|$)", " `$1`n ").trimend()
 			}
 		}
 	}
@@ -1560,18 +1580,26 @@ Function DClone {# Display DClone Status.
 		[object] $DCloneChanges,
 		[String] $DCloneAlarmLevel
 	)
-	if ($D2CloneTrackerSource -eq "d2rapi.fly.dev"){
-		$URI = "https://d2rapi.fly.dev/dclone"
+	if ($D2CloneTrackerSource -eq "d2emu.com"){
+		$URI = "https://d2emu.com/api/v1/dclone"
 		try {
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $D2CloneTrackerSource -ScriptBlock {
 				Invoke-RestMethod -Uri $using:URI -Method GET
 			} -TimeoutSeconds 3
-			$CurrentStatus = $D2RDCloneResponse.PSObject.Properties | Select-Object @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.value + 1)}} #| sort server #add +1 as this source counts status from 0
+			$D2RDCloneResponse = $D2RDCloneResponse.PSObject.Properties | ForEach-Object {
+				[PSCustomObject]@{
+					Name = $_.Name
+					Progress = $_.Value.status
+					Updated_at = $_.Value.updated_at
+				}
+			}
+			$CurrentStatus = $D2RDCloneResponse | Select-Object @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.Progress + 1)}} #| sort server #add +1 as this source counts status from 0
 		}
 		Catch {#catch commands captured in WebRequestWithTimeOut function
 			Write-Debug "Problem connecting to $URI"
 		}
-	}
+	}	
+
 	elseif ($D2CloneTrackerSource -eq "D2runewizard.com"){
 		$QLC = "zouaqcSTudL"
 		$tokreg = ("QLC" + $qlc + 1 +"fnbttzP")
@@ -1645,8 +1673,8 @@ Function DClone {# Display DClone Status.
 		if ($Status.server -like "*us*" -or $Status.server -like "*americas*" -or $Status.Server -eq "1"){$Tag = "-NA";$ServerName = "Americas"}
 		elseif ($Status.server -like "*eu*" -or $Status.server -like "*europe*" -or $Status.Server -eq "2"){$Tag = "-EU";$ServerName = "Europe"}
 		elseif ($Status.server -like "*kr*" -or $Status.server -like "*asia*" -or $Status.Server -eq "3"){$Tag = "-KR";$ServerName = "Asia"}
-		if (($Status.server -notlike "*nonladder*" -and -not [int]::TryParse($Status.server,[ref]$null)) -or $Status.Ladder -eq "2"){
-			if ($Status.server -match "hardcore" -or $Status.Core -eq "2"){$Tag = ("HCL" + $Tag);$ServerName = ("HCL - " + $ServerName)}
+		if (($Status.server -notlike "*nonladder*" -and -not [int]::TryParse($Status.server,[ref]$null)) -or $Status.Ladder -eq "1"){
+			if ($Status.server -match "hardcore" -or $Status.Core -eq "1"){$Tag = ("HCL" + $Tag);$ServerName = ("HCL - " + $ServerName)}
 			else {$Tag = ("SCL" + $Tag);$ServerName = ("SCL - " + $ServerName)}
 			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
 			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderServer -Value $ServerName
@@ -1654,7 +1682,7 @@ Function DClone {# Display DClone Status.
 			[VOID]$DCloneLadderTable.Add($DCloneLadderInfo)		
 		}
 		Else {
-			if ($Status.server -match "hardcore" -or $Status.Core -eq 2){$Tag = ("HC" + $Tag);$ServerName = ("HC - " + $ServerName)}
+			if ($Status.server -match "hardcore" -or $Status.Core -eq "1"){$Tag = ("HC" + $Tag);$ServerName = ("HC - " + $ServerName)}
 			else {$Tag = ("SC" + $Tag);$ServerName = ("SC - " + $ServerName)}
 			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
 			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderServer -Value $ServerName
@@ -1815,8 +1843,8 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 	param (
 		[ScriptBlock] $ScriptBlock,
 		[int] $TimeoutSeconds,
-		[String] $InitiatingFunction
-		# [String] $DCloneSource # Unused
+		[String] $InitiatingFunction,
+		[String] $DCloneSource
 	)
 	$Script:DCloneErrorMessage = $null
 	if ($InitiatingFunction -eq "DClone"){
@@ -1849,7 +1877,7 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 	}
 	else {
 		if ($InitiatingFunction -eq "DClone"){
-			Write-Host " Couldn't connect to DClone Source." -foregroundcolor red	
+			Write-Host " Couldn't connect to $DCloneSource." -foregroundcolor red	
 		}
 	}
 	Remove-Job -Job $TimedJob
@@ -2007,7 +2035,7 @@ Function DisplayActiveAccounts {
 			}
 		}
 		if ($AccountOption.id -in $Script:ActiveAccountsList.id){#if account is currently active
-			$Windowname = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match ($AccountOption.id + "*Diablo II: Resurrected")} | Select-Object MainWindowTitle).mainwindowtitle #Check active game instances to see which accounts are active. As this is based on checking window titles, this will only work for accounts opened from the script
+			$Windowname = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -like ($AccountOption.id + "*Diablo II: Resurrected")} | Select-Object MainWindowTitle).mainwindowtitle #Check active game instances to see which accounts are active. As this is based on checking window titles, this will only work for accounts opened from the script
 			$CurrentRegion = [regex]::Match($WindowName, $Pattern).value #Check which region aka realm the active account is connected to.
 			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
 			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
@@ -2381,14 +2409,12 @@ Function ChooseAccount {
 					Else {
 						$Script:DCloneChangesCSV = ""#if menu is refreshed too quick
 					}
-					$script:counting ++
 					remove-job * -force
 					$Script:DCloneJob = Start-Job -ScriptBlock {
 						Invoke-Expression "function Dclone {$using:GetDCloneFunc}"
 						Invoke-Expression "function WebRequestWithTimeOut {$Using:GetWebRequestFunc}"
 						Dclone -DisableOutput $True -D2CloneTrackerSource $Using:D2CloneTrackerSource -TagList $Using:Config.DCloneAlarmList -DCloneChanges $using:DCloneChangesCSV -DCloneAlarmLevel $Using:DCloneAlarmLevel
 					} #check for dclone status
-					
 				}
 				catch {
 					Write-Host
@@ -2516,6 +2542,8 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 		} until ("" -ne $Script:RegionOption)
 	if ($Script:RegionOption -in 1..3 ){# if value is 1,2 or 3 set the region string.
 		$Script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server
+		$Script:RegionLabel = $Script:Region.substring(0,2)
+		if ($Script:RegionLabel -eq "US"){$Script:RegionLabel = "NA"}
 		$Script:LastRegion = $Script:Region
 	}
 }
@@ -2537,7 +2565,7 @@ Function Processing {
 				$Script:AccountID = "1"
 			}
 		}
-		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or ($Script:ForceAuthToken -eq $True -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){
 			$Script:Token = $Script:AccountChoice.Token.tostring()
 			$EncryptedToken = $Script:Token | ConvertTo-SecureString
 			$Tokenobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedToken)
@@ -2563,7 +2591,7 @@ Function Processing {
 		}	
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
-		if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -and $Script:ForceAuthToken -ne $True){
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -and $Script:ForceAuthToken -ne $True -and $Script:Config.ForceAuthTokenForRegion -notmatch $RegionLabel){
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW +" -address " + $Script:Region + " " + $Script:AccountChoice.CustomLaunchArguments).tostring()
 		}
 		else {
@@ -2705,7 +2733,6 @@ Function Processing {
 				Write-Host
 				PressTheAnyKey
 			}
-
 			if ($handlekilled -ne $True){
 				Write-Host " Couldn't find any handles to kill." -foregroundcolor red
 				Write-Host " Game may not have launched as expected." -foregroundcolor red
@@ -2724,7 +2751,7 @@ Function Processing {
 				Write-Host " Couldn't rename window :(" -foregroundcolor red
 				PressTheAnyKey
 			}
-			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or ($Script:ForceAuthToken -eq $True -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
+			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
 				$CurrentTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 				write-host " Launched Game using an $X[38;2;165;146;99;4mAuthentication Token$X[0m."
 				write-host " Waiting for you to get to Character select screen..." -foregroundcolor yellow
