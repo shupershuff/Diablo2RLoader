@@ -83,12 +83,12 @@ Other misc stats and info can be seen on the info screen. Statistics are recorde
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
-Data courtesy of D2emu.com<br>
+Data courtesy of d2emu.com<br>
 
 **Check DClone Status**<br>
 You can also manually check the current DClone status by pressing 'd'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/f6f2c934-7fce-47db-a052-97e42874d9be)<br>
-Data courtesy of d2rapi.fly.dev, d2runewizard.com and diablo2.io. That's right, you can choose your source!<br>
+Data courtesy of d2emu.com, d2runewizard.com and diablo2.io. That's right, you can choose your source!<br>
 
 **Alarms for DClone Walk status changes**<br>
 If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.<br>
@@ -207,7 +207,7 @@ All other config options below this are strictly optional:<br>
 - Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
 - Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section below for more info. Disabled by default.
 - Set 'TrackAccountUseTime' to False if you don't want accounts.csv or stats.csv to be autoupdated with playtime. Other Stats are still tracked in stats.csv. Mainly added this option in the unlikely case there are any issues with accounts.csv getting corrupted. Enabled by default.
-- Set 'DCloneTrackerSource' to one of the options noted in the config file. Default (and recommended) is d2rapi.fly.dev as it provides realtime data (not crowdsourced).
+- Set 'DCloneTrackerSource' to one of the options noted in the config file. Default (and recommended) is d2emu.com as it provides realtime data (not crowdsourced).
 - Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#8-dclone-status-alarms-optional) section below for more info. Blank by default.
 - Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
 - Set 'DCloneAlarmVoice' to the preferred Text to Speech Robot voice. Choices are 'Amazon' or 'Paladin'. Amazon by Default.
