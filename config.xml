@@ -47,11 +47,11 @@
 	<!--This allows you to roughly track how long you've used each account while using this script. Choose False if you want to disable this.-->
 	<TrackAccountUseTime>True</TrackAccountUseTime>
 
-	<!--Options are d2rapi.fly.dev, D2runewizard.com and diablo2.io.
-	Default and recommended option is d2rapi.fly.dev as this pulls live data from the game as opposed to crowdsourced data.-->
-	<DCloneTrackerSource>d2rapi.fly.dev</DCloneTrackerSource>
+	<!--Options are d2emu.com, D2runewizard.com and diablo2.io.
+	Default and recommended option is d2emu.com as this pulls live data from the game as opposed to crowdsourced data.-->
+	<DCloneTrackerSource>d2emu.com</DCloneTrackerSource>
 
-	<!--Allow you to have the script audibly warn you of upcoming dclone walks.
+	<!--Allow you to have the script audibly warn you of upcoming DClone walks.
 	Specify as many of the following options as you like: SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR
 	EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>
 	If left blank this feature is disabled. Default is blank as this may be annoying for some people-->
