@@ -19,9 +19,9 @@ Servers:
  Asia - kr.actual.battle.net
 
 Changes since 1.11.0 (next version edits):
-Added config for ForceAuthTokenForRegion
-Fixed Region display issues on Main menu when multiple regions are open.
-Fixed Diablo2.io displaying incorrectly.
+Added config for ForceAuthTokenForRegion. You can now specify regions to use auth tokens (in case one regions auth goes down).
+Fixed Region display issues on main menu when multiple regions are open.
+Fixed dclone info from Diablo2.io displaying incorrectly.
 Replaced D2rapi.fly.dev with d2emu.com for dclone tracking.
 Many tidy ups to align with better coding practices.
 Removed unused variables.																								
@@ -184,11 +184,16 @@ Function PressTheAnyKeyToExit {#Used instead of Pause so folk can hit any key to
 }
 
 if ((Test-Path -Path "$Script:WorkingDirectory\Stats.csv") -ne $true){#Create Stats CSV if it doesn't exist
-	$CreateStatCSV = {} | Select-Object "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
+	$Null = {} | Select-Object "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
 	write-host " Stats.csv created!"
 }
 do {
-	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv" #Get current stats csv details
+	Try {
+		$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv" #Get current stats csv details
+	}
+	Catch {
+		Write-Host " Unable to import stats.csv. File corrupt or missing." -foregroundcolor red
+	}
 	if ($null -ne $CurrentStats){
 		#Todo: In the Future add CSV validation checks
 		$StatsCSVImportSuccess = $True
@@ -196,7 +201,7 @@ do {
 	else {#Error out and exit if there's a problem with the csv.
 			if ($StatsCSVRecoveryAttempt -lt 1){
 				try {
-					Write-Host " Issue with Stats.csv. Attempting Autorecovery from backup..." -foregroundcolor red
+					Write-Host " Attempting Autorecovery of stats.csv from backup..." -foregroundcolor red
 					Copy-Item -Path $Script:WorkingDirectory\Stats.backup.csv -Destination $Script:WorkingDirectory\Stats.csv
 					Write-Host " Autorecovery successful!" -foregroundcolor Green
 					$StatsCSVRecoveryAttempt ++
@@ -555,7 +560,7 @@ if ($Null -eq $Script:Config.DCloneAlarmVoice){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
-if ($Script:Config.ForceAuthTokenForRegion -eq $Null){
+if ($Null -eq $Script:Config.ForceAuthTokenForRegion){
 	Write-Host
 	Write-Host " Config option 'ForceAuthTokenForRegion' missing from config.xml" -foregroundcolor Yellow
 	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
