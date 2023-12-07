@@ -62,7 +62,8 @@ Note that if you've configured your account(s) or a region(s) to launch the game
 
 **Batch Open Accounts**<br>
 Rather than open all accounts, you can open a group of accounts. This feature is designed for you creatures that have several accounts but only want to launch a subset of these, for example only launch the 3 accounts you primarily play from.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0f98dc8e-319a-43b8-b860-c84cb9d6dd60)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/e2705d60-525e-4f10-a70c-8d78675c2529)
+<br>
 
 **Launch Each account with specific game settings**<br>
 These features were made in mind for multiboxing where you may have different screen sizes and want your secondary accounts to have lower graphics settings:<br>
@@ -156,15 +157,16 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 ## 3. Setup Your Accounts
 **NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
-2. Add number for each account starting from 1.
-3. Add your account sign in address.
-4. Add your account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
+2. Add number for each account starting from 1
+	- Note, if you're crazy and have more than 9 accounts, you'll need to start adding letters instead of numbers. Letters cannot be the same as existing menu options. Characters a, b, c, g, r, t, d, j, s, i and x are all reserved.
+4. Add your account sign in address.
+5. Add your account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
 	- If you're using a text editor to edit the CSV AND your password has a comma in it, ensure your password is surrounded by quotes eg "fjl3Ng2<,03h%mn"
-5. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames.
-6. If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
+6. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames.
+7. If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
 	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
  	- Don't forget to enable the Batch feature in the config file.
-7. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
+8. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
 9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
 10. OPTIONAL, if you want to be able to use Token based authentication (eg if you have MFA enabled on your account or a one of Blizzards Auth servers are down and you can't connect), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
@@ -365,9 +367,8 @@ See this site for more information on what this does, this contains the original
 
 # What's Next #
 If there's something you want to see added or improved then let me know. Future updates may include:<br>
-* Remove toggleable ForceAuthToken within the script and replace with a config to specify region(s) to force AuthToken connection method. Useful when one region is down.
 * Possibly add the ability to mute minimised windows (as long as it can be done within windows without additional software)
-* Ability to skip intro
+* Investigate Ability to skip intro
 * Fixing anything I broke in the last release.
 * Adding whatever features you fools ask for.
 * Perhaps make a GUI *if* there's enough interest. Probably not though as there would be a lot of brain activity involved. Pay my mortgage and we'll perhaps maybe talk... probably.
@@ -382,11 +383,11 @@ Happy for you to make any modifications this script for your own needs providing
 - Handle64 tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 - Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
 - Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
-  - After using the above for several months, I built my own to work with Process ID. Posted to the thread above.
+  - After using the above for several months, I built my own to work with Process ID instead of process name for improved accuracy. Posted to the thread above.
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
 - Thanks to Mysterio from [D2Emu.com}(https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
-- Thanks to Shalzuth (https://d2rapi.fly.dev), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
+- Thanks to Mysterio (https://D2Emu.com), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
 - Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
 - ChatGPT for helping with regex patterns.
