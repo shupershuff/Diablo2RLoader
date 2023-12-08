@@ -66,4 +66,9 @@
 
 	<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->
 	<DCloneAlarmVoice>Paladin</DCloneAlarmVoice>
+
+	<!--Select regions which should be forced to use Tokens over parameters (overrides config in accounts.csv).
+	Only use this if connecting via Parameters is down for a particular region and you don't want to have to manually toggle.
+	Valid options are NA, EU and KR. Default is blank.-->
+	<ForceAuthTokenForRegion></ForceAuthTokenForRegion>
 </D2loaderconfig>
