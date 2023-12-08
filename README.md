@@ -179,7 +179,6 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 	e. The token will be converted to an encrypted string when script is next run.<br>
 	f. You will need to redo this step if you add/remove MFA to your account.<br>
 
-
 Make sure to save it and close the file :)
 
 **Account CSV BEFORE running script:**<br>
@@ -211,6 +210,7 @@ All other config options below this are strictly optional:<br>
 - Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#8-dclone-status-alarms-optional) section below for more info. Blank by default.
 - Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
 - Set 'DCloneAlarmVoice' to the preferred Text to Speech Robot voice. Choices are 'Amazon' or 'Paladin'. Amazon by Default.
+- Set 'ForceAuthTokenForRegion' to enforce AuthToken based authentication for one or more regions. Useful if an Auth server goes down preventing parameter based connections (remember when Asia stopped working for several weeks?) Valid options are NA, EU and KR. Multiple values should be comma separated. Recommend leaving blank unless there are auth issues.
 
 Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
 
