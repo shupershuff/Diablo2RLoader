@@ -21,7 +21,7 @@ Servers:
 Changes since 1.11.0 (next version edits):
 Added config for ForceAuthTokenForRegion. You can now specify regions to use auth tokens (in case one regions auth goes down).
 Fixed Region display issues on main menu when multiple regions are open.
-Fixed dclone info from Diablo2.io displaying incorrectly.
+Fixed DClone info from Diablo2.io displaying incorrectly.
 Replaced D2rapi.fly.dev with d2emu.com for dclone tracking.
 Many tidy ups to align with better coding practices.
 Removed unused variables.																								
@@ -571,8 +571,9 @@ if ($Null -eq $Script:Config.ForceAuthTokenForRegion){
 	Write-Host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 	$Pattern = "</DCloneAlarmVoice>"
-	$Replacement = "</DCloneAlarmVoice>`n`n`t<!--Select regions which should be forced to use Tokens over parameters. (overrides config in accounts.csv).`n`t"
-	$Replacement += "Only use this if connecting via Parameters is down for a particular region. Valid options are NA, EU, KR-->`n`t"
+	$Replacement = "</DCloneAlarmVoice>`n`n`t<!--Select regions which should be forced to use Tokens over parameters (overrides config in accounts.csv).`n`t"
+	$Replacement += "Only use this if connecting via Parameters is down for a particular region and you don't want to have to manually toggle.`n`t"
+	$Replacement +=	"Valid options are NA, EU and KR. Default is blank.-->`n`t"
 	$Replacement +=	"<ForceAuthTokenForRegion></ForceAuthTokenForRegion>" #add option to config file if it doesn't exist.
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
