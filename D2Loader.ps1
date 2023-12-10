@@ -252,15 +252,15 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 			}
 			Write-Host
 			$ReleaseInfo.body -split "`n" | ForEach-Object {
-				$Line = " " + $Line
+				$Line = " " + $_
 				if ($Line[1] -eq "-") {#for any line starting with a dash
 					 $DashFormat = ($Line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
 					 $DashFormat -split "`n" | ForEach-Object {
-						if ($Line[1] -eq "-") {#for any line starting with a dash
-							$Line
+						if ($_[1] -eq "-") {#for any line starting with a dash
+							$_
 						}
 						else {
-							($Line -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
+							($_ -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
 						}
 					}
 				}
@@ -1203,7 +1203,7 @@ Function Notifications {
 	param (
 		[bool] $Check
 	)
-	if ($Check -eq $True -and $Script:LastNotificationCheck -lt (Get-Date).addminutes(-30).ToString('yyyy.MM.dd HH:mm:ss')){#check for notifications once every 30mins
+if ($Check -eq $True -and $Script:LastNotificationCheck -lt (Get-Date).addminutes(-30).ToString('yyyy.MM.dd HH:mm:ss')){#check for notifications once every 30mins
 		try {
 			$URI = "https://raw.githubusercontent.com/shupershuff/Diablo2RLoader/main/Notifications.txt"
 			$Script:Notifications = Invoke-RestMethod -Uri $URI
@@ -1228,15 +1228,15 @@ Function Notifications {
 	Elseif ($Check -eq $False) {
 		write-host
 		$Notifications.notification -split "`n" | ForEach-Object {
-			$Line = " " + $Line
+			$Line = " " + $_
 			if ($Line[1] -eq "-") {#for any line starting with a dash
 				 $DashFormat = ($Line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
 				 $DashFormat -split "`n" | ForEach-Object {
-					if ($Line[1] -eq "-") {#for any line starting with a dash
-						" " + $Line
+					if ($_[1] -eq "-") {#for any line starting with a dash
+						" " + $_
 					}
 					else {
-						($Line -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend()
+						($_ -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend()
 					}
 				}
 			}			
