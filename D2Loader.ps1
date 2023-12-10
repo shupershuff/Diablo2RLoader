@@ -22,6 +22,7 @@ Changes since 1.11.0 (next version edits):
 Added config for ForceAuthTokenForRegion. You can now specify regions to use auth tokens (in case one regions auth goes down).
 Fixed Region display issues on main menu when multiple regions are open.
 Fixed DClone info from Diablo2.io displaying incorrectly.
+Fixed update checker not sorting versions correctly.
 Replaced D2rapi.fly.dev with d2emu.com for dclone tracking.
 Many tidy ups to align with better coding practices.
 Removed unused variables.																								
@@ -243,7 +244,7 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 		if ($Script:LatestVersion -gt $Script:CurrentVersion) {
 			Write-Host
 			Write-Host " Update available! See Github for latest version and info" -foregroundcolor Yellow -nonewline
-			if ([version[]]$CurrentVersion -in ($Releases.Name.Trim('v') | Sort-Object -desc)[2..$releases.count]){
+			if ([version]$CurrentVersion -in (($Releases.name.Trim('v') | ForEach-Object { [version]$_ } | Sort-Object -desc)[2..$releases.count])){
 				Write-Host ".`n There have been several releases since your version." -foregroundcolor Yellow
 				Write-Host " Checkout Github releases for fixes/features added. " -foregroundcolor Yellow
 				Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/$X[0m"
