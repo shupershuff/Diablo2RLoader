@@ -394,6 +394,7 @@ Happy for you to make any modifications this script for your own needs providing
 - Google.com for everything else.
 - Live, Laugh, Love.
 - Lastly big thanks to everyone that's messaged me with issues, ideas, performed testing, sent FG donations, or simply messaged to say thanks. It's awesome to be able to help out and bring some QOL to folks across the world :)
-<br>
-<br>
+
+[![Github All Releases](https://img.shields.io/github/downloads/shupershuff/Diablo2RLoader/total.svg)]()
+
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
