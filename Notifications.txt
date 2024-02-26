@@ -1,5 +1,10 @@
 {
-    "Notification":  "Diablo II: Resurrected Season 6 Ladder will begin for all players globally starting February 22nd at 5:00pm PST",
-    "PublishDate":  "2024.02.14 16:58:57",
-    "ExpiryDate":  "2024.02.22 12:00:00"
+    "Notification":  "Hi everyone, hope your season is off to a great start and you've managed to grab a couple of Anni's!
+Just a reminder that you can optionally enable your script to announce realtime DClone status changes so that you're not caught off guard. 
+See the "DClone Status Alarms" section on Github for more info. 
+
+Consider saying thanks to Mysterio who provides DClone & TZ data for not only this script but for many of the Discord channels you probably use (including D2r Clone Hunters).
+Say thanks to them here: https://www.buymeacoffee.com/d2emu",
+    "PublishDate":  "2024.02.27 10:54:57",
+    "ExpiryDate":  "2024.02.31 12:00:00"
 }
