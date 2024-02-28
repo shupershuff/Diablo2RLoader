@@ -1,13 +1,3 @@
-**Notice about Update Issues for v1.8.1 through to v1.8.3**<br>
-In v1.8.1 and v1.8.2 there was an issue that didn't present itself until the script was run on a day of the month that's a single digit.<br>
-This meant if you ran the script any time between 1st through to the 9th of August 2023, then the update checker will have broken :(<br>
-There was also a separate issue where this didn't work properly for folk in different regions where your computers use the different date/time formatting settings.<br>
-If you're impacted, then you will notice an error message (in red) briefly show when launching the script and/or notice your script version is stuck on a version below v1.8.4.<br>
-There is an easy fix for this, perform the following:<br>
-1. Download the latest release and copy the D2Loader.ps1 file from the latest release to where your script sits to overwrite it.
-
----
-
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 <br>
@@ -41,7 +31,6 @@ Script Screenshot:<br>
 What your windows will look like:<br>
 ![GameWindows](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/62129f82-bde4-4744-83f2-cc69d873988a)
 ## But I don't want to use your script you dodgy internet human
-WORK IN PROGRESS<br>
 Not everyone wants to use a random script or an app and that's understandable.<br>
 See guides for alternative multiboxing methods here: https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script
 
@@ -173,7 +162,7 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 	a. Log in with your credentials and approve MFA request (if enabled).<br>
 	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
-		![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/e9976e64-5eaf-4288-b6aa-6f76513f76e9)<br>
+		![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/dfde17f7-a068-4060-9304-f92bee4bd067)<br>
 	c. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues. Generally speaking you will have the best experience launching with parameters. You can toggle the script to temporarily use auth tokens instead of parameters from the info menu.<br>
 	d. Close the browser, reopen in private mode, log into each of your other accounts and repeat the steps A to C above.<br>
 	e. The token will be converted to an encrypted string when script is next run.<br>
@@ -295,7 +284,7 @@ I've noted that with my hardware running 4 instances is generally not fun graphi
 Or here [https://github.com/sponsors/shupershuff](https://github.com/sponsors/shupershuff?frequency=one-time&sponsor=shupershuff&amount=5).<br>
 Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510).<br>
 Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ).<br>
-Or just a message to say thanks :)<br>
+Or even just a [message](https://github.com/shupershuff/Diablo2RLoader/discussions) to say thanks :)<br>
 
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
 **A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
@@ -332,6 +321,9 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 
 **Q:** If I've read this far through this long ass readme does that mean I can read good?<br>
 **A:** Yes, you read at least up to a Dr Seuss reading level. Well done you!
+
+**Q:** I get prompts to enter captcha's on my accounts randomly. Why is this?<br>
+**A:** I'm not sure exactly why this happens but it does appear to happen more with newer accounts. Ensure you have logged into the battlenet client AND into your webbrowser with the account and approve any verifications/captchas needed. Do not share the account with other people. Do NOT use a VPN when signing into the account (whether it be via this script, bnet client or website).
 
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
