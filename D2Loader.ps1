@@ -19,16 +19,19 @@ Servers:
  Asia - kr.actual.battle.net
 
 Changes since 1.11.0 (next version edits):
-Removed references to OCR
-Fixed script launch parameters from launching accounts using AuthToken authentication.
-Minor Tidy ups to code and error text.
-Script now autodetects if usermods are being used and will use the appropriate directory for settings.json.
-Fixed numpad numbers not working.
-Relegated the "Account last opened" details to debug mode.
-Added a volume config option for DClone Voice alarm so it's not as startling.
 
-TODO make it so if a mod is detected it reads custom save location from modinfo. Currently just assumes save location is same as modname if modinfo exists
-TODO make it so if it's stuck on a "Invalid Input. Please enter one of the options above" screens that it times out and refreshes to main menu after 30seconds.
+Improved regex pattern for detecting region from window name (helps with account display names with spaces in them).
+Fixed script launch parameters from launching accounts using AuthToken authentication. 
+Fixed (Inadvertantly) an issue with joining using the region parameter.
+Fixed numpad numbers not working.
+Fixed Custom launch arguments not working when enclosed in quotes. Good for folks who use excel to edit accounts.csv
+Relegated the "Account last opened" details to debug mode.
+Minor Tidy ups to code and error text.
+Removed references to OCR
+Script now autodetects if usermods are being used and will use the appropriate custom directory for settings.json. Handy for folks launching for SinglePlayer mods.
+Added a volume config option for DClone Voice alarm so it's not as startlingly loud.
+Script will now revert back to the main menu on batch, region and setting selection screens if no input is provided after 30 seconds.
+
 
 1.11.0+ to do list
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script. Can't really be bothered though :)
@@ -38,7 +41,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.11.0.3"
+$CurrentVersion = "1.11.0.5"
 
 ###########################################################################################################################################
 # Script itself
@@ -98,7 +101,7 @@ $ProgressPreference = "SilentlyContinue"
 $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\')) #Set Current Directory path.
 $Script:StartTime = Get-Date #Used for elapsed time. Is reset when script refreshes.
 $Script:MOO = "%%%"
-$MenuRefreshRate = 30 #How often the script refreshes in seconds.
+$MenuRefreshRate = 30 #How often the script refreshes in seconds. This should be set to 30, don't change this please.
 $Script:ScriptFileName = Split-Path $MyInvocation.MyCommand.Path -Leaf #find the filename of the script in case a user renames it.
 $Script:SessionTimer = 0 #set initial session timer to avoid errors in info menu.
 $Script:NotificationHasBeenChecked = $False
@@ -148,13 +151,14 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys) {#u
     )
 }
 
-Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null) {#used to receive user input but times out after X amount of time
+Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null) {#used to receive user input but times out after X amount of time
 	$key = $Null
     $Host.UI.RawUI.FlushInputBuffer()
     if (![string]::IsNullOrEmpty($message)) {
         Write-Host -NoNewLine $message
     }
     $Counter = $timeOutSeconds * 1000 / 250
+	$AllowedKeyList = $Script:AllowedKeyList + $AdditionalAllowedKeys #Add any other specified allowed key inputs (eg Enter).
     while ($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)) {
         if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
             $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
@@ -174,9 +178,13 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
     }
 	Write-Host #prevent follow up text from ending up on the same line.
     return $(
-        if ($Null -eq $key -or $key.VirtualKeyCode -eq $EnterKey) {
+        If ($key.VirtualKeyCode -eq $EnterKey -and $EnterKey -in $AllowedKeyList){
+			""
+		}
+		ElseIf ($Null -eq $key -or $key.VirtualKeyCode -eq $EnterKey) {
             $Default
-        } else {
+        }
+		else {
             $key.Character
         }
     )
@@ -951,7 +959,9 @@ Function ImportCSV {
 				if ($Entry.Token.length -eq 0 -and $Entry.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
 					Write-Host
 					Write-Host (" The account " + $Entry.AccountLabel + " doesn't yet have a Token defined.") -foregroundcolor yellow
-					Write-Host " See the readme for how to obtain Auth token." -foregroundcolor yellow
+					Write-Host " See the readme on Github for how to obtain Auth token." -foregroundcolor yellow
+					Write-Host
+					Write-Host " https://github.com/shupershuff/Diablo2RLoader/#3-setup-your-accounts" -foregroundcolor cyan
 					Write-Host
 					while ($Entry.Token.length -eq 0){#prevent empty entries as this will cause errors.
 						$Entry.Token = ValidateTokenInput -ManuallyEntered $True
@@ -963,6 +973,9 @@ Function ImportCSV {
 					Start-Sleep -milliseconds 100
 					$Entry
 					$TokensUpdated = $true
+				}
+				if ($Entry.TokenIsSecureString -eq "Yes" -or $Entry.TokenIsSecureString -eq $True){
+					$Script:TokensConfigured = $True
 				}
 			}
 			if ($Script:ConvertPlainTextPasswords -ne $False){
@@ -1150,7 +1163,7 @@ function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 }
 
 Function Inventory {#Info screen
-	clear-host
+	Clear-Host
 	Write-Host
 	Write-Host "          Stay a while and listen! Here's your D2r Loader info." -foregroundcolor yellow
 	write-host;	write-host
@@ -1249,10 +1262,15 @@ Function Inventory {#Info screen
 		write-host "  -------------------------------------------------------------------------"
 	}
 	write-host
-	Write-Host "  Press '$X[38;2;255;165;000;22mt$X[0m' to temporarily force token based authentication for configured "
-	write-host "  accounts. Otherwise, press any other key to return to main menu... " -nonewline
-	$InventoryOption = readkey
-	Write-Host;Write-Host
+	if ($Script:TokensConfigured -eq $True){
+		Write-Host "  Press '$X[38;2;255;165;000;22mt$X[0m' to temporarily force token based authentication (for configured "
+		write-host "  accounts). Otherwise, press any other key to return to main menu... " -nonewline
+		$InventoryOption = readkey
+		Write-Host;Write-Host
+	}
+	Else {
+		PressTheAnyKey
+	}
 	if ($InventoryOption -eq "t"){
 		if($Script:ForceAuthToken -ne $True){
 			$Script:ForceAuthToken = $True
@@ -2078,7 +2096,7 @@ Function DisplayActiveAccounts {
 	else {
 		Write-Host "  ID   Account Label"
 	}
-	$Pattern = "(?<=- \w+ \()([a-z]+)"#Regex pattern to pull the region characters out of the window title.
+	$Pattern = "(?<=- [^\(]+ \()([a-z]+)" #Regex pattern to pull the region characters out of the window title.
 	foreach ($AccountOption in $Script:AccountOptionsCSV){
 		$RegionDisplayPostIndent = ""
 		$RegionDisplayPreIndent = ""
@@ -2127,7 +2145,7 @@ Function DisplayActiveAccounts {
 }
 
 Function Menu {
-	clear-host
+	Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
 		if ($DebugMode -eq $true){
@@ -2195,7 +2213,7 @@ Function Menu {
 				if ($Null -eq $Batch){
 					Write-Host " Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 				}
-				$Script:BatchToOpen = readkey
+				$Script:BatchToOpen = ReadKeyTimeout "" $MenuRefreshRate "c" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 				Write-Host;	Write-Host
 			}
 			if ($Script:BatchToOpen -notin $AcceptableBatchValues + "c"){
@@ -2384,7 +2402,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
-				clear-host
+				Clear-Host
 				if ($Script:ScriptHasBeenRun -eq $true){
 					if ($DebugMode -eq $true){
 						DisplayPreviousAccountOpened
@@ -2544,7 +2562,7 @@ Function ChooseAccount {
 				}
 				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, '$X[38;2;255;165;000;22mt$X[0m' for TZ info, '$X[38;2;255;165;000;22md$X[0m' for DClone status, '$X[38;2;255;165;000;22mj$X[0m' for jokes,"
 				Write-Host "  $ManualSettingSwitcherMenuText'$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
-				$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+				$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -AdditionalAllowedKeys 27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
 				if ($Script:AccountID -notin ($Script:AcceptableValues + "x" + "r" + "t" + "d" + "g" + "j" + "i" + $ManualSettingSwitcherOption + $AllOption + $BatchOption) -and $Null -ne $Script:AccountID){
 					if ($Script:AccountID -eq "a" -and $Script:Config.DisableOpenAllAccountsOption -ne $true){
 						Write-Host " Can't open all accounts as all of your accounts are already open doofus!" -foregroundcolor red
@@ -2595,7 +2613,7 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 		do {
 			Write-Host " Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
 			Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + "): ") -nonewline
-			$Script:RegionOption = ReadKey
+			$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 			Write-Host
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Config.DefaultRegion #default to NA
@@ -2622,16 +2640,30 @@ Function Processing {
 		if (($Script:PW -eq "" -or $Null -eq $Script:PW) -and $Script:PWmanualset -eq 0){
 			$Script:PW = $Script:AccountChoice.PW.tostring()
 		}
-		if (($Script:ConvertPlainTextPasswords -ne $false -and $Script:ParamsUsed -ne $true) -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){#Convert password if it's enabled in config and script is being run normally *OR* Convert password if script is being run from paramters using either -all batch or -all (but not if -username is used instead)
-			$Script:acct = $Script:AccountChoice.acct.tostring()
-			$EncryptedPassword = $PW | ConvertTo-SecureString
-			$PWobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedPassword)
-			$Script:PW = $PWobject.GetNetworkCredential().Password
-		}
-		else {
-			if ($Null -eq $Script:AccountID){
-				$Script:acct = $Script:AccountUsername
-				$Script:AccountID = "1"
+		if ($Script:AccountChoice.AuthenticationMethod -ne "Token"){
+			try {
+				if (($Script:ConvertPlainTextPasswords -ne $false -and $Script:ParamsUsed -ne $true) -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){#Convert password if it's enabled in config and script is being run normally *OR* Convert password if script is being run from paramters using either -all batch or -all (but not if -username is used instead)
+					$Script:acct = $Script:AccountChoice.acct.tostring()
+					$EncryptedPassword = $PW | ConvertTo-SecureString -ErrorAction Stop #If User has changed password but left "PWIsSecureString" in accounts
+					$PWobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedPassword)
+					$Script:PW = $PWobject.GetNetworkCredential().Password
+				}
+				else {
+					if ($Null -eq $Script:AccountID){
+						$Script:acct = $Script:AccountUsername
+						$Script:AccountID = "1"
+					}
+				}
+			}
+			Catch {
+				Write-Host
+				Write-Host " Password for this account is in plain text in accounts.csv." -foregroundcolor red
+				Write-Host " Close the script, open accounts.csv and find the column PWIsSecureString." -foregroundcolor red
+				Write-Host " Note, this is the column immediately after your password." -foregroundcolor red
+				Write-Host " From there, remove `"Yes`" from the column and run script again." -foregroundcolor red
+				Write-Host " Run the script again and your password will be secured." -foregroundcolor red
+				Write-Host
+				PressTheAnyKey
 			}
 		}
 		if ($ParamsUsed -eq $True){
@@ -2664,11 +2696,12 @@ Function Processing {
 		}	
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
+		$CustomLaunchArguments = ($Script:AccountChoice.CustomLaunchArguments).replace("`"","").replace("'","") #clean up arguments in case they contain quotes (for folks that have used excel to edit accounts.csv).
 		if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -and $Script:ForceAuthToken -ne $True -and $Script:Config.ForceAuthTokenForRegion -notmatch $RegionLabel){
-			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW +" -address " + $Script:Region + " " + $Script:AccountChoice.CustomLaunchArguments).tostring()
+			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		else {
-			$arguments = (" -uid osi " + $Script:AccountChoice.CustomLaunchArguments).tostring()
+			$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
 		}
 		if ($Config.ForceWindowedMode -eq $true){#starting with forced window mode sucks, but someone asked for it.
 			$arguments = $arguments + " -w"
@@ -2683,11 +2716,19 @@ Function Processing {
 				if ($Script:AccountChoice.CustomLaunchArguments -match $pattern) {
 					$ModName = $matches[1]	
 					try {
-						write-Verbose "Trying to get Mod Content..."
-						$Modinfo = (get-content "$($Config.GamePath)\Mods\$ModName\$ModName.mpq\Modinfo.json" | convertfrom-json).savepath
-						if ($Modinfo -ne "../") {
+						write-Verbose " Trying to get Mod Content..."
+						$Modinfo = ((get-content "$($Config.GamePath)\Mods\$ModName\$ModName.mpq\Modinfo.json" | convertfrom-json).savepath).trim("/")
+						If ($Modinfo -eq $Null) {
+								Write-Verbose " No Custom Save Path Specified for this mod."
+							}
+						ElseIf ($Modinfo -ne "../") {
 							$SettingsProfilePath += "mods\$Modinfo\"
-							write-host " Mod: $ModName detected. Using custom path for settings.json:" -ForegroundColor Green
+							if (-not (Test-Path $SettingsProfilePath)){
+								Write-Host " Mod Save Folder doesn't exist yet. Creating folder..."
+								New-Item -ItemType Directory -Path $SettingsProfilePath -ErrorAction stop | Out-Null 
+								write-host " Created folder: $SettingsProfilePath" -ForegroundColor Green
+							}
+							write-host " Mod: $ModName detected. Using custom path for settings.json." -ForegroundColor Green
 							Write-Verbose "$SettingsProfilePath"
 						}
 						Else {
@@ -2703,33 +2744,35 @@ Function Processing {
 				}
 			}
 			$SettingsJSON = ($SettingsProfilePath + "Settings.json")
-			foreach ($id in $Script:AccountOptionsCSV){#create a copy of settings.json file per account so user doesn't have to do it themselves
-				if ((Test-Path -Path ($SettingsProfilePath + "Settings" + $id.id +".json")) -ne $true){#if somehow settings<ID>.json doesn't exist yet make one from the current settings.json file.
-					try {
-						Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
-					}
-					catch {
-						Write-Host
-						FormatFunction -Text "Couldn't find settings.json in $SettingsProfilePath" -IsError $True
-						if ($Script:AccountChoice.CustomLaunchArguments -match "-mod"){
-							Write-Host " Please ensure you have setup the mod correctly."  -foregroundcolor red
+			if ((Test-Path -Path ($SettingsProfilePath + "Settings.json")) -eq $true){ #check if settings.json does exist in the savegame path (if it doesn't, this indicates first time launch or use of a new single player mod).
+				foreach ($id in $Script:AccountOptionsCSV){#create a copy of settings.json file per account so user doesn't have to do it themselves
+					if ((Test-Path -Path ($SettingsProfilePath + "Settings" + $id.id +".json")) -ne $true){#if somehow settings<ID>.json doesn't exist yet make one from the current settings.json file.
+						try {
+							Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
 						}
-						Else {				
-							Write-Host " Start the game normally (via Bnet client) & this file will be rebuilt." -foregroundcolor red
+						catch {
+							Write-Host
+							FormatFunction -Text "Couldn't find settings.json in $SettingsProfilePath" -IsError $True
+							if ($Script:AccountChoice.CustomLaunchArguments -match "-mod"){
+								Break
+							}
+							Else {				
+								Write-Host " Start the game normally (via Bnet client) & this file will be rebuilt." -foregroundcolor red
+							}
+							write-host
+							PressTheAnyKeyToExit
 						}
-						write-host
-						PressTheAnyKeyToExit
 					}
 				}
-			}
-			try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
-				$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
-				Write-Host (" Custom game settings (settings" + $Script:AccountID + ".json) being used for " + $CurrentLabel) -foregroundcolor green
-				Start-Sleep -milliseconds 100
-			}
-			catch {
-				Write-Host " Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -foregroundcolor red
-				PressTheAnyKey
+				try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
+					$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
+					Write-Host (" Custom game settings (settings" + $Script:AccountID + ".json) being used for " + $CurrentLabel) -foregroundcolor green
+					Start-Sleep -milliseconds 100
+				}
+				catch {
+					FormatFunction -Text "Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -IsError $True
+					PressTheAnyKey
+				}
 			}
 		}
 		if ($Script:AskForSettings -eq $True){#steps go through if user has toggled on the manual setting switcher ('s' in the menu).
@@ -2766,7 +2809,6 @@ Function Processing {
 			}
 			if ($Null -ne $SettingsFileOptions){# If settings files are found, IE the end user has set them up prior to running script.
 				$SettingsFileOptions = $SettingsDefaultOptionArray + $SettingsFileOptions
-				Write-Host
 				Write-Host "  Settings options you can choose from are:"
 				foreach ($Option in $SettingsFileOptions){
 					Write-Host ("   " + $Option.ID + ". " + $Option.name) -foregroundcolor green
@@ -2786,7 +2828,7 @@ Function Processing {
 						Write-Host "  Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 						$SettingsCancelOption = "c"
 					}
-					$SettingsChoice = Readkey
+					$SettingsChoice = ReadKeyTimeout "" $MenuRefreshRate "c" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 					if ($SettingsChoice -eq ""){$SettingsChoice = 1}
 					Write-Host
 					if ($SettingsChoice.tostring() -notin $SettingsFileOptions.id + $SettingsCancelOption){
@@ -2804,7 +2846,7 @@ Function Processing {
 						Write-Host
 					}
 					catch {
-						Write-Host " Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -foregroundcolor red
+						FormatFunction -Text "Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -IsError $True
 						PressTheAnyKey
 					}
 				}
@@ -2883,7 +2925,7 @@ Function Processing {
 	}
 }
 ImportCSV
-clear-host
+Clear-Host
 SetQualityRolls
 Menu
 
