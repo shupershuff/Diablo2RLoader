@@ -208,7 +208,7 @@ Done editing? What are your thoughts on saving the file? I've heard it helps. CT
 2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
    ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
    a) If you instead get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following steps:   
-   b) Open the start menu and type in powershell. Open PowerShell.<br>
+   b) Open the start menu and type in powershell. Open PowerShell as admin.<br>
    c) Enter the following command: **Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser**<br>
    d) Type in y and press enter to confirm.<br>
    e) Run the D2Loader.ps1 script again.<br>
