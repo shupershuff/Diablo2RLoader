@@ -146,19 +146,19 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 ## 3. Setup Your Accounts
 **NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
-2. Add number for each account starting from 1
-	- Note, if you're crazy and have more than 9 accounts, you'll need to start adding letters instead of numbers. Letters cannot be the same as existing menu options. Characters a, b, c, g, r, t, d, j, s, i and x are all reserved.
-4. Add your account sign in address.
-5. Add your account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
+2. Add number for each account starting from 1.
+	- Note, if you're crazy and have more than 9 accounts, you'll need to start adding letters instead of numbers. Letters cannot be the same as existing menu options. Characters a, b, c, g, r, t, d, j, s, i and x are all reserved. I will look to enable double digit ID's in a future release.
+4. Add your battlenet account sign in address (eg bogan@askjeeves.com).
+5. Add your battlenet account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
 	- If you're using a text editor to edit the CSV AND your password has a comma in it, ensure your password is surrounded by quotes eg "fjl3Ng2<,03h%mn"
-6. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames.
-7. If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
+6. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames. You could simply set these as "Barb", "Sorc" etc.
+7. [OPTIONAL] If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
 	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
  	- Don't forget to enable the Batch feature in the config file.
-8. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
+8. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
 9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
-10. OPTIONAL, if you want to be able to use Token based authentication (eg if you have MFA enabled on your account or a one of Blizzards Auth servers are down and you can't connect), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
+10. [OPTIONAL] If you want to be able to use Token based authentication (eg if you have MFA enabled on your account or a one of Blizzards Auth servers are down and you can't connect), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
 	a. Log in with your credentials and approve MFA request (if enabled).<br>
 	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
