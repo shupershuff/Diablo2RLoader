@@ -378,7 +378,7 @@ Happy for you to make any modifications this script for your own needs providing
   - After using the above for several months, I built my own to work with Process ID instead of process name for improved accuracy. Posted to the thread above.
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
-- Thanks to Mysterio from [D2Emu.com}(https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
+- Thanks to Mysterio from [D2Emu.com](https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
 - Thanks to Mysterio (https://D2Emu.com), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
 - Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
