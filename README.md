@@ -157,8 +157,7 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
  	- Don't forget to enable the Batch feature in the config file.
 8. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
-9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
-10. [OPTIONAL] If you want to be able to use Token based authentication (eg if you have MFA enabled on your account or a one of Blizzards Auth servers are down and you can't connect), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
+9. [OPTIONAL] If you want to be able to use Token based authentication (eg if you have MFA enabled on your account or a one of Blizzards Auth servers are down and you can't connect), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
 	a. Log in with your credentials and approve MFA request (if enabled).<br>
 	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
@@ -171,10 +170,10 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 Make sure to save it and close the file :)
 
 **Account CSV BEFORE running script:**<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0e3c26c5-8c71-431c-8bf7-06bde4c36c91)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/4b53981e-4915-46b1-afaf-54d59f77f041)<br>
 **What it will look like AFTER running the script (in a later step):**<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ca6ed47-d5b7-486d-8bf2-a1fcfba2a612)<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/d5453bf8-0af4-43ac-af5b-b16d31590c26)
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/982aa776-492b-491d-81da-ee34e4151dca)
 
 
 ## 4. Script Config (Mostly Optional)
@@ -297,7 +296,7 @@ Or even just a [message](https://github.com/shupershuff/Diablo2RLoader/discussio
 **A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).
 
 **Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
-**A:** Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it.
+**A:** Open accounts.csv and clearout the password field. Either enter your new password into the csv file or leave it blank and the script will ask you next time you run it.
 
 **Q:** When I run this I'm unable to use Push to Talk (PTT) in Discord.<br>
 **A:** As the script needs to run as administrator, this also means it starts the game with elevated rights. As such this can mess with Discord PTT. This is a known issue with Discord. To resolve this you can run [Discord in Administrator mode](https://support.discord.com/hc/en-us/articles/205082178-How-do-I-enable-push-to-talk-if-I-am-running-my-game-in-administrator-mode).<br>
