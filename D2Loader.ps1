@@ -22,15 +22,19 @@ Changes since 1.11.0 (next version edits):
 
 Improved regex pattern for detecting region from window name (helps with account display names with spaces in them).
 Fixed script launch parameters from launching accounts using AuthToken authentication. 
-Fixed (Inadvertantly) an issue with joining using the region parameter.
+Fixed (albeit inadvertantly) an issue with joining using the region parameter.
 Fixed numpad numbers not working.
 Fixed Custom launch arguments not working when enclosed in quotes. Good for folks who use excel to edit accounts.csv
+Fixed unavailable batch ID's being selectable on batch screen.
 Relegated the "Account last opened" details to debug mode.
 Minor Tidy ups to code and error text.
 Removed references to OCR
 Script now autodetects if usermods are being used and will use the appropriate custom directory for settings.json. Handy for folks launching for SinglePlayer mods.
 Added a volume config option for DClone Voice alarm so it's not as startlingly loud.
 Script will now revert back to the main menu on batch, region and setting selection screens if no input is provided after 30 seconds.
+Script now detects if there are 2 digit ID's in account csv and allows multiple character inputs on account select screen. Good for those with more than 10 accounts.
+
+To do, check if password is over X characters long to determine whether it's been converted or not, remove TokenIsSecureString and PasswordIsSecureString from accounts.csv
 
 
 1.11.0+ to do list
@@ -41,7 +45,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.11.0.5"
+$CurrentVersion = "1.11.0.7"
 
 ###########################################################################################################################################
 # Script itself
@@ -109,8 +113,8 @@ $Script:NotificationHasBeenChecked = $False
 $Script:AllowedKeyList = @(48,49,50,51,52,53,54,55,56,57) #0 to 9
 $Script:AllowedKeyList += @(96,97,98,99,100,101,102,103,104,105) #0 to 9 on numpad
 $Script:AllowedKeyList += @(65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90) # A to Z
+$Script:MenuOptions = @(65,66,67,68,71,73,74,82,83,84,88) #a, b, c, d, g, i, j ,r, s, t and x 
 $EnterKey = 13
-
 Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys) {#used to receive user input
     $key = $Null
     $Host.UI.RawUI.FlushInputBuffer()
@@ -151,7 +155,87 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys) {#u
     )
 }
 
-Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null) {#used to receive user input but times out after X amount of time
+Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null, [bool]$TwoDigitAcctSelection = $False) {
+	$key = $Null
+	$inputString = ""
+	$Host.UI.RawUI.FlushInputBuffer()
+	if (![string]::IsNullOrEmpty($message)) {
+		Write-Host -NoNewLine $message
+	}
+	$Counter = $timeOutSeconds * 1000 / 250
+	$AllowedKeyList = $Script:AllowedKeyList + $AdditionalAllowedKeys #Add any other specified allowed key inputs (eg Enter).
+
+	while ($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)) {
+		if ($TwoDigitAcctSelection -eq $True -and $inputString.length -ge 1){
+			$AllowedKeyList = $Script:AllowedKeyList + 13 + 8 # Allow enter and backspace to be used if 1 character has been typed.
+		}
+		if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
+			$key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
+			if ($key_.KeyDown -and $key_.VirtualKeyCode -in $AllowedKeyList) {
+				if ($key_.VirtualKeyCode -eq [System.ConsoleKey]::Backspace) {
+					$Counter = $timeOutSeconds * 1000 / 250 #reset counter
+					if ($inputString.Length -gt 0) {
+						$inputString = $inputString.Substring(0, $inputString.Length - 1) #remove last added character/number from variable
+						# Clear the last character from the console
+						$Host.UI.RawUI.CursorPosition = @{
+							X = [Math]::Max($Host.UI.RawUI.CursorPosition.X - 1, 0)
+							Y = $Host.UI.RawUI.CursorPosition.Y
+						}
+						Write-Host -NoNewLine " " #-ForegroundColor Black
+						$Host.UI.RawUI.CursorPosition = @{
+							X = [Math]::Max($Host.UI.RawUI.CursorPosition.X - 1, 0)
+							Y = $Host.UI.RawUI.CursorPosition.Y
+						}
+					}
+				}
+				Elseif ($TwoDigitAcctSelection -eq $True -and $key_.VirtualKeyCode -notin $Script:MenuOptions){
+					$Counter = $timeOutSeconds * 1000 / 250 #reset counter
+					if ($key_.VirtualKeyCode -eq $EnterKey) {
+						break
+					}
+					$inputString += $key_.Character
+					Write-Host ("$X[38;2;255;165;000;22m" + $key_.Character + "$X[0m") -nonewline
+					if ($inputString.length -eq 2){#if 2 characters have been entered
+						break
+					}
+				}
+				Else {
+					$key = $key_
+					$inputString = $key_.Character
+				}
+			}
+		}
+		else {
+			Start-Sleep -m 250 # Milliseconds
+		}
+	}
+	if ($Counter -le 0){
+		if ($InputString.Length -gt 0){# if it timed out, revert to no input if one character was entered.
+			$InputString = "" #remove last added character/number from variable
+		}
+	}
+	if ($TwoDigitAcctSelection -eq $False -or ($TwoDigitAcctSelection -eq $True -and $key_.VirtualKeyCode -in $Script:MenuOptions)) {
+		Write-Host ("$X[38;2;255;165;000;22m" + "$inputString" + "$X[0m")
+	}
+	if (![string]::IsNullOrEmpty($message) -or $TwoDigitAcctSelection -eq $True) {
+		Write-Host "" # newline
+	}
+	Write-Host #prevent follow up text from ending up on the same line.
+	return $(
+		If ($key.VirtualKeyCode -eq $EnterKey -and $EnterKey -in $AllowedKeyList){
+			""
+		}
+		ElseIf ($inputString.Length -eq 0) {
+			$Default
+		}
+		else {
+			$inputString
+		}
+	)
+}
+
+
+Function ReadKeyTimeoutold([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null) {#used to receive user input but times out after X amount of time
 	$key = $Null
     $Host.UI.RawUI.FlushInputBuffer()
     if (![string]::IsNullOrEmpty($message)) {
@@ -203,12 +287,15 @@ Function PressTheAnyKeyToExit {#Used instead of Pause so folk can hit any key to
 Function Red {
     process { Write-Host $_ -ForegroundColor Red }
 }
-
+Function Yellow {
+    process { Write-Host $_ -ForegroundColor Yellow }
+}
 Function FormatFunction {
 	param (
 		[string] $Text,
 		[int] $Indents,
-		[bool] $IsError
+		[bool] $IsError,
+		[bool] $IsWarning
 	)
 	$MaxLineLength = 75
 	$MaxLineLengthDash = 73
@@ -229,6 +316,9 @@ Function FormatFunction {
 					if ($IsError -eq $True){
 						write-output $_ | red
 					}
+					Elseif ($IsWarning -eq $True){
+						write-output $_ | Yellow
+					}
 					Else {
 						$_
 					}
@@ -236,6 +326,9 @@ Function FormatFunction {
 				else {
 					if ($IsError -eq $True){
 						write-output ($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend() | red
+					}
+					ElseIf ($IsError -eq $True){
+						write-output ($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend() | Yellow
 					}
 					Else {
 						($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend()
@@ -247,6 +340,9 @@ Function FormatFunction {
 			if ($IsError -eq $True){
 				write-output ($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend() | red
 			}
+			if ($IsWarning -eq $True){
+				write-output ($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend() | Yellow
+			}			
 			Else {
 				($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend()
 			}
@@ -873,17 +969,15 @@ Function ImportCSV {
 			}
 			Catch {
 				Write-Host
-				Write-Host " Accounts.csv does not exist. Make sure you create this and populate with accounts first." -foregroundcolor red
+				FormatFunction -text "Accounts.csv does not exist. Make sure you create this and populate with accounts first." -IsError $True
 				PressTheAnyKeyToExit
 			}
 		}
 		if ($Null -ne $Script:AccountOptionsCSV){
 			#check Accounts.csv has been updated and doesn't contain the example account.
 			if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
-				Write-Host
-				Write-Host "You haven't setup accounts.csv with your accounts." -foregroundcolor red
-				Write-Host "Add your account details to the CSV file and run the script again :)" -foregroundcolor red
-				Write-Host
+				Write-Host "`n You haven't setup accounts.csv with your accounts." -foregroundcolor red
+				Write-Host " Add your account details to the CSV file and run the script again :)`n" -foregroundcolor red
 				PressTheAnyKeyToExit
 			}
 			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.7.0. If batch column doesn't exist, add it
@@ -894,20 +988,30 @@ Function ImportCSV {
 				# Export the updated CSV data back to the file
 				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
 			}
-			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "TokenIsSecureString" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.10.0. If token columns don't exist, add them.
+			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.10.0. If token columns don't exist, add them. As of 1.12.0 onwards, TokenSecureString is no longer used.
 				# Column does not exist, so add it to the CSV data
 				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "Token" -NotePropertyValue $Null}
-				}
-				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "TokenIsSecureString" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
-					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "TokenIsSecureString" -NotePropertyValue $Null}
 				}
 				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "AuthenticationMethod" -NotePropertyValue "Parameter"}
 				}				
 				# Export the updated CSV data back to the file
 				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-			}	
+			}
+			$OldColumnsToRemove = @("PWIsSecureString","TokenIsSecureString") #Old Account.csv columns that are now unused.
+			$ExistingColumns = $Script:AccountOptionsCSV | Select-Object -First 1 | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name
+			$ColumnsRemoved = $ExistingColumns | Where-Object { $OldColumnsToRemove -contains $_ }
+			$DesiredColumnOrder = @("ID","Acct","AccountLabel","Batches","TimeActive","CustomLaunchArguments","AuthenticationMethod","PW","Token") # Update with your desired column order			
+			if ($ColumnsRemoved.Count -gt 0) {
+				$Script:AccountOptionsCSV = $Script:AccountOptionsCSV | Select-Object -Property $DesiredColumnOrder
+				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #rewrite to accounts.csv to remove unused columns.
+				FormatFunction -text ("Unused Columns were removed from Accounts.csv: " + ($columnsRemoved -join ", ") + ".`n") -IsWarning $True
+				start-sleep -milliseconds 1000
+			}
+			else {
+				Write-Verbose "No columns were removed as they do not exist in the CSV."
+			}
 			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "CustomLaunchArguments" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If CustomLaunchArguments column doesn't exist, add it
 				# Column does not exist, so add it to the CSV data
 				$Script:AccountOptionsCSV | ForEach-Object {
@@ -942,15 +1046,14 @@ Function ImportCSV {
 					Write-host " Open accounts.csv and set this to either 'Parameter' or 'Token'." -Foregroundcolor red
 					Write-host
 					PressTheAnyKeyToExit
-				}	
-				if ($Entry.TokenIsSecureString.length -gt 0 -and $Entry.TokenIsSecureString -ne $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+				}
+				if ($Entry.Token.length -ge 200){#if nothing needs converting, make sure existing entries still make it into the updated CSV
 					$Entry
 				}
-				if (($Entry.TokenIsSecureString.length -eq 0 -or $Entry.TokenIsSecureString -eq "no" -or $Entry.TokenIsSecureString -eq $false) -and $Entry.Token.length -ne 0){#if account.csv has a Token and TokenIsSecureString isn't set to yes, convert Token to secure string and update CSV.
+				if ($Entry.Token.length -lt 200 -and $Entry.Token.length -ne 0){#if account.csv has a Token and it's less than 200 chars long, it hasn't been secured yet.
 					$ValidatedToken = ValidateTokenInput -TokenInput $Entry.Token
 					$Entry.Token = ConvertTo-SecureString -String $ValidatedToken -AsPlainText -Force
 					$Entry.Token = $Entry.Token | ConvertFrom-SecureString
-					$Entry.TokenIsSecureString = "Yes"
 					Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
 					Start-Sleep -milliseconds 100
 					$Entry
@@ -968,26 +1071,24 @@ Function ImportCSV {
 					}
 					$Entry.Token = ConvertTo-SecureString -String $Entry.Token -AsPlainText -Force
 					$Entry.Token = $Entry.Token | ConvertFrom-SecureString
-					$Entry.TokenIsSecureString = "Yes"
 					Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
 					Start-Sleep -milliseconds 100
 					$Entry
 					$TokensUpdated = $true
 				}
-				if ($Entry.TokenIsSecureString -eq "Yes" -or $Entry.TokenIsSecureString -eq $True){
+				if ($Entry.Token.length -ge 200){
 					$Script:TokensConfigured = $True
 				}
 			}
 			if ($Script:ConvertPlainTextPasswords -ne $False){
 				#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
 				$NewCSV = Foreach ($Entry in $Script:AccountOptionsCSV) {
-					if ($Entry.PWisSecureString.length -gt 0 -and $Entry.PWisSecureString -ne $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+					if ($Entry.PW.length -ge 300){#if nothing needs converting, make sure existing entries still make it into the updated CSV
 						$Entry
 					}
-					if (($Entry.PWisSecureString.length -eq 0 -or $Entry.PWisSecureString -eq "no" -or $Entry.PWisSecureString -eq $false) -and $Entry.PW.length -ne 0){#if account.csv has a password and PWisSecureString isn't set to yes, convert PW to secure string and update CSV.
+					if ($Entry.PW.length -lt 300 -and $Entry.PW.length -ne 0){#if account.csv has a password and it isn't over 300characters, this means it's not converted yet. As such, convert PW to secure string and update CSV.
 						$Entry.PW = ConvertTo-SecureString -String $Entry.PW -AsPlainText -Force
 						$Entry.PW = $Entry.PW | ConvertFrom-SecureString
-						$Entry.PWisSecureString = "Yes"
 						Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
 						$Entry
@@ -1001,7 +1102,6 @@ Function ImportCSV {
 							$Entry.PW = read-host -AsSecureString " Enter the Battle.net password for"$Entry.AccountLabel
 						}
 						$Entry.PW = $Entry.PW | ConvertFrom-SecureString
-						$Entry.PWisSecureString = "Yes"
 						Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
 						$Entry
@@ -1024,6 +1124,9 @@ Function ImportCSV {
 					Write-Host
 					Write-Host " Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
 					Write-Host " Please close accounts.csv and run the script again!" -foregroundcolor red
+					Write-Host
+					Write-Host " If Accounts.csv isn't open, then there must be a permission issue." -foregroundcolor red
+					write-Host " Try moving your install folder to a different location." -foregroundcolor red
 					PressTheAnyKeyToExit
 				}
 			}
@@ -1163,7 +1266,7 @@ function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 }
 
 Function Inventory {#Info screen
-	Clear-Host
+	#Clear-Host
 	Write-Host
 	Write-Host "          Stay a while and listen! Here's your D2r Loader info." -foregroundcolor yellow
 	write-host;	write-host
@@ -1478,6 +1581,7 @@ $D2rLevels =@(
 $Script:QuoteList =
 "Stay a while and listen..",
 "My brothers will not have died in vain!",
+"My brothers have escaped you...",
 "Not even death can save you from me.",
 "Good Day!",
 "You have quite a treasure there in that Horadric Cube.",
@@ -1495,6 +1599,7 @@ $Script:QuoteList =
 "Ner. Ner! Nur. Roah. Hork, Hork.",
 "Greetings, stranger. I'm not surprised to see your kind here.",
 "There is a place of great evil in the wilderness.",
+"East... Always into the east...",
 "I shall make weapons from your bones",
 "I am overburdened",
 "This magic ring does me no good.",
@@ -1549,10 +1654,14 @@ $Script:QuoteList =
 "Death becomes you Andariel.",
 "You dark mages are all alike, obsessed with power.",
 "Planting the dead. How odd.",
-"Live, Laugh, Love - Andariel, 1264.",
+"'Live, Laugh, Love' - Andariel, 1264.",
 "Oh no, snakes. I hate snakes.",
 "Who would have thought that such primitive beings could cause so much `ntrouble.",
-"Hail to you champion"
+"Hail to you champion",
+"Help us! LET US OUT!",
+"'I cannot carry anymore' - Me, carrying my teammates.",
+"You're an even greater warrior than I expected...Sorry for `nunderestimating you.",
+"Cut them down, warrior. All of them!"
 
 Function BannerLogo {
 	$BannerLogo = @"
@@ -1885,7 +1994,6 @@ Function DClone {# Display DClone Status.
 		$DCloneChangesArray | ConvertTo-Csv -NoTypeInformation
 	}
 }
-
 Function DCloneVoiceAlarm {
 	$voice = New-Object -ComObject Sapi.spvoice
 	$voice.rate = -2 #How quickly the voice message should be
@@ -2026,7 +2134,6 @@ Function TerrorZone {
 		PressTheAnyKey
 	}
 }
-
 Function Killhandle {#kudos the info in this post to save me from figuring it out: https://forums.d2jsp.org/topic.php?t=90563264&f=87
 	& "$PSScriptRoot\handle\handle64.exe" -accepteula -a -p D2R.exe > $PSScriptRoot\d2r_handles.txt
 	$proc_id_populated = ""
@@ -2053,7 +2160,7 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 		$Script:ActiveIDs = $Null
 		$D2rRunning = $false
 		$Script:ActiveIDs = New-Object -TypeName System.Collections.ArrayList
-		$Script:ActiveIDs = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,1) #find all diablo 2 game windows and pull the account ID from the title
+		$Script:ActiveIDs = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,2).trim() #find all diablo 2 game windows and pull the account ID from the title
 		$Script:D2rRunning = $true
 		Write-Verbose "Running Instances."
 	}
@@ -2097,7 +2204,7 @@ Function DisplayActiveAccounts {
 		Write-Host "  ID   Account Label"
 	}
 	$Pattern = "(?<=- [^\(]+ \()([a-z]+)" #Regex pattern to pull the region characters out of the window title.
-	foreach ($AccountOption in $Script:AccountOptionsCSV){
+	foreach ($AccountOption in ($Script:AccountOptionsCSV | Sort-Object -Property @{Expression = {[int]$_.ID}} )){
 		$RegionDisplayPostIndent = ""
 		$RegionDisplayPreIndent = ""
 		if ($AccountOption.ID.length -ge 2){#keep table formatting looking lovely if some crazy user has 10+ accounts.
@@ -2130,13 +2237,13 @@ Function DisplayActiveAccounts {
 				}
 			}
 		}
-		if ($AccountOption.id -in $Script:ActiveAccountsList.id){#if account is currently active
+		if ($AccountOption.id -in $Script:ActiveAccountsList.id){ #if account is currently active
 			$Windowname = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -like ($AccountOption.id + "*Diablo II: Resurrected")} | Select-Object MainWindowTitle).mainwindowtitle #Check active game instances to see which accounts are active. As this is based on checking window titles, this will only work for accounts opened from the script
 			$CurrentRegion = [regex]::Match($WindowName, $Pattern).value #Check which region aka realm the active account is connected to.
 			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
 			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
 			if ($CurrentRegion -eq "EU"){$CurrentRegion = "EU"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
-			Write-Host ("   " + $AccountOption.ID + "    "  + $RegionDisplayPreIndent + $CurrentRegion + $RegionDisplayPostIndent + "    " + $AcctPlayTime  + $AccountOption.accountlabel + " - Account Active.") -foregroundcolor yellow
+			Write-Host ("  " + $IDIndent + $AccountOption.ID + "    "  + $RegionDisplayPreIndent + $CurrentRegion + $RegionDisplayPostIndent + "    " + $AcctPlayTime  + $AccountOption.accountlabel + " - Account Active.") -foregroundcolor yellow
 		}
 		else {#if account isn't currently active
 			Write-Host ("  " + $IDIndent + $AccountOption.ID + "      -     " + $AcctPlayTime + $AccountOption.accountlabel + "  " + $AccountIndent + $Batches) -foregroundcolor green
@@ -2145,7 +2252,7 @@ Function DisplayActiveAccounts {
 }
 
 Function Menu {
-	Clear-Host
+	#Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
 		if ($DebugMode -eq $true){
@@ -2166,14 +2273,19 @@ Function Menu {
 		CheckActiveAccounts
 		$Script:PWmanualset = $False
 		$Script:AcceptableValues = New-Object -TypeName System.Collections.ArrayList
+		$Script:TwoDigitIDsUsed = $False
 		foreach ($AccountOption in $Script:AccountOptionsCSV){
 			if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
 				$Script:AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"
+				if ($AccountOption.id.length -eq 2){
+					$Script:TwoDigitIDsUsed = $True
+				}
 			}
 		}
 	}
-	if ($Null -ne $Batch -or $Script:OpenBatches -eq $true){#if batch has been passed through parameter or if batch wass been selected from the menu.
+	if ($Null -ne $Batch -or $Script:OpenBatches -eq $true){#if batch has been passed through parameter or if batch was been selected from the menu.
 		$Script:AcceptableBatchIDs = $Null #reset value
+		$AcceptableBatchValues = $Null #reset value
 		foreach ($ID in $Script:AccountOptionsCSV){
 			if ($ID.id -in $Script:AcceptableValues){#Find batch values to choose from based on accounts that aren't already open.
 				$AcceptableBatchValues = $AcceptableBatchValues + ($ID.batches).split(',') #collate acceptable options of batch ID's
@@ -2214,7 +2326,7 @@ Function Menu {
 					Write-Host " Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 				}
 				$Script:BatchToOpen = ReadKeyTimeout "" $MenuRefreshRate "c" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
-				Write-Host;	Write-Host
+				Write-Host
 			}
 			if ($Script:BatchToOpen -notin $AcceptableBatchValues + "c"){
 				Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
@@ -2402,7 +2514,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
-				Clear-Host
+				#Clear-Host
 				if ($Script:ScriptHasBeenRun -eq $true){
 					if ($DebugMode -eq $true){
 						DisplayPreviousAccountOpened
@@ -2475,9 +2587,13 @@ Function ChooseAccount {
 				$Script:StartTime = Get-Date #restart timer for session time only
 			}
 			$Script:AcceptableValues = New-Object -TypeName System.Collections.ArrayList
+			$Script:TwoDigitIDsUsed = $False
 			foreach ($AccountOption in $Script:AccountOptionsCSV){
 				if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
 					$Script:AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"
+					if ($AccountOption.id.length -eq 2){
+						$Script:TwoDigitIDsUsed = $True
+					}
 				}
 			}
 			$accountoptions = ($Script:AcceptableValues -join  ", ").trim()
@@ -2562,7 +2678,12 @@ Function ChooseAccount {
 				}
 				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, '$X[38;2;255;165;000;22mt$X[0m' for TZ info, '$X[38;2;255;165;000;22md$X[0m' for DClone status, '$X[38;2;255;165;000;22mj$X[0m' for jokes,"
 				Write-Host "  $ManualSettingSwitcherMenuText'$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
-				$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -AdditionalAllowedKeys 27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+				if ($Script:TwoDigitIDsUsed -eq $True){
+					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -AdditionalAllowedKeys 27 -TwoDigitAcctSelection $True #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+				}
+				else {
+					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -AdditionalAllowedKeys 27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+				}
 				if ($Script:AccountID -notin ($Script:AcceptableValues + "x" + "r" + "t" + "d" + "g" + "j" + "i" + $ManualSettingSwitcherOption + $AllOption + $BatchOption) -and $Null -ne $Script:AccountID){
 					if ($Script:AccountID -eq "a" -and $Script:Config.DisableOpenAllAccountsOption -ne $true){
 						Write-Host " Can't open all accounts as all of your accounts are already open doofus!" -foregroundcolor red
@@ -2614,7 +2735,6 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 			Write-Host " Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
 			Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + "): ") -nonewline
 			$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
-			Write-Host
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Config.DefaultRegion #default to NA
 			}
@@ -2644,7 +2764,7 @@ Function Processing {
 			try {
 				if (($Script:ConvertPlainTextPasswords -ne $false -and $Script:ParamsUsed -ne $true) -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){#Convert password if it's enabled in config and script is being run normally *OR* Convert password if script is being run from paramters using either -all batch or -all (but not if -username is used instead)
 					$Script:acct = $Script:AccountChoice.acct.tostring()
-					$EncryptedPassword = $PW | ConvertTo-SecureString -ErrorAction Stop #If User has changed password but left "PWIsSecureString" in accounts
+					$EncryptedPassword = $PW | ConvertTo-SecureString -ErrorAction Stop #Try converting password.
 					$PWobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedPassword)
 					$Script:PW = $PWobject.GetNetworkCredential().Password
 				}
@@ -2658,9 +2778,6 @@ Function Processing {
 			Catch {
 				Write-Host
 				Write-Host " Password for this account is in plain text in accounts.csv." -foregroundcolor red
-				Write-Host " Close the script, open accounts.csv and find the column PWIsSecureString." -foregroundcolor red
-				Write-Host " Note, this is the column immediately after your password." -foregroundcolor red
-				Write-Host " From there, remove `"Yes`" from the column and run script again." -foregroundcolor red
 				Write-Host " Run the script again and your password will be secured." -foregroundcolor red
 				Write-Host
 				PressTheAnyKey
@@ -2670,7 +2787,7 @@ Function Processing {
 			$Script:RegionLabel = $Script:Region.substring(0,2)
 			if ($Script:RegionLabel -eq "US"){$Script:RegionLabel = "NA"}
 		}
-		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.Token.length -ge 200)){
 			$Script:Token = $Script:AccountChoice.Token.tostring()
 			$EncryptedToken = $Script:Token | ConvertTo-SecureString
 			$Tokenobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedToken)
@@ -2896,7 +3013,7 @@ Function Processing {
 				Write-Host " Couldn't rename window :(" -foregroundcolor red
 				PressTheAnyKey
 			}
-			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
+			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.Token.length -ge 200)){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
 				$CurrentTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 				write-host " Launched Game using an $X[38;2;165;146;99;4mAuthentication Token$X[0m."
 				write-host " Waiting for you to get to Character select screen..." -foregroundcolor yellow
@@ -2925,7 +3042,7 @@ Function Processing {
 	}
 }
 ImportCSV
-Clear-Host
+#Clear-Host
 SetQualityRolls
 Menu
 
