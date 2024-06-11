@@ -20,22 +20,20 @@ Servers:
 
 Changes since 1.11.0 (next version edits):
 
-Improved regex pattern for detecting region from window name (helps with account display names with spaces in them).
+Improved regex pattern for detecting region from window name (helps with account display names with spaces in them or ID's with 2 digits).
 Fixed script launch parameters from launching accounts using AuthToken authentication. 
-Fixed (albeit inadvertantly) an issue with joining using the region parameter.
+Fixed (albeit inadvertantly) an issue with joining using the -region parameter.
 Fixed numpad numbers not working.
-Fixed Custom launch arguments not working when enclosed in quotes. Good for folks who use excel to edit accounts.csv
+Fixed Custom launch arguments not working when enclosed in quotes. An improvement for folks who use Excel to edit accounts.csv.
 Fixed unavailable batch ID's being selectable on batch screen.
 Relegated the "Account last opened" details to debug mode.
-Minor Tidy ups to code and error text.
-Removed references to OCR
-Script now autodetects if usermods are being used and will use the appropriate custom directory for settings.json. Handy for folks launching for SinglePlayer mods.
+Minor tidy ups to code and error text.
+Removed irrelevant references to OCR.
+Script now autodetects if usermods are being used and will use the appropriate custom save directory for settings.json. Handy for folks launching for SinglePlayer mods.
 Added a volume config option for DClone Voice alarm so it's not as startlingly loud.
 Script will now revert back to the main menu on batch, region and setting selection screens if no input is provided after 30 seconds.
 Script now detects if there are 2 digit ID's in account csv and allows multiple character inputs on account select screen. Good for those with more than 10 accounts.
-
-To do, check if password is over X characters long to determine whether it's been converted or not, remove TokenIsSecureString and PasswordIsSecureString from accounts.csv
-
+To make changing passwords more straightforward, script now checks password and token length to assess if they've been converted to a secure string or not. This means TokenIsSecureString and PasswordIsSecureString from accounts.csv are no longer needed and as such have been removed.
 
 1.11.0+ to do list
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script. Can't really be bothered though :)
@@ -45,7 +43,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.11.0.7"
+$CurrentVersion = "1.11.0.8"
 
 ###########################################################################################################################################
 # Script itself
@@ -730,7 +728,7 @@ if ($Null -eq $Script:Config.DCloneAlarmVolume){
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 	$Pattern = "</DCloneAlarmVoice>"
 	$Replacement = "</DCloneAlarmVoice>`n`t<!--Specify how loud notifications can be. Range from 0 and 100.-->`n`t"
-	$Replacement +=	"<DCloneAlarmVolume>80</DCloneAlarmVolume>" #add option to config file if it doesn't exist.
+	$Replacement +=	"<DCloneAlarmVolume>69</DCloneAlarmVolume>" #add option to config file if it doesn't exist.
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 	Start-Sleep -milliseconds 1500
@@ -1266,7 +1264,7 @@ function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 }
 
 Function Inventory {#Info screen
-	#Clear-Host
+	Clear-Host
 	Write-Host
 	Write-Host "          Stay a while and listen! Here's your D2r Loader info." -foregroundcolor yellow
 	write-host;	write-host
@@ -2252,7 +2250,7 @@ Function DisplayActiveAccounts {
 }
 
 Function Menu {
-	#Clear-Host
+	Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
 		if ($DebugMode -eq $true){
@@ -2514,7 +2512,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
-				#Clear-Host
+				Clear-Host
 				if ($Script:ScriptHasBeenRun -eq $true){
 					if ($DebugMode -eq $true){
 						DisplayPreviousAccountOpened
@@ -2884,7 +2882,7 @@ Function Processing {
 				try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
 					$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
 					Write-Host (" Custom game settings (settings" + $Script:AccountID + ".json) being used for " + $CurrentLabel) -foregroundcolor green
-					Start-Sleep -milliseconds 100
+					Start-Sleep -milliseconds 133
 				}
 				catch {
 					FormatFunction -Text "Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -IsError $True
@@ -3042,7 +3040,7 @@ Function Processing {
 	}
 }
 ImportCSV
-#Clear-Host
+Clear-Host
 SetQualityRolls
 Menu
 
