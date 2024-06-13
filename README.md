@@ -71,7 +71,7 @@ Other misc stats and info can be seen on the info screen. Statistics are recorde
 
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7f612465-be54-4883-ba37-5febfa39c58d)<br>
 Data courtesy of d2emu.com<br>
 
 **Check DClone Status**<br>
@@ -86,7 +86,7 @@ The alarm will a text warning (as seen in example below) as well as a text to sp
 The voice alarm activates only once but the text warnings will remain in place for 5 minutes. <br>
 You will also be notified after the script has launched if there's any imminent walks about to happen (ie status is 5/6).<br>
 See the [DClone Status Alarms](#8-dclone-status-alarms-optional) and [config](#4-script-config-mostly-optional) sections for more information and how to configure this.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/22288449-6088-4d1c-b559-689907ea0afa)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/929f62d0-a952-449d-bbdc-ad3a9126d008)<br>
 Voice Examples (make sure to unmute, GitHub mutes by default):<br>
 
 https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50e9a49d-a01c-40e4-8654-a8da9fe40c05
@@ -96,8 +96,8 @@ https://github.com/shupershuff/Diablo2RLoader/assets/63577525/56bd87d5-157f-4119
 **Be an Entertainer in Baals Comedy Club**<br>
 If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
 That way instead of providing any real value in terms of damage, you can provide entertainment value instead.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ba83409-eeba-4ae6-ba1e-b68d03e850e3)<br>
-Jokes courtesy of v2.jokeapi.dev and official-joke-api.appspot.com<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/55f47b81-c86e-424b-9954-9a1796ae5f9b)<br>
+Jokes courtesy of v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io<br>
 
 **Launch Parameters**<br>
 You can run the script using launch parameters instead.<br>
