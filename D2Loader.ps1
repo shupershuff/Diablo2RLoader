@@ -32,12 +32,12 @@ Script now autodetects if usermods are being used and will use the appropriate c
 Script will now revert back to the main menu on batch, region and setting selection screens if no input is provided after 30 seconds.
 Script now detects if there are 2 digit ID's in account csv and allows multiple character inputs on account select screen. Good for those with more than 10 accounts.
 Script now downloads handle64.exe from SysInternals if it's not there (one less setup step)
+Script now checks if folk have entered duplicate ID's in accounts.csv
 Added a volume config option for DClone Voice alarm so it's not as startlingly loud.
 Gave the joke screen some McLovin and added two additional API sources for cringy Dad jokes and Chuck Norris facts.
 To make changing passwords more straightforward, script now checks password and token length to assess if they've been converted to a secure string or not. This means the TokenIsSecureString and PasswordIsSecureString columns in accounts.csv are no longer needed and as such have been removed.
 
 1.12.0+ to do list
-Add checks when launching to prevent people adding in the same ID in accounts.csv
 Add Capability for D2Emu Websocket connection as the current TZ/dclone API might be getting deprecated.
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script. Can't really be bothered though :)
 To reduce lines, add repeated commands into functions. Can't really be bothered though :)
@@ -46,7 +46,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.11.10"
+$CurrentVersion = "1.12.0"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -962,6 +962,12 @@ Function ImportCSV {
 			if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
 				Write-Host "`n You haven't setup accounts.csv with your accounts." -foregroundcolor red
 				Write-Host " Add your account details to the CSV file and run the script again :)`n" -foregroundcolor red
+				PressTheAnyKeyToExit
+			}
+			$DuplicateIDs = $AccountOptionsCSV | Group-Object -Property ID | Where-Object { $_.Count -gt 1 }
+			if ($duplicateIDs.Count -gt 0) {
+				Write-Host "`n Accounts.csv has duplicate IDs." -foregroundcolor red
+				FormatFunction -Text "Please adjust Accounts.csv so that the ID numbers against each account are unique.`n" -IsError $True
 				PressTheAnyKeyToExit
 			}
 			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.7.0. If batch column doesn't exist, add it
