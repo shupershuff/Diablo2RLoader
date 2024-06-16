@@ -157,7 +157,7 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
  	- Don't forget to enable the Batch feature in the config file.
 8. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
-9. [OPTIONAL] If you want to be able to use Token based authentication (eg if you have MFA enabled on your account or a one of Blizzards Auth servers are down and you can't connect), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
+9. [OPTIONAL] If you want to be able to use Token based authentication (eg if you have MFA enabled on your account, one of Blizzards Auth servers are down and you can't connect or if you get errors about account being "locked for suspicious activity" on certain regions), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
 	a. Log in with your credentials and approve MFA request (if enabled).<br>
 	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
