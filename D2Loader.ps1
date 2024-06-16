@@ -31,6 +31,7 @@ Removed irrelevant references to OCR.
 Script now autodetects if usermods are being used and will use the appropriate custom save directory for settings.json. Handy for folks launching for SinglePlayer mods.
 Script will now revert back to the main menu on batch, region and setting selection screens if no input is provided after 30 seconds.
 Script now detects if there are 2 digit ID's in account csv and allows multiple character inputs on account select screen. Good for those with more than 10 accounts.
+Script now downloads handle64.exe from SysInternals if it's not there (one less setup step)
 Added a volume config option for DClone Voice alarm so it's not as startlingly loud.
 Gave the joke screen some McLovin and added two additional API sources for cringy Dad jokes and Chuck Norris facts.
 To make changing passwords more straightforward, script now checks password and token length to assess if they've been converted to a secure string or not. This means the TokenIsSecureString and PasswordIsSecureString columns in accounts.csv are no longer needed and as such have been removed.
@@ -45,7 +46,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.12.0"
+$CurrentVersion = "1.11.10"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -883,8 +884,34 @@ if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){
 #Check Handle64.exe downloaded and placed into correct folder
 $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 if ((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
-	Write-Host " Handle64.exe isn't the .\Handle\ folder. See instructions for more details on setting this up." -foregroundcolor red
-	PressTheAnyKeyToExit
+	try {
+		$HandleExtractPath = ($Script:WorkingDirectory + "\Handle\")
+		Write-Host
+		Write-Host " Handle64.exe not in \Handle\ folder. Downloading now..." -foregroundcolor Yellow
+		try {
+			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\Handle\ExtractTemp\") -ErrorAction stop | Out-Null #create temporary folder to download zip to and extract
+		}
+		Catch {#if folder already exists for whatever reason.
+			Remove-Item -Path ($Script:WorkingDirectory + "\Handle\ExtractTemp\") -Recurse -Force
+			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\Handle\ExtractTemp\") | Out-Null #create temporary folder to download zip to and extract
+		}
+		$ZipURL = "https://download.sysinternals.com/files/Handle.zip" #get zip download URL
+		$ZipPath = ($WorkingDirectory + "\Handle\ExtractTemp\")
+		Invoke-WebRequest -Uri $ZipURL -OutFile ($ZipPath + "\Handle.zip")
+		Expand-Archive -Path ($ZipPath + "\Handle.zip") -DestinationPath $ZipPath -Force
+		Copy-Item -Path ($ZipPath + "Handle64.exe") -Destination ($Script:WorkingDirectory + "\Handle\")
+		Remove-Item -Path ($Script:WorkingDirectory + "\Handle\ExtractTemp\") -Recurse -Force #delete update temporary folder
+		Write-Host " Successfully downloaded Handle64.exe :)" -ForeGroundcolor Green
+		Start-Sleep -milliseconds 2024	
+	}
+	Catch {
+		Write-Host " Handle.zip couldn't be downloaded." -foregroundcolor red
+		FormatFunction -text "It's possible the download link changed. Try checking the Microsoft page or SysInternals.com site for a download link and ensure that handle64.exe is placed in the .\Handle\ folder." -IsError $True
+		Write-Host
+		Write-Host " $X[38;2;69;155;245;4mhttps://learn.microsoft.com/sysinternals/downloads/handle$X[0m"
+		Write-Host " $X[38;2;69;155;245;4mhttps://download.sysinternals.com/files/Handle.zip$X[0m`n"
+		PressTheAnyKeyToExit
+	}
 }
 
 Function ValidateTokenInput {
