@@ -19,24 +19,33 @@ Servers:
  Asia - kr.actual.battle.net
 
 Changes since 1.11.0 (next version edits):
-Added config for ForceAuthTokenForRegion. You can now specify regions to use auth tokens (in case one regions auth goes down).
-Fixed Region display issues on main menu when multiple regions are open.
-Fixed DClone info from Diablo2.io displaying incorrectly.
-Fixed update checker not sorting versions correctly.
-Replaced D2rapi.fly.dev with d2emu.com for dclone tracking.
-Many tidy ups to align with better coding practices.
-Removed unused variables.																								
+Improved regex pattern for detecting region from window name (helps with account display names with spaces in them or ID's with 2 digits).
+Fixed script launch parameters from launching accounts using AuthToken authentication.
+Fixed (albeit inadvertantly) an issue with joining using the -region parameter.
+Fixed numpad numbers not working on full sized keyboards.
+Fixed Custom launch arguments not working when enclosed in quotes. An improvement for folks who use Excel to edit accounts.csv.
+Fixed unavailable batch ID's being selectable on batch screen.
+Relegated the "Account last opened" details to debug mode.
+Minor tidy ups to code and error text.
+Removed irrelevant references to OCR.
+Script now autodetects if usermods are being used and will use the appropriate custom save directory for settings.json. Handy for folks launching for SinglePlayer mods.
+Script will now revert back to the main menu on batch, region and setting selection screens if no input is provided after 30 seconds.
+Script now detects if there are 2 digit ID's in account csv and allows multiple character inputs on account select screen. Good for those with more than 10 accounts.
+Added a volume config option for DClone Voice alarm so it's not as startlingly loud.
+Gave the joke screen some McLovin and added two additional API sources for cringy Dad jokes and Chuck Norris facts.
+To make changing passwords more straightforward, script now checks password and token length to assess if they've been converted to a secure string or not. This means the TokenIsSecureString and PasswordIsSecureString columns in accounts.csv are no longer needed and as such have been removed.
 
-1.11.0+ to do list
-To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script.
-To reduce lines, add repeated commands into functions
+1.12.0+ to do list
+Add checks when launching to prevent people adding in the same ID in accounts.csv
+Add Capability for D2Emu Websocket connection as the current TZ/dclone API might be getting deprecated.
+To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script. Can't really be bothered though :)
+To reduce lines, add repeated commands into functions. Can't really be bothered though :)
 Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windows. Investigate how this could be done. Would need an agent to detect key combos, Possibly via AutoIT or Autohotkey. Likely not possible within powershell and requires a separate project.
 Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.11.0"
-
+$CurrentVersion = "1.12.0"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -78,7 +87,12 @@ Else {
 }
 #run script as admin
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $ScriptArguments"  -Verb RunAs;exit }
-
+#DebugMode
+#$DebugMode = $True # Uncomment to enable
+if ($DebugMode -eq $True){
+	$DebugPreference = "Continue"
+	$VerbosePreference = "Continue"
+}
 #set window size
 [console]::WindowWidth=77; #script has been designed around this width. Adjust at your own peril.
 [console]::WindowHeight=48;
@@ -89,27 +103,27 @@ $ProgressPreference = "SilentlyContinue"
 $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\')) #Set Current Directory path.
 $Script:StartTime = Get-Date #Used for elapsed time. Is reset when script refreshes.
 $Script:MOO = "%%%"
-$MenuRefreshRate = 30 #How often the script refreshes in seconds.
+$MenuRefreshRate = 30 #How often the script refreshes in seconds. This should be set to 30, don't change this please.
 $Script:ScriptFileName = Split-Path $MyInvocation.MyCommand.Path -Leaf #find the filename of the script in case a user renames it.
 $Script:SessionTimer = 0 #set initial session timer to avoid errors in info menu.
 $Script:NotificationHasBeenChecked = $False
 #Baseline of acceptable characters for ReadKey functions. Used to prevents receiving inputs from folk who are alt tabbing etc.
 $Script:AllowedKeyList = @(48,49,50,51,52,53,54,55,56,57) #0 to 9
-$Script:AllowedKeyList += @(48,49,50,51,52,53,54,55,56,57) #0 to 9 on numpad
+$Script:AllowedKeyList += @(96,97,98,99,100,101,102,103,104,105) #0 to 9 on numpad
 $Script:AllowedKeyList += @(65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90) # A to Z
+$Script:MenuOptions = @(65,66,67,68,71,73,74,82,83,84,88) #a, b, c, d, g, i, j ,r, s, t and x
 $EnterKey = 13
-
 Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys) {#used to receive user input
-    $key = $Null
-    $Host.UI.RawUI.FlushInputBuffer()
-    if (![string]::IsNullOrEmpty($message)) {
-        Write-Host -NoNewLine $message
-    }
+	$key = $Null
+	$Host.UI.RawUI.FlushInputBuffer()
+	if (![string]::IsNullOrEmpty($message)) {
+	Write-Host -NoNewLine $message
+	}
 	$AllowedKeyList = $Script:AllowedKeyList + @(13,27) #Add Enter & Escape to the allowedkeylist as acceptable inputs.
-    while ($Null -eq $key) {
-        if ($Host.UI.RawUI.KeyAvailable) {
-            $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
-            if ($True -ne $AllowAllKeys){
+	while ($Null -eq $key) {
+	if ($Host.UI.RawUI.KeyAvailable) {
+			$key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
+			if ($True -ne $AllowAllKeys){
 				if ($key_.KeyDown -and $key_.VirtualKeyCode -in $AllowedKeyList) {
 					$key = $key_
 				}
@@ -119,59 +133,104 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys) {#u
 					$key = $key_
 				}
 			}
-        }
+		}
 		else {
-            Start-Sleep -m 200  # Milliseconds
-        }
-    }
+			Start-Sleep -m 200  # Milliseconds
+		}
+	}
 	if ($key_.VirtualKeyCode -ne $EnterKey -and -not ($Null -eq $key) -and [bool]$NoOutput -ne $true) {
-        Write-Host ("$X[38;2;255;165;000;22m" + "$($key.Character)" + "$X[0m") -NoNewLine
-    }
-    if (![string]::IsNullOrEmpty($message)) {
-        Write-Host "" # newline
-    }
-    return $(
-        if ($Null -eq $key -or $key.VirtualKeyCode -eq $EnterKey) {
-            ""
-        } else {
-            $key.Character
-        }
-    )
+		Write-Host ("$X[38;2;255;165;000;22m" + "$($key.Character)" + "$X[0m") -NoNewLine
+	}
+	if (![string]::IsNullOrEmpty($message)) {
+		Write-Host "" # newline
+	}
+	return $(
+		if ($Null -eq $key -or $key.VirtualKeyCode -eq $EnterKey) {
+			""
+		} else {
+			$key.Character
+		}
+	)
 }
 
-Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null) {#used to receive user input but times out after X amount of time
+Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null, [bool]$TwoDigitAcctSelection = $False) {
 	$key = $Null
-    $Host.UI.RawUI.FlushInputBuffer()
-    if (![string]::IsNullOrEmpty($message)) {
-        Write-Host -NoNewLine $message
-    }
-    $Counter = $timeOutSeconds * 1000 / 250
-    while ($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)) {
-        if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
-            $key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
-            if ($key_.KeyDown -and $key_.VirtualKeyCode -in $AllowedKeyList) {
-                $key = $key_
-            }
-        }
+	$inputString = ""
+	$Host.UI.RawUI.FlushInputBuffer()
+	if (![string]::IsNullOrEmpty($message)) {
+		Write-Host -NoNewLine $message
+	}
+	$Counter = $timeOutSeconds * 1000 / 250
+	$AllowedKeyList = $Script:AllowedKeyList + $AdditionalAllowedKeys #Add any other specified allowed key inputs (eg Enter).
+	while ($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)) {
+		if ($TwoDigitAcctSelection -eq $True -and $inputString.length -ge 1){
+			$AllowedKeyList = $Script:AllowedKeyList + 13 + 8 # Allow enter and backspace to be used if 1 character has been typed.
+		}
+		if (($timeOutSeconds -eq 0) -or $Host.UI.RawUI.KeyAvailable) {
+			$key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
+			if ($key_.KeyDown -and $key_.VirtualKeyCode -in $AllowedKeyList) {
+				if ($key_.VirtualKeyCode -eq [System.ConsoleKey]::Backspace) {
+					$Counter = $timeOutSeconds * 1000 / 250 #reset counter
+					if ($inputString.Length -gt 0) {
+						$inputString = $inputString.Substring(0, $inputString.Length - 1) #remove last added character/number from variable
+						# Clear the last character from the console
+						$Host.UI.RawUI.CursorPosition = @{
+							X = [Math]::Max($Host.UI.RawUI.CursorPosition.X - 1, 0)
+							Y = $Host.UI.RawUI.CursorPosition.Y
+						}
+						Write-Host -NoNewLine " " #-ForegroundColor Black
+						$Host.UI.RawUI.CursorPosition = @{
+							X = [Math]::Max($Host.UI.RawUI.CursorPosition.X - 1, 0)
+							Y = $Host.UI.RawUI.CursorPosition.Y
+						}
+					}
+				}
+				Elseif ($TwoDigitAcctSelection -eq $True -and $key_.VirtualKeyCode -notin $Script:MenuOptions){
+					$Counter = $timeOutSeconds * 1000 / 250 #reset counter
+					if ($key_.VirtualKeyCode -eq $EnterKey) {
+						break
+					}
+					$inputString += $key_.Character
+					Write-Host ("$X[38;2;255;165;000;22m" + $key_.Character + "$X[0m") -nonewline
+					if ($inputString.length -eq 2){#if 2 characters have been entered
+						break
+					}
+				}
+				Else {
+					$key = $key_
+					$inputString = $key_.Character
+				}
+			}
+		}
 		else {
-            Start-Sleep -m 200  # Milliseconds
-        }
-    }	
-    if ($key_.VirtualKeyCode -ne $EnterKey -and -not ($Null -eq $key)) {
-        Write-Host ("$X[38;2;255;165;000;22m" + "$($key.Character)" + "$X[0m")
-    }
-    if (![string]::IsNullOrEmpty($message)) {
-        Write-Host "" # newline
-    }
+			Start-Sleep -m 250 # Milliseconds
+		}
+	}
+	if ($Counter -le 0){
+		if ($InputString.Length -gt 0){# if it timed out, revert to no input if one character was entered.
+			$InputString = "" #remove last added character/number from variable
+		}
+	}
+	if ($TwoDigitAcctSelection -eq $False -or ($TwoDigitAcctSelection -eq $True -and $key_.VirtualKeyCode -in $Script:MenuOptions)) {
+		Write-Host ("$X[38;2;255;165;000;22m" + "$inputString" + "$X[0m")
+	}
+	if (![string]::IsNullOrEmpty($message) -or $TwoDigitAcctSelection -eq $True) {
+		Write-Host "" # newline
+	}
 	Write-Host #prevent follow up text from ending up on the same line.
-    return $(
-        if ($Null -eq $key -or $key.VirtualKeyCode -eq $EnterKey) {
-            $Default
-        } else {
-            $key.Character
-        }
-    )
+	return $(
+		If ($key.VirtualKeyCode -eq $EnterKey -and $EnterKey -in $AllowedKeyList){
+			""
+		}
+		ElseIf ($inputString.Length -eq 0) {
+			$Default
+		}
+		else {
+			$inputString
+		}
+	)
 }
+
 Function PressTheAnyKey {#Used instead of Pause so folk can hit any key to continue
 	write-host "  Press any key to continue..." -nonewline
 	readkey -NoOutput $True -AllowAllKeys $True | out-null
@@ -183,7 +242,81 @@ Function PressTheAnyKeyToExit {#Used instead of Pause so folk can hit any key to
 	remove-job * -force
 	Exit
 }
-
+Function Red {
+	process { Write-Host $_ -ForegroundColor Red }
+}
+Function Yellow {
+	process { Write-Host $_ -ForegroundColor Yellow }
+}
+Function FormatFunction {
+	param (
+		[string] $Text,
+		[int] $Indents,
+		[bool] $IsError,
+		[bool] $IsWarning
+	)
+	$MaxLineLength = 75
+	$MaxLineLengthDash = 73
+	If ($Indents -ge 1){
+		$MaxLineLength = $MaxLineLength - $Indents
+		$MaxLineLengthDash = $MaxLineLengthDash - $Indents
+		while ($Indents -gt 0){
+			$Indent += " "
+			$Indents --
+		}
+	}
+	$Text -split "`n" | ForEach-Object {
+		$Line = " " + $Indent + $_
+		if ($Line -match '^[\s]*-'){ #For any line starting with a dash (excluding spaces).
+			$script:DashFormat = ($Line -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "`$1`n").trimend()
+			$DashFormat -split "`n" | ForEach-Object {
+				if ($_ -match '^[\s]*-') { #For any line starting with a dash (excluding spaces).
+					if ($IsError -eq $True){
+						write-output $_ | red
+					}
+					Elseif ($IsWarning -eq $True){
+						write-output $_ | Yellow
+					}
+					Else {
+						$_
+					}
+				}
+				else {
+					if ($IsError -eq $True){
+						write-output ($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend() | red
+					}
+					ElseIf ($IsError -eq $True){
+						write-output ($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend() | Yellow
+					}
+					Else {
+						($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend()
+					}
+				}
+			}
+		}
+		else {
+			if ($IsError -eq $True){
+				write-output ($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend() | red
+			}
+			Elseif ($IsWarning -eq $True){
+				write-output ($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend() | Yellow
+			}
+			Else {
+				($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend()
+			}
+		}
+	}
+}
+Function DisplayPreviousAccountOpened {
+		Write-Host "Account previously opened was:" -foregroundcolor yellow -backgroundcolor darkgreen
+		$Lastopened = @(
+			[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$Script:LastRegion}
+		)
+		Write-Host " " -NoNewLine
+		Write-Host ("Account:  " + $Lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen
+		Write-Host " " -NoNewLine
+		Write-Host "Region:  " $Lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
+}
 if ((Test-Path -Path "$Script:WorkingDirectory\Stats.csv") -ne $true){#Create Stats CSV if it doesn't exist
 	$Null = {} | Select-Object "TotalGameTime","TimesLaunched","LastUpdateCheck","HighRunesFound","UniquesFound","SetItemsFound","RaresFound","MagicItemsFound","NormalItemsFound","Gems","CowKingKilled","PerfectGems" | Export-Csv "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation
 	write-host " Stats.csv created!"
@@ -252,23 +385,7 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 				Write-Host ":`n $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
 			}
 			Write-Host
-			$ReleaseInfo.body -split "`n" | ForEach-Object {
-				$Line = " " + $_
-				if ($Line[1] -eq "-") {#for any line starting with a dash
-					 $DashFormat = ($Line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
-					 $DashFormat -split "`n" | ForEach-Object {
-						if ($_[1] -eq "-") {#for any line starting with a dash
-							$_
-						}
-						else {
-							($_ -replace "(.{1,73})(\s+|$)", "   `$1`n").trimend()
-						}
-					}
-				}
-				else {
-					($Line -replace "(.{1,75})(\s+|$)", "`$1`n ").trimend()
-				}
-			}
+			FormatFunction -Text $ReleaseInfo.body #Output the latest release notes in an easy to read format.
 			Write-Host; Write-Host
 			Do {
 				Write-Host " Your Current Version is v$CurrentVersion."
@@ -292,10 +409,10 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 					Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force
 					New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
 				}
-				$ZipURL = $ReleaseInfo.zipball_url #get zip download URL	
+				$ZipURL = $ReleaseInfo.zipball_url #get zip download URL
 				$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
 				Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
-				if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.				
+				if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.
 					Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -OutFile $null | out-null #identify the latest file only.
 				}
 				$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
@@ -305,13 +422,13 @@ if ($CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.
 				Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force #delete update temporary folder
 				Write-Host " Updated :)" -foregroundcolor green
 				Start-Sleep -milliseconds 850
-				& ($Script:WorkingDirectory + "\" + $Script:ScriptFileName)	
+				& ($Script:WorkingDirectory + "\" + $Script:ScriptFileName)
 				exit
 			}
 		}
 		$CurrentStats.LastUpdateCheck = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
 		$Script:LatestVersionCheck = $CurrentStats.LastUpdateCheck
-		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update stats.csv with the new time played.		
+		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update stats.csv with the new time played.
 	}
 	Catch {
 		Write-Host
@@ -330,10 +447,10 @@ if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.bas')) -ne $True){
 		}
 		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
 		$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
-		$ZipURL = $ReleaseInfo.zipball_url #get zip download URL	
+		$ZipURL = $ReleaseInfo.zipball_url #get zip download URL
 		$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
 		Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
-		if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.				
+		if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.
 			Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -OutFile $null | out-null #identify the latest file only.
 		}
 		$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
@@ -348,7 +465,7 @@ if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.bas')) -ne $True){
 Function ImportXML {
 	try {
 		$Script:Config = ([xml](Get-Content "$Script:WorkingDirectory\Config.xml" -ErrorAction Stop)).D2loaderconfig
-		#Write-Host "Config imported successfully." -foregroundcolor green
+		Write-Verbose "Config imported successfully."
 	}
 	Catch {
 		Write-Host ""
@@ -561,6 +678,21 @@ if ($Null -eq $Script:Config.DCloneAlarmVoice){
 	Start-Sleep -milliseconds 1500
 	PressTheAnyKey
 }
+if ($Null -eq $Script:Config.DCloneAlarmVolume){
+	Write-Host
+	Write-Host " Config option 'DCloneAlarmVolume' missing from config.xml" -foregroundcolor Yellow
+	Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+	Write-Host " Added this missing option into .xml file :)" -foregroundcolor green
+	Write-Host
+	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	$Pattern = "</DCloneAlarmVoice>"
+	$Replacement = "</DCloneAlarmVoice>`n`t<!--Specify how loud notifications can be. Range from 0 and 100.-->`n`t"
+	$Replacement +=	"<DCloneAlarmVolume>69</DCloneAlarmVolume>" #add option to config file if it doesn't exist.
+	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+	Start-Sleep -milliseconds 1500
+	PressTheAnyKey
+}
 if ($Null -eq $Script:Config.ForceAuthTokenForRegion){
 	Write-Host
 	Write-Host " Config option 'ForceAuthTokenForRegion' missing from config.xml" -foregroundcolor Yellow
@@ -737,7 +869,7 @@ if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){
 		Write-Host " Download and install it from Microsoft here:" -foregroundcolor red
 		Write-Host " https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40" #actual download link https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net40-web-installer
 		PressTheAnyKeyToExit
-	}	
+	}
 	Write-Host " Compiling SetTextv2.exe from SetTextv2.bas..."
 	& "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" -target:winexe -out:"`"$WorkingDirectory\SetText\SetTextv2.exe`"" "`"$WorkingDirectory\SetText\SetTextv2.bas`"" | out-null #/verbose  #actually compile the bastard
 	if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){#if it fails for some reason and settextv2.exe still doesn't exist.
@@ -751,7 +883,7 @@ if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){
 #Check Handle64.exe downloaded and placed into correct folder
 $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 if ((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
-	Write-Host " Handle64.exe is in the .\Handle\ folder. See instructions for more details on setting this up." -foregroundcolor red
+	Write-Host " Handle64.exe isn't the .\Handle\ folder. See instructions for more details on setting this up." -foregroundcolor red
 	PressTheAnyKeyToExit
 }
 
@@ -794,17 +926,15 @@ Function ImportCSV {
 			}
 			Catch {
 				Write-Host
-				Write-Host " Accounts.csv does not exist. Make sure you create this and populate with accounts first." -foregroundcolor red
+				FormatFunction -text "Accounts.csv does not exist. Make sure you create this and populate with accounts first." -IsError $True
 				PressTheAnyKeyToExit
 			}
 		}
 		if ($Null -ne $Script:AccountOptionsCSV){
 			#check Accounts.csv has been updated and doesn't contain the example account.
 			if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
-				Write-Host
-				Write-Host "You haven't setup accounts.csv with your accounts." -foregroundcolor red
-				Write-Host "Add your account details to the CSV file and run the script again :)" -foregroundcolor red
-				Write-Host
+				Write-Host "`n You haven't setup accounts.csv with your accounts." -foregroundcolor red
+				Write-Host " Add your account details to the CSV file and run the script again :)`n" -foregroundcolor red
 				PressTheAnyKeyToExit
 			}
 			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.7.0. If batch column doesn't exist, add it
@@ -815,20 +945,30 @@ Function ImportCSV {
 				# Export the updated CSV data back to the file
 				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
 			}
-			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "TokenIsSecureString" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.10.0. If token columns don't exist, add them.
+			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.10.0. If token columns don't exist, add them. As of 1.12.0 onwards, TokenSecureString is no longer used.
 				# Column does not exist, so add it to the CSV data
 				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "Token" -NotePropertyValue $Null}
 				}
-				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "TokenIsSecureString" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
-					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "TokenIsSecureString" -NotePropertyValue $Null}
-				}
 				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "AuthenticationMethod" -NotePropertyValue "Parameter"}
-				}				
+				}
 				# Export the updated CSV data back to the file
 				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-			}	
+			}
+			$OldColumnsToRemove = @("PWIsSecureString","TokenIsSecureString") #Old Account.csv columns that are now unused.
+			$ExistingColumns = $Script:AccountOptionsCSV | Select-Object -First 1 | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name
+			$ColumnsRemoved = $ExistingColumns | Where-Object { $OldColumnsToRemove -contains $_ }
+			$DesiredColumnOrder = @("ID","Acct","AccountLabel","Batches","TimeActive","CustomLaunchArguments","AuthenticationMethod","PW","Token") # Update with your desired column order
+			if ($ColumnsRemoved.Count -gt 0) {
+				$Script:AccountOptionsCSV = $Script:AccountOptionsCSV | Select-Object -Property $DesiredColumnOrder
+				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #rewrite to accounts.csv to remove unused columns.
+				FormatFunction -text ("Unused Columns were removed from Accounts.csv: " + ($columnsRemoved -join ", ") + ".`n") -IsWarning $True
+				start-sleep -milliseconds 1000
+			}
+			else {
+				Write-Verbose "No columns were removed as they do not exist in the CSV."
+			}
 			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "CustomLaunchArguments" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.0. If CustomLaunchArguments column doesn't exist, add it
 				# Column does not exist, so add it to the CSV data
 				$Script:AccountOptionsCSV | ForEach-Object {
@@ -863,15 +1003,14 @@ Function ImportCSV {
 					Write-host " Open accounts.csv and set this to either 'Parameter' or 'Token'." -Foregroundcolor red
 					Write-host
 					PressTheAnyKeyToExit
-				}	
-				if ($Entry.TokenIsSecureString.length -gt 0 -and $Entry.TokenIsSecureString -ne $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+				}
+				if ($Entry.Token.length -ge 200){#if nothing needs converting, make sure existing entries still make it into the updated CSV
 					$Entry
 				}
-				if (($Entry.TokenIsSecureString.length -eq 0 -or $Entry.TokenIsSecureString -eq "no" -or $Entry.TokenIsSecureString -eq $false) -and $Entry.Token.length -ne 0){#if account.csv has a Token and TokenIsSecureString isn't set to yes, convert Token to secure string and update CSV.
+				if ($Entry.Token.length -lt 200 -and $Entry.Token.length -ne 0){#if account.csv has a Token and it's less than 200 chars long, it hasn't been secured yet.
 					$ValidatedToken = ValidateTokenInput -TokenInput $Entry.Token
 					$Entry.Token = ConvertTo-SecureString -String $ValidatedToken -AsPlainText -Force
 					$Entry.Token = $Entry.Token | ConvertFrom-SecureString
-					$Entry.TokenIsSecureString = "Yes"
 					Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
 					Start-Sleep -milliseconds 100
 					$Entry
@@ -880,30 +1019,33 @@ Function ImportCSV {
 				if ($Entry.Token.length -eq 0 -and $Entry.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
 					Write-Host
 					Write-Host (" The account " + $Entry.AccountLabel + " doesn't yet have a Token defined.") -foregroundcolor yellow
-					Write-Host " See the readme for how to obtain Auth token." -foregroundcolor yellow
+					Write-Host " See the readme on Github for how to obtain Auth token." -foregroundcolor yellow
+					Write-Host
+					Write-Host " https://github.com/shupershuff/Diablo2RLoader/#3-setup-your-accounts" -foregroundcolor cyan
 					Write-Host
 					while ($Entry.Token.length -eq 0){#prevent empty entries as this will cause errors.
 						$Entry.Token = ValidateTokenInput -ManuallyEntered $True
 					}
 					$Entry.Token = ConvertTo-SecureString -String $Entry.Token -AsPlainText -Force
 					$Entry.Token = $Entry.Token | ConvertFrom-SecureString
-					$Entry.TokenIsSecureString = "Yes"
 					Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
 					Start-Sleep -milliseconds 100
 					$Entry
 					$TokensUpdated = $true
 				}
+				if ($Entry.Token.length -ge 200){
+					$Script:TokensConfigured = $True
+				}
 			}
 			if ($Script:ConvertPlainTextPasswords -ne $False){
 				#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
 				$NewCSV = Foreach ($Entry in $Script:AccountOptionsCSV) {
-					if ($Entry.PWisSecureString.length -gt 0 -and $Entry.PWisSecureString -ne $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+					if ($Entry.PW.length -ge 300){#if nothing needs converting, make sure existing entries still make it into the updated CSV
 						$Entry
 					}
-					if (($Entry.PWisSecureString.length -eq 0 -or $Entry.PWisSecureString -eq "no" -or $Entry.PWisSecureString -eq $false) -and $Entry.PW.length -ne 0){#if account.csv has a password and PWisSecureString isn't set to yes, convert PW to secure string and update CSV.
+					if ($Entry.PW.length -lt 300 -and $Entry.PW.length -ne 0){#if account.csv has a password and it isn't over 300characters, this means it's not converted yet. As such, convert PW to secure string and update CSV.
 						$Entry.PW = ConvertTo-SecureString -String $Entry.PW -AsPlainText -Force
 						$Entry.PW = $Entry.PW | ConvertFrom-SecureString
-						$Entry.PWisSecureString = "Yes"
 						Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
 						$Entry
@@ -917,7 +1059,6 @@ Function ImportCSV {
 							$Entry.PW = read-host -AsSecureString " Enter the Battle.net password for"$Entry.AccountLabel
 						}
 						$Entry.PW = $Entry.PW | ConvertFrom-SecureString
-						$Entry.PWisSecureString = "Yes"
 						Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
 						$Entry
@@ -940,6 +1081,9 @@ Function ImportCSV {
 					Write-Host
 					Write-Host " Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
 					Write-Host " Please close accounts.csv and run the script again!" -foregroundcolor red
+					Write-Host
+					Write-Host " If Accounts.csv isn't open, then there must be a permission issue." -foregroundcolor red
+					write-Host " Try moving your install folder to a different location." -foregroundcolor red
 					PressTheAnyKeyToExit
 				}
 			}
@@ -1093,7 +1237,7 @@ Function Inventory {#Info screen
 	}
 	$NormalProbability = ($QualityArray | where-object {$_.type -eq "Normal"} | Select-Object Probability).probability
 	write-host
-	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"	
+	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"
 	$Line1 = "                    --------------------------------"
 	$Line2 = ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m    " +  ((($time =([TimeSpan]::Parse($CurrentStats.TotalGameTime))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
 	$Line3 = ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m " + ((($time =([TimeSpan]::Parse($Script:SessionTimer))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
@@ -1146,13 +1290,13 @@ Function Inventory {#Info screen
 	write-host
 	write-host ("  $X[4mD2r Game Version:$X[0m    " + (Get-Command "$GamePath\D2R.exe").FileVersionInfo.FileVersion)
 	write-host "  $X[4mScript Install Path:$X[0m " -nonewline
-	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.	
+	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.
 	write-host "  $X[4mYour Script Version:$X[0m v$CurrentVersion"
 	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion"
-	if($null -ne $Script:ForceAuthToken){
+	if ($null -ne $Script:ForceAuthToken){
 		write-host "  $X[4mForceAuthToken:$X[0m $Script:ForceAuthToken"
 	}
-	if($null -eq $Script:LatestVersionCheck -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
+	if ($null -eq $Script:LatestVersionCheck -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
 		try {
 			$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
 			$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
@@ -1160,10 +1304,9 @@ Function Inventory {#Info screen
 			$Script:LatestVersion = [version[]]$ReleaseInfo.Name.Trim('v')
 		}
 		Catch {
-			write-verbose "  Couldn't check for updates :("
+			write-output "  Couldn't check for updates :(" | Red
 		}
 	}
-	
 	if ($Null -ne $Script:LatestVersion -and $Script:LatestVersion -gt $Script:CurrentVersion) {
 		write-host
 		write-host "  $X[4mLatest Script Version:$X[0m v$LatestVersion" -foregroundcolor yellow
@@ -1178,10 +1321,15 @@ Function Inventory {#Info screen
 		write-host "  -------------------------------------------------------------------------"
 	}
 	write-host
-	Write-Host "  Press '$X[38;2;255;165;000;22mt$X[0m' to temporarily force token based authentication for configured "
-	write-host "  accounts. Otherwise, press any other key to return to main menu... " -nonewline
-	$InventoryOption = readkey
-	Write-Host;Write-Host
+	if ($Script:TokensConfigured -eq $True){
+		Write-Host "  Press '$X[38;2;255;165;000;22mt$X[0m' to temporarily force token based authentication (for configured "
+		write-host "  accounts). Otherwise, press any other key to return to main menu... " -nonewline
+		$InventoryOption = readkey
+		Write-Host;Write-Host
+	}
+	Else {
+		PressTheAnyKey
+	}
 	if ($InventoryOption -eq "t"){
 		if($Script:ForceAuthToken -ne $True){
 			$Script:ForceAuthToken = $True
@@ -1210,7 +1358,7 @@ if ($Check -eq $True -and $Script:LastNotificationCheck -lt (Get-Date).addminute
 			$Script:Notifications = Invoke-RestMethod -Uri $URI
 			if ($Notifications.notification -ne "") {
 				if ($Script:PrevNotification -ne $Notifications.notification){#if message has changed since last check
-					$Script:PrevNotification = $Notifications.notification	
+					$Script:PrevNotification = $Notifications.notification
 					$Script:NotificationHasBeenChecked = $False
 					if ((get-date).tostring('yyyy.MM.dd HH:mm:ss') -lt $Notifications.ExpiryDate){
 						$Script:NotificationsAvailable = $True
@@ -1223,14 +1371,14 @@ if ($Check -eq $True -and $Script:LastNotificationCheck -lt (Get-Date).addminute
 			$Script:LastNotificationCheck = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
 		}
 		Catch {
-			Write-Debug "  Couldn't check for notifications." -foregroundcolor Yellow # If this fails in production don't show any errors/warnings.
+			Write-Debug "  Couldn't check for notifications." # If this fails in production don't show any errors/warnings.
 		}
 	}
 	Elseif ($Check -eq $False) {
 		write-host
 		$Notifications.notification -split "`n" | ForEach-Object {
 			$Line = " " + $_
-			if ($Line[1] -eq "-") {#for any line starting with a dash
+			if ($Line[1] -eq "-") { #for any line starting with a dash
 				 $DashFormat = ($Line -replace "(.{1,73})(\s+|$)", "`$1`n").trimend()
 				 $DashFormat -split "`n" | ForEach-Object {
 					if ($_[1] -eq "-") {#for any line starting with a dash
@@ -1240,155 +1388,157 @@ if ($Check -eq $True -and $Script:LastNotificationCheck -lt (Get-Date).addminute
 						($_ -replace "(.{1,73})(\s+|$)", "    `$1`n").trimend()
 					}
 				}
-			}			
+			}
 			else {
 				($Line -replace "(.{1,74})(\s+|$)", " `$1`n ").trimend()
 			}
 		}
 	}
 	if ($Check -eq $True -and $Script:NotificationHasBeenChecked -eq $False -and $Script:NotificationsAvailable -eq $True){#only show message if user hasn't seen notification yet.
-		write-host "  $X[38;2;255;165;000;48;2;1;1;1;4mNotification available. See Info screen for details.$X[0m"
-	}
+		write-host "            $X[38;2;255;165;000;48;2;1;1;1;4mNotification available. See Info screen for details.$X[0m"
+	}#%%%%%%%%%%%%%%%%%%%%
 }
-
-$D2rLevels =@(
-	@(1, "Rogue Encampment"),
-	@(2, "Blood Moor"),
-	@(3, "Cold Plains"),
-	@(4, "Stony Field"),
-	@(5, "Dark Wood"),
-	@(6, "Black Marsh"),
-	@(7, "Tamoe Highland"),
-	@(8, "Den of Evil"),
-	@(9, "Cave 1"),
-	@(10, "Underground Passage 1"),
-	@(11, "Hole 1"),
-	@(12, "Pit 1"),
-	@(13, "Cave 2"),
-	@(14, "Underground Passage 2"),
-	@(15, "Hole 2"),
-	@(16, "Pit 2"),
-	@(17, "Burial Grounds"),
-	@(18, "Crypt"),
-	@(19, "Mausoleum"),
-	@(20, "Forgotten Tower"),
-	@(21, "Tower Cellar 1"),
-	@(22, "Tower Cellar 2"),
-	@(23, "Tower Cellar 3"),
-	@(24, "Tower Cellar 4"),
-	@(25, "Tower Cellar 5"),
-	@(26, "Monastery Gate"),
-	@(27, "Outer Cloister"),
-	@(28, "Barracks"),
-	@(29, "Jail 1"),
-	@(30, "Jail 2"),
-	@(31, "Jail 3"),
-	@(32, "Inner Cloister"),
-	@(33, "Cathedral"),
-	@(34, "Catacombs 1"),
-	@(35, "Catacombs 2"),
-	@(36, "Catacombs 3"),
-	@(37, "Catacombs 4"),
-	@(38, "Tristram"),
-	@(39, "The Secret Cow Level"),
-	@(40, "Lut Gholein"),
-	@(41, "Rocky Waste"),
-	@(42, "Dry Hills"),
-	@(43, "Far Oasis"),
-	@(44, "Lost City"),
-	@(45, "Valley of Snakes"),
-	@(46, "Canyon of the Magi"),
-	@(47, "Sewers 1"),
-	@(48, "Sewers 2"),
-	@(49, "Sewers 3"),
-	@(50, "Harem 1"),
-	@(51, "Harem 2"),
-	@(52, "Palace Cellar 1"),
-	@(53, "Palace Cellar 2"),
-	@(54, "Palace Cellar 3"),
-	@(55, "Stony Tomb 1"),
-	@(56, "Halls of the Dead 1"),
-	@(57, "Halls of the Dead 2"),
-	@(58, "Claw Viper Temple 1"),
-	@(59, "Stony Tomb 2"),
-	@(60, "Halls of the Dead 3"),
-	@(61, "Claw Viper Temple 2"),
-	@(62, "Maggot Lair 1"),
-	@(63, "Maggot Lair 2"),
-	@(64, "Maggot Lair 3"),
-	@(65, "Ancient Tunnels"),
-	@(66, "Tal Rashas Tomb 1"),
-	@(67, "Tal Rashas Tomb 2"),
-	@(68, "Tal Rashas Tomb 3"),
-	@(69, "Tal Rashas Tomb 4"),
-	@(70, "Tal Rashas Tomb 5"),
-	@(71, "Tal Rashas Tomb 6"),
-	@(72, "Tal Rashas Tomb 7"),
-	@(73, "Tal Rashas Chamber"),
-	@(74, "Arcane Sanctuary"),
-	@(75, "Kurast Docks"),
-	@(76, "Spider Forest"),
-	@(77, "Great Marsh"),
-	@(78, "Flayer Jungle"),
-	@(79, "Lower Kurast"),
-	@(80, "Kurast Bazaar"),
-	@(81, "Upper Kurast"),
-	@(82, "Kurast Causeway"),
-	@(83, "Travincal"),
-	@(84, "Archnid Lair"),
-	@(85, "Spider Cavern"),
-	@(86, "Swampy Pit 1"),
-	@(87, "Swampy Pit 2"),
-	@(88, "Flayer Dungeon 1"),
-	@(89, "Flayer Dungeon 2"),
-	@(90, "Swampy Pit 3"),
-	@(91, "Flayer Dungeon 3"),
-	@(92, "Sewers 1"),
-	@(93, "Sewers 2"),
-	@(94, "Ruined Temple"),
-	@(95, "Disused Fane"),
-	@(96, "Forgotten Reliquary"),
-	@(97, "Forgotten Temple"),
-	@(98, "Ruined Fane"),
-	@(99, "Disused Reliquary"),
-	@(100, "Durance of Hate 1"),
-	@(101, "Durance of Hate 2"),
-	@(102, "Durance of Hate 3"),
-	@(103, "Pandemonium Fortress"),
-	@(104, "Outer Steppes"),
-	@(105, "Plains of Despair"),
-	@(106, "City of the Damned"),
-	@(107, "River of Flame"),
-	@(108, "Chaos Sanctuary"),
-	@(109, "Harrogath"),
-	@(110, "Bloody Foothills"),
-	@(111, "Frigid Highlands"),
-	@(112, "Arreat Plateau"),
-	@(113, "Crystalline Passage"),
-	@(114, "Frozen River"),
-	@(115, "Glacial Trail"),
-	@(116, "Drifter Cavern"),
-	@(117, "Frozen Tundra"),
-	@(118, "The Ancients Way"),
-	@(119, "Icy Cellar"),
-	@(120, "Arreat Summit"),
-	@(121, "Nihlathaks Temple"),
-	@(122, "Halls of Anguish"),
-	@(123, "Halls of Pain"),
-	@(124, "Halls of Vaught"),
-	@(125, "Abaddon"),
-	@(126, "Pit of Acheron"),
-	@(127, "Infernal Pit"),
-	@(128, "Worldstone Keep 1"),
-	@(129, "Worldstone Keep 2"),
-	@(130, "Worldstone Keep 3"),
-	@(131, "Throne of Destruction"),
-	@(132, "Worldstone Keep")
-)
-
+Function D2rLevels {
+	$Script:D2rLevels = @(
+		@(1, "Rogue Encampment"),
+		@(2, "Blood Moor"),
+		@(3, "Cold Plains"),
+		@(4, "Stony Field"),
+		@(5, "Dark Wood"),
+		@(6, "Black Marsh"),
+		@(7, "Tamoe Highland"),
+		@(8, "Den of Evil"),
+		@(9, "Cave 1"),
+		@(10, "Underground Passage 1"),
+		@(11, "Hole 1"),
+		@(12, "Pit 1"),
+		@(13, "Cave 2"),
+		@(14, "Underground Passage 2"),
+		@(15, "Hole 2"),
+		@(16, "Pit 2"),
+		@(17, "Burial Grounds"),
+		@(18, "Crypt"),
+		@(19, "Mausoleum"),
+		@(20, "Forgotten Tower"),
+		@(21, "Tower Cellar 1"),
+		@(22, "Tower Cellar 2"),
+		@(23, "Tower Cellar 3"),
+		@(24, "Tower Cellar 4"),
+		@(25, "Tower Cellar 5"),
+		@(26, "Monastery Gate"),
+		@(27, "Outer Cloister"),
+		@(28, "Barracks"),
+		@(29, "Jail 1"),
+		@(30, "Jail 2"),
+		@(31, "Jail 3"),
+		@(32, "Inner Cloister"),
+		@(33, "Cathedral"),
+		@(34, "Catacombs 1"),
+		@(35, "Catacombs 2"),
+		@(36, "Catacombs 3"),
+		@(37, "Catacombs 4"),
+		@(38, "Tristram"),
+		@(39, "The Secret Cow Level"),
+		@(40, "Lut Gholein"),
+		@(41, "Rocky Waste"),
+		@(42, "Dry Hills"),
+		@(43, "Far Oasis"),
+		@(44, "Lost City"),
+		@(45, "Valley of Snakes"),
+		@(46, "Canyon of the Magi"),
+		@(47, "Sewers 1"),
+		@(48, "Sewers 2"),
+		@(49, "Sewers 3"),
+		@(50, "Harem 1"),
+		@(51, "Harem 2"),
+		@(52, "Palace Cellar 1"),
+		@(53, "Palace Cellar 2"),
+		@(54, "Palace Cellar 3"),
+		@(55, "Stony Tomb 1"),
+		@(56, "Halls of the Dead 1"),
+		@(57, "Halls of the Dead 2"),
+		@(58, "Claw Viper Temple 1"),
+		@(59, "Stony Tomb 2"),
+		@(60, "Halls of the Dead 3"),
+		@(61, "Claw Viper Temple 2"),
+		@(62, "Maggot Lair 1"),
+		@(63, "Maggot Lair 2"),
+		@(64, "Maggot Lair 3"),
+		@(65, "Ancient Tunnels"),
+		@(66, "Tal Rashas Tomb 1"),
+		@(67, "Tal Rashas Tomb 2"),
+		@(68, "Tal Rashas Tomb 3"),
+		@(69, "Tal Rashas Tomb 4"),
+		@(70, "Tal Rashas Tomb 5"),
+		@(71, "Tal Rashas Tomb 6"),
+		@(72, "Tal Rashas Tomb 7"),
+		@(73, "Tal Rashas Chamber"),
+		@(74, "Arcane Sanctuary"),
+		@(75, "Kurast Docks"),
+		@(76, "Spider Forest"),
+		@(77, "Great Marsh"),
+		@(78, "Flayer Jungle"),
+		@(79, "Lower Kurast"),
+		@(80, "Kurast Bazaar"),
+		@(81, "Upper Kurast"),
+		@(82, "Kurast Causeway"),
+		@(83, "Travincal"),
+		@(84, "Archnid Lair"),
+		@(85, "Spider Cavern"),
+		@(86, "Swampy Pit 1"),
+		@(87, "Swampy Pit 2"),
+		@(88, "Flayer Dungeon 1"),
+		@(89, "Flayer Dungeon 2"),
+		@(90, "Swampy Pit 3"),
+		@(91, "Flayer Dungeon 3"),
+		@(92, "Sewers 1"),
+		@(93, "Sewers 2"),
+		@(94, "Ruined Temple"),
+		@(95, "Disused Fane"),
+		@(96, "Forgotten Reliquary"),
+		@(97, "Forgotten Temple"),
+		@(98, "Ruined Fane"),
+		@(99, "Disused Reliquary"),
+		@(100, "Durance of Hate 1"),
+		@(101, "Durance of Hate 2"),
+		@(102, "Durance of Hate 3"),
+		@(103, "Pandemonium Fortress"),
+		@(104, "Outer Steppes"),
+		@(105, "Plains of Despair"),
+		@(106, "City of the Damned"),
+		@(107, "River of Flame"),
+		@(108, "Chaos Sanctuary"),
+		@(109, "Harrogath"),
+		@(110, "Bloody Foothills"),
+		@(111, "Frigid Highlands"),
+		@(112, "Arreat Plateau"),
+		@(113, "Crystalline Passage"),
+		@(114, "Frozen River"),
+		@(115, "Glacial Trail"),
+		@(116, "Drifter Cavern"),
+		@(117, "Frozen Tundra"),
+		@(118, "The Ancients Way"),
+		@(119, "Icy Cellar"),
+		@(120, "Arreat Summit"),
+		@(121, "Nihlathaks Temple"),
+		@(122, "Halls of Anguish"),
+		@(123, "Halls of Pain"),
+		@(124, "Halls of Vaught"),
+		@(125, "Abaddon"),
+		@(126, "Pit of Acheron"),
+		@(127, "Infernal Pit"),
+		@(128, "Worldstone Keep 1"),
+		@(129, "Worldstone Keep 2"),
+		@(130, "Worldstone Keep 3"),
+		@(131, "Throne of Destruction"),
+		@(132, "Worldstone Keep")
+	)
+}
+Function QuoteList {
 $Script:QuoteList =
 "Stay a while and listen..",
 "My brothers will not have died in vain!",
+"My brothers have escaped you...",
 "Not even death can save you from me.",
 "Good Day!",
 "You have quite a treasure there in that Horadric Cube.",
@@ -1406,6 +1556,7 @@ $Script:QuoteList =
 "Ner. Ner! Nur. Roah. Hork, Hork.",
 "Greetings, stranger. I'm not surprised to see your kind here.",
 "There is a place of great evil in the wilderness.",
+"East... Always into the east...",
 "I shall make weapons from your bones",
 "I am overburdened",
 "This magic ring does me no good.",
@@ -1460,11 +1611,15 @@ $Script:QuoteList =
 "Death becomes you Andariel.",
 "You dark mages are all alike, obsessed with power.",
 "Planting the dead. How odd.",
-"Live, Laugh, Love - Andariel, 1264.",
+"'Live, Laugh, Love' - Andariel, 1264.",
 "Oh no, snakes. I hate snakes.",
 "Who would have thought that such primitive beings could cause so much `ntrouble.",
-"Hail to you champion"
-
+"Hail to you champion",
+"Help us! LET US OUT!",
+"'I cannot carry anymore' - Me, carrying my teammates.",
+"You're an even greater warrior than I expected...Sorry for `nunderestimating you.",
+"Cut them down, warrior. All of them!"
+}
 Function BannerLogo {
 	$BannerLogo = @"
 
@@ -1500,19 +1655,45 @@ Function BannerLogo {
 		Write-Host $BannerLogo -foregroundcolor yellow
 	}
 }
-Function JokeMaster {
+Function JokeMaster ([int]$JokeProviderRoll=""){
 	#If you're going to leech and not provide any damage value in the Throne Room then at least provide entertainment value right?
-	Write-Host "  Copy these mediocre jokes into the game while doing Baal Comedy Club runs`r`n  to mislead everyone into believing you have a personality:"
-	Write-Host
-	$attempt = 0
-	$JokeProviderRoll = get-random -min 1 -max 3 #Randomly roll for a joke provider
+	Write-Host "  Copy these mediocre jokes into the game while doing Baal Comedy Club runs`r`n  to mislead everyone into believing you have a personality:`n"
 	do {
-		$attempt ++
-		if ($JokeProviderRoll -eq 1){
-			if ((Get-Date).Month -eq 12 -or ((Get-Date).Month -eq 10 -and (Get-Date).Day -ge 24 -and (Get-Date).Day -le 31)) {#If December or A week leading up to Halloween.
-				if ((Get-Date).Month -eq 12){ #If December
+		$JokeType = "Joke"
+		if ($JokeProviderRoll -eq "" -or $JokeProviderRoll -eq 69){
+			$JokeProviderRoll = get-random -min 1 -max 3 #Randomly roll for first two joke providers
+		}
+		$attempt = 0
+		do {
+			$attempt ++
+			if ($JokeProviderRoll -eq 1){
+				if ((Get-Date).Month -eq 12 -or ((Get-Date).Month -eq 10 -and (Get-Date).Day -ge 24 -and (Get-Date).Day -le 31)) {#If December or A week leading up to Halloween.
+					if ((Get-Date).Month -eq 12){ #If December
+						try {
+							$Joke = Invoke-RestMethod -uri https://v2.jokeapi.dev/joke/Christmas -Method GET -header $headers -ErrorAction Stop #get absolutely punishing xmas jokes during December
+							$JokeObtained = $true
+						}
+						catch {
+							Write-Host "  Couldn't Reach v2.jokeapi.dev :( Trying alternate provider..." -foregroundcolor Red
+							$JokeObtained = $false
+							$JokeProviderRoll = 2
+						}
+					}
+					Else {#else if it's around Halloweeen
+						try {
+							$Joke = Invoke-RestMethod -uri https://v2.jokeapi.dev/joke/Spooky -Method GET -header $headers -ErrorAction Stop #get absolutely punishing 'spooky' jokes in the week leading up to Halloween.
+							$JokeObtained = $true
+						}
+						Catch {
+							Write-Host "  Couldn't Reach v2.jokeapi.dev :( Trying alternate provider..." -foregroundcolor Red
+							$JokeObtained = $false
+							$JokeProviderRoll = 2
+						}
+					}
+				}
+				else {#For non seasonal jokes.
 					try {
-						$Joke = Invoke-RestMethod -uri https://v2.jokeapi.dev/joke/Christmas -Method GET -header $headers -ErrorAction Stop #get absolutely punishing xmas jokes during December
+						$Joke = Invoke-RestMethod -uri "https://v2.jokeapi.dev/joke/Miscellaneous,Dark,Pun?blacklistFlags=racist,sexist" -Method GET -header $headers -ErrorAction Stop #exclude any racist/sexist jokes as we're not 75+ years old. Exclude IT/Programmer jokes that folk won't understand and also exclude, xmas & halloween themed jokes
 						$JokeObtained = $true
 					}
 					catch {
@@ -1521,64 +1702,97 @@ Function JokeMaster {
 						$JokeProviderRoll = 2
 					}
 				}
-				Else {#else if it's around Halloweeen
-					try {
-						$Joke = Invoke-RestMethod -uri https://v2.jokeapi.dev/joke/Spooky -Method GET -header $headers -ErrorAction Stop #get absolutely punishing 'spooky' jokes in the week leading up to Halloween.
-						$JokeObtained = $true
+				if ($JokeObtained -eq $true){
+					if ($Joke.Type -eq "twopart"){#some jokes are come through as two parters with two variables
+						$JokeSetup = ($Joke.setup -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
+						$JokeDelivery = ($Joke.delivery -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
+						Write-Host "   $X[38;2;255;165;000;22m$JokeSetup$X[0m"
+						Write-Host "   $X[38;2;255;165;000;22m$JokeDelivery$X[0m"
 					}
-					Catch {
-						Write-Host "  Couldn't Reach v2.jokeapi.dev :( Trying alternate provider..." -foregroundcolor Red
-						$JokeObtained = $false
-						$JokeProviderRoll = 2
+					else {#else if single liner joke.
+						$SingleJoke =  ($joke.joke -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
+						Write-Host "   $X[38;2;255;165;000;22m$SingleJoke$X[0m"
 					}
+					$JokeProvider = "v2.jokeapi.dev"
 				}
 			}
-			else {#For non seasonal jokes.
+			if ($JokeProviderRoll -eq 2){
 				try {
-					$Joke = Invoke-RestMethod -uri "https://v2.jokeapi.dev/joke/Miscellaneous,Dark,Pun?blacklistFlags=racist,sexist" -Method GET -header $headers -ErrorAction Stop #exclude any racist/sexist jokes as we're not 75+ years old. Exclude IT/Programmer jokes that folk won't understand and also exclude, xmas & halloween themed jokes
+					$Joke = Invoke-RestMethod -uri https://official-joke-api.appspot.com/random_joke -Method GET -header $headers -ErrorAction Stop
 					$JokeObtained = $true
-				}
-				catch {
-					Write-Host "  Couldn't Reach v2.jokeapi.dev :( Trying alternate provider..." -foregroundcolor Red
-					$JokeObtained = $false
-					$JokeProviderRoll = 2
-				}
-			}
-			if ($JokeObtained -eq $true){
-				if ($Joke.Type -eq "twopart"){#some jokes are come through as two parters with two variables
 					$JokeSetup = ($Joke.setup -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
-					$JokeDelivery = ($Joke.delivery -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
+					$JokeDelivery = ($Joke.punchline -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
 					Write-Host "   $X[38;2;255;165;000;22m$JokeSetup$X[0m"
 					Write-Host "   $X[38;2;255;165;000;22m$JokeDelivery$X[0m"
+					$JokeProvider = "official-joke-api.appspot.com"
 				}
-				else {#else if single liner joke.
-					$SingleJoke =  ($joke.joke -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
+				catch {
+					$JokeProviderRoll = 1
+					Write-Host "  Couldn't Reach official-joke-api.appspot.com :( Trying alternate provider..." -foregroundcolor Red
+				}
+			}
+			if ($JokeProviderRoll -eq 3){
+				try {
+					$headers = @{
+						"User-Agent" = "github.com/shupershuff/Diablo2RLoader"
+						"Accept" = "application/json"
+					}
+					$Joke = (Invoke-RestMethod -uri https://icanhazdadjoke.com -Method GET -header $headers -ErrorAction Stop).joke
+					$JokeObtained = $true
+					$SingleJoke =  ($joke -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
 					Write-Host "   $X[38;2;255;165;000;22m$SingleJoke$X[0m"
+					$JokeProvider = "icanhazdadjoke.com"
 				}
-				$JokeProvider = "v2.jokeapi.dev"
+				catch {
+					$JokeProviderRoll = 1
+					Write-Host "  Couldn't Reach official-joke-api.appspot.com :( Trying alternate provider..." -foregroundcolor Red
+				}
+			}
+			if ($JokeProviderRoll -eq 4){
+				try {
+					$Joke = (Invoke-RestMethod -uri https://api.chucknorris.io/jokes/random -ErrorAction Stop).value
+					$JokeObtained = $true
+					$SingleJoke =  ($joke -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
+					Write-Host "   $X[38;2;255;165;000;22m$SingleJoke$X[0m"
+					$JokeProvider = "api.chucknorris.io"
+					$JokeType = "Fact"
+				}
+				catch {
+					$JokeProviderRoll = 1
+					Write-Host "  Couldn't Reach official-joke-api.appspot.com :( Trying alternate provider..." -foregroundcolor Red
+				}
+			}
+		} until ($JokeObtained -eq $true -or $attempt -eq 3)
+		Write-Host;	Write-Host "  $JokeType courtesy of $JokeProvider"
+		Write-Host;	Write-Host
+		Write-Host "  Press '$X[38;2;255;165;000;22mj$X[0m' for another joke, '$X[38;2;255;165;000;22md$X[0m' for dad joke or '$X[38;2;255;165;000;22mc$X[0m' for Chuck Norris joke."
+		write-host "  Otherwise, press any other key to return to main menu... " -nonewline
+		$JokeOption = readkey
+		Write-Host;Write-Host
+		if ($JokeOption -eq "j" -or $JokeOption -eq "d" -or $JokeOption -eq "c"){
+			if ($JokeOption -eq "j"){
+				$JokeProviderRoll = 69 #fish out another cringey joke.
+			}
+			if ($JokeOption -eq "d"){
+				$JokeProviderRoll = 3
+			}
+			if ($JokeOption -eq "c"){
+				$JokeProviderRoll = 4
+			}
+			# Clear faff from the console so more jokes show.
+			$InputLength = 138
+			$Host.UI.RawUI.CursorPosition = @{
+				X = [Math]::Max($Host.UI.RawUI.CursorPosition.X - $InputLength, 0)
+				Y = $Host.UI.RawUI.CursorPosition.Y -3
+			}
+			Write-Host -NoNewLine (" " * ($InputLength)) #-ForegroundColor Black
+			$Host.UI.RawUI.CursorPosition = @{
+				X = [Math]::Max($Host.UI.RawUI.CursorPosition.X - $InputLength, 0)
+				Y = $Host.UI.RawUI.CursorPosition.Y -2
 			}
 		}
-		if ($JokeProviderRoll -eq 2){
-			try {
-				$Joke = Invoke-RestMethod -uri https://official-joke-api.appspot.com/random_joke -Method GET -header $headers -ErrorAction Stop #get absolutely punishing xmas jokes during December
-				$JokeObtained = $true
-				$JokeSetup = ($Joke.setup -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
-				$JokeDelivery = ($Joke.punchline -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
-				Write-Host "   $X[38;2;255;165;000;22m$JokeSetup$X[0m"
-				Write-Host "   $X[38;2;255;165;000;22m$JokeDelivery$X[0m"
-				$JokeProvider = "official-joke-api.appspot.com"
-			}
-			catch {
-				$JokeProviderRoll = 1
-				Write-Host "  Couldn't Reach official-joke-api.appspot.com :( Trying alternate provider..." -foregroundcolor Red
-			}
-		}
-	} until ($JokeObtained -eq $true -or $attempt -eq 3)
-	Write-Host;	Write-Host "  Joke courtesy of $JokeProvider"
-	Write-Host;	Write-Host
-	PressTheAnyKey
+	} until ($JokeOption -ne "j" -and $JokeOption -ne "d" -and $JokeOption -ne "c")
 }
-
 Function DClone {# Display DClone Status.
 	param (
 		[bool] $DisableOutput,
@@ -1605,8 +1819,7 @@ Function DClone {# Display DClone Status.
 		Catch {#catch commands captured in WebRequestWithTimeOut function
 			Write-Debug "Problem connecting to $URI"
 		}
-	}	
-
+	}
 	elseif ($D2CloneTrackerSource -eq "D2runewizard.com"){
 		$QLC = "zouaqcSTudL"
 		$tokreg = ("QLC" + $qlc + 1 +"fnbttzP")
@@ -1686,7 +1899,7 @@ Function DClone {# Display DClone Status.
 			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
 			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderServer -Value $ServerName
 			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderProgress -Value $Status.progress
-			[VOID]$DCloneLadderTable.Add($DCloneLadderInfo)		
+			[VOID]$DCloneLadderTable.Add($DCloneLadderInfo)
 		}
 		Else {
 			if ($Status.server -match "hardcore" -or $Status.Core -eq "1"){$Tag = ("HC" + $Tag);$ServerName = ("HC - " + $ServerName)}
@@ -1696,21 +1909,21 @@ Function DClone {# Display DClone Status.
 			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderProgress -Value $Status.progress
 			[VOID]$DCloneNonLadderTable.Add($DCloneNonLadderInfo)
 		}
-		if ($True -eq $DisableOutput){	
+		if ($True -eq $DisableOutput){
 			if ($taglist -match $Tag ){#if D Dclone region and server matches what's in config, check for changes.
-				#Write-Host " Tag $tag in taglist" #debug
+				Write-Debug " Tag $tag in taglist" #debug
 				if ($DCloneChangesArray | where-object {$_.Tag -eq $Tag}){
 					foreach ($Item in $DCloneChangesArray | where-object {$_.Tag -eq $Tag}) {#for each tag specified in config.xml...
 						$item.VoiceAlarmStatus = $False
 						$item.TextAlarmStatus = $False
 						if ($item.Status -ne $Status.progress){
-							if ($Status.progress -ge 5 -and ($DCloneAlarmLevel -match 5)) {#if D Clone walk is imminent
+							if ($Status.progress -ge 5 -and ($DCloneAlarmLevel -match 5)) {#if DClone walk is imminent
 								$item.VoiceAlarmStatus = $True
 							}
-							elseif ($Status.progress -eq 1 -or $Status.progress -eq 6){#if D Clone walk has just happened
+							elseif ($Status.progress -eq 1 -or $Status.progress -eq 6){#if DClone walk has just happened
 								$item.VoiceAlarmStatus = $True
 							}
-							elseif ($DCloneAlarmLevel -match $Status.progress){#if User has configured alarms to happen for lower D Clone status levels (2,3,4)
+							elseif ($DCloneAlarmLevel -match $Status.progress){#if User has configured alarms to happen for lower DClone status levels (2,3,4)
 								$item.VoiceAlarmStatus = $True
 							}
 							$item.TextAlarmStatus = $True
@@ -1749,7 +1962,6 @@ Function DClone {# Display DClone Status.
 						Return
 					}
 				}
-				
 			}
 		}
 	}
@@ -1796,10 +2008,10 @@ Function DClone {# Display DClone Status.
 		$DCloneChangesArray | ConvertTo-Csv -NoTypeInformation
 	}
 }
-
 Function DCloneVoiceAlarm {
 	$voice = New-Object -ComObject Sapi.spvoice
 	$voice.rate = -2 #How quickly the voice message should be
+	$voice.volume = $Config.DCloneAlarmVolume
 	Write-Host
 	if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man" -or $Script:Config.DCloneAlarmVoice -eq "Paladin"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}}
 	elseif ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman" -or $Script:Config.DCloneAlarmVoice -eq "Amazon"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
@@ -1843,10 +2055,10 @@ Function DCloneVoiceAlarm {
 		}
 	}
 	if ($null -ne $Message){
-		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mD Clone status provided by $D2CloneTrackerSource$X[0m"
+		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mDClone status provided by $D2CloneTrackerSource$X[0m"
 	}
 }
-Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long so that another attempt can be made with a different OCR engine.
+Function WebRequestWithTimeOut {#Used to timeout web requests that take too long.
 	param (
 		[ScriptBlock] $ScriptBlock,
 		[int] $TimeoutSeconds,
@@ -1855,7 +2067,7 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 	)
 	$Script:DCloneErrorMessage = $null
 	if ($InitiatingFunction -eq "DClone"){
-		$ArgumentList = $URI	
+		$ArgumentList = $URI
 	}
 	$TimedJob = Start-Job -ScriptBlock $ScriptBlock -ArgumentList $ArgumentList #Sets the parameter $EngineNumber to $Engine
 	$timer = [Diagnostics.Stopwatch]::StartNew()
@@ -1874,7 +2086,7 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 	}
 	elseif ($TimedJob.State -eq "Completed") {
 		$result = Receive-Job -Job $TimedJob
-		#Write-Host "  Command completed successfully."
+		Write-Verbose "Command completed successfully."
 		foreach ($Object in $result){#Remove Properties from Result Array inserted by the Start-Job command. This prevents skewed data for DClone status checks.
 			$Object.PSObject.Properties.Remove("RunspaceId")
 			$Object.PSObject.Properties.Remove("PSComputerName")
@@ -1884,19 +2096,19 @@ Function WebRequestWithTimeOut {#Used to timeout OCR requests that take too long
 	}
 	else {
 		if ($InitiatingFunction -eq "DClone"){
-			Write-Host " Couldn't connect to $DCloneSource." -foregroundcolor red	
+			Write-Host " Couldn't connect to $DCloneSource." -foregroundcolor red
 		}
 	}
 	Remove-Job -Job $TimedJob
 }
 Function TerrorZone {
 	# Get the current time data was pulled
-	$TimeDataObtained = (Get-Date -Format 'h:mmtt')	
+	$TimeDataObtained = (Get-Date -Format 'h:mmtt')
 	$TZProvider = "D2Emu.com"
 	$TZURI = "https://www.d2emu.com/api/v1/tz"
 	$D2TZResponse = Invoke-RestMethod -Uri $TZURI
 	foreach ($Level in $D2TZResponse.current){
-		#Write-host "level ID is:" $Level
+		Write-Debug "Level ID is: $Level"
 		foreach ($LevelID in $D2rLevels){
 			if ($LevelID[0] -eq $Level){
 				$CurrentTZ += $LevelID[1] + ", "
@@ -1905,7 +2117,7 @@ Function TerrorZone {
 	}
 	$CurrentTZ = $CurrentTZ -replace '..$', ''
 	foreach ($Level in $D2TZResponse.next){
-		#Write-host "level ID is:" $Level
+		Write-Debug "Level ID is: $Level"
 		foreach ($LevelID in $D2rLevels){
 			if ($LevelID[0] -eq $Level){
 				$NextTZ += $LevelID[1] + ", "
@@ -1917,8 +2129,7 @@ Function TerrorZone {
 		Write-Host
 		Write-Host "   Current TZ is: "  -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta #print next tz. The regex code helps format the string into an indented new line for longer TZ's.
 		if ($CheckForNextTZ -ne $False){
-			$FailMessage += "`n                             Attempts made: $Script:OCRAttempts`n                             Token used:      $tokreg"
-			Write-Host "   Next TZ info unavailable: $FailMessage" -ForegroundColor Red
+			Write-Host "   Next TZ info unavailable." -ForegroundColor Red
 		}
 		Write-Host
 		Write-Host "  Information Retrieved at: " $TimeDataObtained
@@ -1937,8 +2148,7 @@ Function TerrorZone {
 		PressTheAnyKey
 	}
 }
-
-Function Killhandle {#kudos the info in this post to save me from figuring it out: https://forums.d2jsp.org/topic.php?t=90563264&f=87
+Function Killhandle {#kudos goes to the info in this post that helped save me from figuring it out myself: https://forums.d2jsp.org/topic.php?t=90563264&f=87
 	& "$PSScriptRoot\handle\handle64.exe" -accepteula -a -p D2R.exe > $PSScriptRoot\d2r_handles.txt
 	$proc_id_populated = ""
 	$handle_id_populated = ""
@@ -1952,7 +2162,7 @@ Function Killhandle {#kudos the info in this post to save me from figuring it ou
 			$handle_id_populated = $handle_id
 		}
 		if ($handle_id){
-			#Write-Host "Closing" $proc_id_populated $handle_id_populated
+			Write-Verbose "Closing $proc_id_populated $handle_id_populated"
 			& "$PSScriptRoot\handle\handle64.exe" -p $proc_id_populated -c $handle_id_populated -y
 		}
 	}
@@ -1960,17 +2170,17 @@ Function Killhandle {#kudos the info in this post to save me from figuring it ou
 
 Function CheckActiveAccounts {#Note: only works for accounts loaded by the script
 	#check if there's any open instances and check the game title window for which account is being used.
-	try {	
+	try {
 		$Script:ActiveIDs = $Null
 		$D2rRunning = $false
 		$Script:ActiveIDs = New-Object -TypeName System.Collections.ArrayList
-		$Script:ActiveIDs = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,1) #find all diablo 2 game windows and pull the account ID from the title
+		$Script:ActiveIDs = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,2).trim() #find all diablo 2 game windows and pull the account ID from the title
 		$Script:D2rRunning = $true
-		#Write-Host "Running Instances."
+		Write-Verbose "Running Instances."
 	}
 	catch {#if the above fails then there are no running D2r instances.
 		$Script:D2rRunning = $false
-		#Write-Host "No Running Instances."
+		Write-Verbose "No Running Instances."
 		$Script:ActiveIDs = ""
 	}
 	if ($Script:D2rRunning -eq $True){
@@ -2000,15 +2210,15 @@ Function DisplayActiveAccounts {
 			$PlayTimeHeader = "Hours Played   "
 		}
 		if ($Script:EnableBatchFeature -eq $true){
-			$BatchesHeader = (""+ $AccountHeaderIndent + "Batch(es)")
+			$BatchesHeader = ("" + $AccountHeaderIndent + "Batch(es)")
 		}
 		Write-Host ("  ID   Region   " + $PlayTimeHeader + "Account Label   " + $BatchesHeader) #Header
 	}
 	else {
 		Write-Host "  ID   Account Label"
 	}
-	$Pattern = "(?<=- \w+ \()([a-z]+)"#Regex pattern to pull the region characters out of the window title.
-	foreach ($AccountOption in $Script:AccountOptionsCSV){
+	$Pattern = "(?<=- [^\(]+ \()([a-z]+)" #Regex pattern to pull the region characters out of the window title.
+	foreach ($AccountOption in ($Script:AccountOptionsCSV | Sort-Object -Property @{Expression = {[int]$_.ID}} )){
 		$RegionDisplayPostIndent = ""
 		$RegionDisplayPreIndent = ""
 		if ($AccountOption.ID.length -ge 2){#keep table formatting looking lovely if some crazy user has 10+ accounts.
@@ -2028,7 +2238,7 @@ Function DisplayActiveAccounts {
 			}
 		}
 		if ($Script:Config.TrackAccountUseTime -eq $true){
-			try {				
+			try {
 				$AcctPlayTime = (" " + (($time =([TimeSpan]::Parse($AccountOption.TimeActive))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes) + "   ")  # Add hours + (days*24) to show total hours, then show ":" followed by minutes
 			}
 			catch {#if account hasn't been opened yet.
@@ -2041,13 +2251,13 @@ Function DisplayActiveAccounts {
 				}
 			}
 		}
-		if ($AccountOption.id -in $Script:ActiveAccountsList.id){#if account is currently active
+		if ($AccountOption.id -in $Script:ActiveAccountsList.id){ #if account is currently active
 			$Windowname = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -like ($AccountOption.id + "*Diablo II: Resurrected")} | Select-Object MainWindowTitle).mainwindowtitle #Check active game instances to see which accounts are active. As this is based on checking window titles, this will only work for accounts opened from the script
 			$CurrentRegion = [regex]::Match($WindowName, $Pattern).value #Check which region aka realm the active account is connected to.
 			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
 			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
 			if ($CurrentRegion -eq "EU"){$CurrentRegion = "EU"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
-			Write-Host ("   " + $AccountOption.ID + "    "  + $RegionDisplayPreIndent + $CurrentRegion + $RegionDisplayPostIndent + "    " + $AcctPlayTime  + $AccountOption.accountlabel + " - Account Active.") -foregroundcolor yellow
+			Write-Host ("  " + $IDIndent + $AccountOption.ID + "    "  + $RegionDisplayPreIndent + $CurrentRegion + $RegionDisplayPostIndent + "    " + $AcctPlayTime  + $AccountOption.accountlabel + " - Account Active.") -foregroundcolor yellow
 		}
 		else {#if account isn't currently active
 			Write-Host ("  " + $IDIndent + $AccountOption.ID + "      -     " + $AcctPlayTime + $AccountOption.accountlabel + "  " + $AccountIndent + $Batches) -foregroundcolor green
@@ -2059,14 +2269,9 @@ Function Menu {
 	Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
-		Write-Host "Account previously opened was:" -foregroundcolor yellow -backgroundcolor darkgreen
-		$Lastopened = @(
-			[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$Script:LastRegion}
-		)
-		Write-Host " " -NoNewLine
-		Write-Host ("Account:  " + $Lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen
-		Write-Host " " -NoNewLine
-		Write-Host "Region:  " $Lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
+		if ($DebugMode -eq $true){
+			DisplayPreviousAccountOpened
+		}
 	}
 	Else {
 		Write-Host ("  You have quite a treasure there in that Horadric multibox script v" + $Currentversion)
@@ -2081,14 +2286,19 @@ Function Menu {
 		CheckActiveAccounts
 		$Script:PWmanualset = $False
 		$Script:AcceptableValues = New-Object -TypeName System.Collections.ArrayList
+		$Script:TwoDigitIDsUsed = $False
 		foreach ($AccountOption in $Script:AccountOptionsCSV){
 			if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
 				$Script:AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"
+				if ($AccountOption.id.length -eq 2){
+					$Script:TwoDigitIDsUsed = $True
+				}
 			}
 		}
 	}
-	if ($Null -ne $Batch -or $Script:OpenBatches -eq $true){#if batch has been passed through parameter or if batch wass been selected from the menu.
+	if ($Null -ne $Batch -or $Script:OpenBatches -eq $true){#if batch has been passed through parameter or if batch was been selected from the menu.
 		$Script:AcceptableBatchIDs = $Null #reset value
+		$AcceptableBatchValues = $Null #reset value
 		foreach ($ID in $Script:AccountOptionsCSV){
 			if ($ID.id -in $Script:AcceptableValues){#Find batch values to choose from based on accounts that aren't already open.
 				$AcceptableBatchValues = $AcceptableBatchValues + ($ID.batches).split(',') #collate acceptable options of batch ID's
@@ -2128,8 +2338,8 @@ Function Menu {
 				if ($Null -eq $Batch){
 					Write-Host " Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 				}
-				$Script:BatchToOpen = readkey
-				Write-Host;	Write-Host
+				$Script:BatchToOpen = ReadKeyTimeout "" $MenuRefreshRate "c" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
+				Write-Host
 			}
 			if ($Script:BatchToOpen -notin $AcceptableBatchValues + "c"){
 				Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
@@ -2242,7 +2452,7 @@ Function ChooseAccount {
 			[pscustomobject]@{PW=$Script:PW;acct=$Script:AccountUsername}
 		)
 	}
-	else {#if no account parameters have been set already
+	Else {#if no account parameters have been set already
 		do {
 			if ($Script:AccountID -eq "t"){
 				TerrorZone
@@ -2319,18 +2529,13 @@ Function ChooseAccount {
 			if ($Script:AccountID -eq "r"){#refresh
 				Clear-Host
 				if ($Script:ScriptHasBeenRun -eq $true){
-					Write-Host "Account previously opened was:"  -foregroundcolor yellow -backgroundcolor darkgreen
-					$Lastopened = @(
-						[pscustomobject]@{Account=$Script:AccountFriendlyName;region=$Script:region}#Americas
-					)
-					Write-Host " " -NoNewLine
-					Write-Host ("Account:  " + $Lastopened.Account) -foregroundcolor yellow -backgroundcolor darkgreen
-					Write-Host " " -NoNewLine
-					Write-Host "Region:  " $Lastopened.Region -foregroundcolor yellow -backgroundcolor darkgreen
+					if ($DebugMode -eq $true){
+						DisplayPreviousAccountOpened
+					}
 				}
 				Notifications -check $True
 				BannerLogo
-				QuoteRoll	
+				QuoteRoll
 			}
 			CheckActiveAccounts
 			DisplayActiveAccounts
@@ -2344,8 +2549,8 @@ Function ChooseAccount {
 				if($Script:ActiveAccountsList.id.length -ne 0){#if there are active accounts open add to total script time
 					#Add time for each account that's open
 					$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv"
-					$AdditionalTimeSpan = New-TimeSpan -Start $Script:StartTime -End (Get-Date) #work out elapsed time to add to accounts.csv	
-					foreach ($AccountID in $Script:ActiveAccountsList.id |Sort-Object){ #$Script:ActiveAccountsList.id				
+					$AdditionalTimeSpan = New-TimeSpan -Start $Script:StartTime -End (Get-Date) #work out elapsed time to add to accounts.csv
+					foreach ($AccountID in $Script:ActiveAccountsList.id |Sort-Object){ #$Script:ActiveAccountsList.id
 						$AccountToUpdate = $Script:AccountOptionsCSV | Where-Object {$_.ID -eq $accountID}
 						if ($AccountToUpdate) {
 							try {#get current time from csv and add to it
@@ -2395,16 +2600,20 @@ Function ChooseAccount {
 				$Script:StartTime = Get-Date #restart timer for session time only
 			}
 			$Script:AcceptableValues = New-Object -TypeName System.Collections.ArrayList
+			$Script:TwoDigitIDsUsed = $False
 			foreach ($AccountOption in $Script:AccountOptionsCSV){
 				if ($AccountOption.id -notin $Script:ActiveAccountsList.id){
 					$Script:AcceptableValues = $AcceptableValues + ($AccountOption.id) #+ "x"
+					if ($AccountOption.id.length -eq 2){
+						$Script:TwoDigitIDsUsed = $True
+					}
 				}
 			}
 			$accountoptions = ($Script:AcceptableValues -join  ", ").trim()
 			#DClone Alarm check
 			$GetDCloneFunc = $(Get-Command DClone).Definition
 			$GetWebRequestFunc = $(Get-Command WebRequestWithTimeOut).Definition
-			if ($Script:Config.DCloneAlarmList -ne ""){#if DClone alarms should be checked on refresh	
+			if ($Script:Config.DCloneAlarmList -ne ""){#if DClone alarms should be checked on refresh
 				try {
 					if ($null -ne $Script:DCloneChangesCSV){
 						$Script:DCloneChangesCSV = Receive-Job $Script:DCloneJob
@@ -2443,7 +2652,7 @@ Function ChooseAccount {
 					}
 					else {
 						$AllOption = "a"
-						$AllAccountMenuText = "'$X[38;2;255;165;000;22ma$X[0m' to open All accounts, "	
+						$AllAccountMenuText = "'$X[38;2;255;165;000;22ma$X[0m' to open All accounts, "
 						$AllAccountMenuTextNoBatch = " or '$X[38;2;255;165;000;22ma$X[0m' for All."
 					}
 					if ($Script:EnableBatchFeature -ne $true){
@@ -2472,7 +2681,7 @@ Function ChooseAccount {
 						}
 						Write-Host "  Enter the ID# of the account you want to sign into."
 						Write-Host "  Alternatively choose from the following menu options:"
-						Write-Host ("  " + $AllAccountMenuText + $BatchMenuText )#+ "'$X[38;2;255;165;000;22mc$X[0m' to close All accounts,"	 )
+						Write-Host ("  " + $AllAccountMenuText + $BatchMenuText )
 					}
 				}
 				else {#if there aren't any available options, IE all accounts are open
@@ -2482,7 +2691,12 @@ Function ChooseAccount {
 				}
 				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, '$X[38;2;255;165;000;22mt$X[0m' for TZ info, '$X[38;2;255;165;000;22md$X[0m' for DClone status, '$X[38;2;255;165;000;22mj$X[0m' for jokes,"
 				Write-Host "  $ManualSettingSwitcherMenuText'$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
-				$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+				if ($Script:TwoDigitIDsUsed -eq $True){
+					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -AdditionalAllowedKeys 27 -TwoDigitAcctSelection $True #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+				}
+				else {
+					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -AdditionalAllowedKeys 27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+				}
 				if ($Script:AccountID -notin ($Script:AcceptableValues + "x" + "r" + "t" + "d" + "g" + "j" + "i" + $ManualSettingSwitcherOption + $AllOption + $BatchOption) -and $Null -ne $Script:AccountID){
 					if ($Script:AccountID -eq "a" -and $Script:Config.DisableOpenAllAccountsOption -ne $true){
 						Write-Host " Can't open all accounts as all of your accounts are already open doofus!" -foregroundcolor red
@@ -2529,12 +2743,11 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 		if ($Server.region.length -eq 4){$Regiontablespacing = ""}
 		Write-Host ("    " + $Server.option + "      " + $Regiontablespacing + $Server.region + $Regiontablespacing + "   " + $Server.region_server) -foregroundcolor green
 	}
-	Write-Host	
+	Write-Host
 		do {
 			Write-Host " Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
 			Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + "): ") -nonewline
-			$Script:RegionOption = ReadKey
-			Write-Host
+			$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Config.DefaultRegion #default to NA
 			}
@@ -2560,19 +2773,42 @@ Function Processing {
 		if (($Script:PW -eq "" -or $Null -eq $Script:PW) -and $Script:PWmanualset -eq 0){
 			$Script:PW = $Script:AccountChoice.PW.tostring()
 		}
-		if (($Script:ConvertPlainTextPasswords -ne $false -and $Script:ParamsUsed -ne $true) -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){#Convert password if it's enabled in config and script is being run normally *OR* Convert password if script is being run from paramters using either -all batch or -all (but not if -username is used instead)
-			$Script:acct = $Script:AccountChoice.acct.tostring()
-			$EncryptedPassword = $PW | ConvertTo-SecureString
-			$PWobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedPassword)
-			$Script:PW = $PWobject.GetNetworkCredential().Password
-		}
-		else {
-			if ($Null -eq $Script:AccountID){
-				$Script:acct = $Script:AccountUsername
-				$Script:AccountID = "1"
+		if ($Script:AccountChoice.AuthenticationMethod -ne "Token"){
+			try {
+				if (($Script:ConvertPlainTextPasswords -ne $false -and $Script:ParamsUsed -ne $true) -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){#Convert password if it's enabled in config and script is being run normally *OR* Convert password if script is being run from paramters using either -all batch or -all (but not if -username is used instead)
+					$Script:acct = $Script:AccountChoice.acct.tostring()
+					$EncryptedPassword = $PW | ConvertTo-SecureString -ErrorAction Stop -Errorvariable ErrorVar #Try converting password.
+					$PWobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedPassword)
+					$Script:PW = $PWobject.GetNetworkCredential().Password
+				}
+				else {
+					if ($Null -eq $Script:AccountID){
+						$Script:acct = $Script:AccountUsername
+						$Script:AccountID = "1"
+					}
+				}
+			}
+			Catch {
+				if ($ErrorVar -match "is not a valid encrypted string"){
+					Write-Host " There was an issue with decrypting this password." -foregroundcolor red
+					FormatFunction -Text ("Please re-enter your password for " + $Script:AccountChoice.acct + " into accounts.csv and re-run the script.") -IsError $True
+					Write-Host
+					PressTheAnyKey
+				}
+				else {
+					Write-Host " Password for this account is in plain text in accounts.csv." -foregroundcolor red
+					Write-Host " Run the script again and your password will be secured." -foregroundcolor red
+					Write-Host " If errors persist, re-enter your password in accounts.csv" -foregroundcolor red
+					Write-Host
+					PressTheAnyKey
+				}
 			}
 		}
-		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){
+		if ($ParamsUsed -eq $True){
+			$Script:RegionLabel = $Script:Region.substring(0,2)
+			if ($Script:RegionLabel -eq "US"){$Script:RegionLabel = "NA"}
+		}
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.Token.length -ge 200)){
 			$Script:Token = $Script:AccountChoice.Token.tostring()
 			$EncryptedToken = $Script:Token | ConvertTo-SecureString
 			$Tokenobject = New-Object System.Management.Automation.PsCredential("N/A", $EncryptedToken)
@@ -2595,14 +2831,15 @@ Function Processing {
 		}
 		Catch {
 			$Script:AccountFriendlyName = $Script:AccountUsername
-		}	
+		}
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
+		$CustomLaunchArguments = ($Script:AccountChoice.CustomLaunchArguments).replace("`"","").replace("'","") #clean up arguments in case they contain quotes (for folks that have used excel to edit accounts.csv).
 		if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -and $Script:ForceAuthToken -ne $True -and $Script:Config.ForceAuthTokenForRegion -notmatch $RegionLabel){
-			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW +" -address " + $Script:Region + " " + $Script:AccountChoice.CustomLaunchArguments).tostring()
+			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		else {
-			$arguments = (" -uid osi " + $Script:AccountChoice.CustomLaunchArguments).tostring()
+			$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
 		}
 		if ($Config.ForceWindowedMode -eq $true){#starting with forced window mode sucks, but someone asked for it.
 			$arguments = $arguments + " -w"
@@ -2612,28 +2849,69 @@ Function Processing {
 		#Switch Settings file to load D2r from.
 		if ($Config.SettingSwitcherEnabled -eq $True -and $Script:AskForSettings -ne $True){#if user has enabled the auto settings switcher.
 			$SettingsProfilePath = ("C:\Users\" + $Env:UserName + "\Saved Games\Diablo II Resurrected\")
-			$SettingsJSON = ($SettingsProfilePath + "Settings.json")
-			foreach ($id in $Script:AccountOptionsCSV){#create a copy of settings.json file per account so user doesn't have to do it themselves
-				if ((Test-Path -Path ($SettingsProfilePath+ "Settings" + $id.id +".json")) -ne $true){#if somehow settings<ID>.json doesn't exist yet make one from the current settings.json file.
+			if ($Script:AccountChoice.CustomLaunchArguments -match "-mod"){
+				$pattern = "-mod\s+(\S+)" #pattern to find the first word after -mod
+				if ($Script:AccountChoice.CustomLaunchArguments -match $pattern) {
+					$ModName = $matches[1]
 					try {
-						Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
+						write-Verbose " Trying to get Mod Content..."
+						$Modinfo = ((get-content "$($Config.GamePath)\Mods\$ModName\$ModName.mpq\Modinfo.json" | convertfrom-json).savepath).trim("/")
+						If ($Modinfo -eq $Null) {
+								Write-Verbose " No Custom Save Path Specified for this mod."
+							}
+						ElseIf ($Modinfo -ne "../") {
+							$SettingsProfilePath += "mods\$Modinfo\"
+							if (-not (Test-Path $SettingsProfilePath)){
+								Write-Host " Mod Save Folder doesn't exist yet. Creating folder..."
+								New-Item -ItemType Directory -Path $SettingsProfilePath -ErrorAction stop | Out-Null
+								write-host " Created folder: $SettingsProfilePath" -ForegroundColor Green
+							}
+							write-host " Mod: $ModName detected. Using custom path for settings.json." -ForegroundColor Green
+							Write-Verbose "$SettingsProfilePath"
+						}
+						Else {
+							Write-Verbose " Mod used but save path is standard."
+						}
 					}
-					catch {
-						Write-Host
-						Write-Host " Couldn't find settings.json in $SettingsProfilePath" -foregroundcolor red
-						Write-Host " Start the game normally (via Bnet client) & this file will be rebuilt." -foregroundcolor red
-						PressTheAnyKeyToExit
+					Catch {
+						Write-Verbose " Mod used but custom save path not specified."
 					}
 				}
+				else {
+					write-host " Couldn't detect Mod name. Standard path to be used for settings.json." -ForegroundColor Red
+				}
 			}
-			try {Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
-				$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
-				Write-Host (" Custom game settings (settings" + $Script:AccountID + ".json) being used for " + $CurrentLabel) -foregroundcolor green
-				Start-Sleep -milliseconds 100
-			}
-			catch {
-				Write-Host " Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -foregroundcolor red
-				PressTheAnyKey
+			$SettingsJSON = ($SettingsProfilePath + "Settings.json")
+			if ((Test-Path -Path ($SettingsProfilePath + "Settings.json")) -eq $true){ #check if settings.json does exist in the savegame path (if it doesn't, this indicates first time launch or use of a new single player mod).
+				foreach ($id in $Script:AccountOptionsCSV){#create a copy of settings.json file per account so user doesn't have to do it themselves
+					if ((Test-Path -Path ($SettingsProfilePath + "Settings" + $id.id +".json")) -ne $true){#if somehow settings<ID>.json doesn't exist yet make one from the current settings.json file.
+						try {
+							Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
+						}
+						catch {
+							Write-Host
+							FormatFunction -Text "Couldn't find settings.json in $SettingsProfilePath" -IsError $True
+							if ($Script:AccountChoice.CustomLaunchArguments -match "-mod"){
+								Break
+							}
+							Else {
+								Write-Host " Start the game normally (via Bnet client) & this file will be rebuilt." -foregroundcolor red
+							}
+							write-host
+							PressTheAnyKeyToExit
+						}
+					}
+				}
+				try {
+					Copy-item ($SettingsProfilePath + "settings"+ $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
+					$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
+					Write-Host (" Custom game settings (settings" + $Script:AccountID + ".json) being used for " + $CurrentLabel) -foregroundcolor green
+					Start-Sleep -milliseconds 133
+				}
+				catch {
+					FormatFunction -Text "Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -IsError $True
+					PressTheAnyKey
+				}
 			}
 		}
 		if ($Script:AskForSettings -eq $True){#steps go through if user has toggled on the manual setting switcher ('s' in the menu).
@@ -2648,7 +2926,7 @@ Function Processing {
 				catch {
 					Write-Host
 					Write-Host " Couldn't find settings.json in $SettingsProfilePath" -foregroundcolor red
-					Write-Host " Please start the game normally (via Bnet client) and this file will be rebuilt." -foregroundcolor red
+					Write-Host " Please start the game normally (via Bnet client) & this file will be rebuilt." -foregroundcolor red
 					PressTheAnyKeyToExit
 				}
 			}
@@ -2670,7 +2948,6 @@ Function Processing {
 			}
 			if ($Null -ne $SettingsFileOptions){# If settings files are found, IE the end user has set them up prior to running script.
 				$SettingsFileOptions = $SettingsDefaultOptionArray + $SettingsFileOptions
-				Write-Host
 				Write-Host "  Settings options you can choose from are:"
 				foreach ($Option in $SettingsFileOptions){
 					Write-Host ("   " + $Option.ID + ". " + $Option.name) -foregroundcolor green
@@ -2690,7 +2967,7 @@ Function Processing {
 						Write-Host "  Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 						$SettingsCancelOption = "c"
 					}
-					$SettingsChoice = Readkey
+					$SettingsChoice = ReadKeyTimeout "" $MenuRefreshRate "c" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 					if ($SettingsChoice -eq ""){$SettingsChoice = 1}
 					Write-Host
 					if ($SettingsChoice.tostring() -notin $SettingsFileOptions.id + $SettingsCancelOption){
@@ -2708,7 +2985,7 @@ Function Processing {
 						Write-Host
 					}
 					catch {
-						Write-Host " Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -foregroundcolor red
+						FormatFunction -Text "Couldn't overwrite settings.json for some reason. Make sure you don't have the file open!" -IsError $True
 						PressTheAnyKey
 					}
 				}
@@ -2750,7 +3027,7 @@ Function Processing {
 			$Command = ('"'+ $WorkingDirectory + '\SetText\SetTextv2.exe" /PID ' + $process.id + ' "' + $rename + '"')
 			try {
 				cmd.exe /c $Command
-				#write-output $Command #debug
+				write-debug $Command #debug
 				Write-Host " Window Renamed." -foregroundcolor green
 				Start-Sleep -milliseconds 250
 			}
@@ -2758,7 +3035,7 @@ Function Processing {
 				Write-Host " Couldn't rename window :(" -foregroundcolor red
 				PressTheAnyKey
 			}
-			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.TokenIsSecureString -eq "Yes")){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
+			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.Token.length -ge 200)){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
 				$CurrentTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 				write-host " Launched Game using an $X[38;2;165;146;99;4mAuthentication Token$X[0m."
 				write-host " Waiting for you to get to Character select screen..." -foregroundcolor yellow
@@ -2766,7 +3043,7 @@ Function Processing {
 				do {
 					$NewTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 					$CompareCheck = Compare-Object $CurrentTokenRegValue $NewTokenRegValue
-					if ($Null -ne $CompareCheck){#if comparecheck has some value, this means it found differences, IE the reg value changed.
+					if ($Null -ne $CompareCheck){#if CompareCheck has some value, this means it found differences, IE the reg value changed.
 						$CurrentTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
 						$CurrentTokenRegValue = $NewTokenRegValue
 						$WebTokenChangeCounter++
@@ -2788,6 +3065,8 @@ Function Processing {
 }
 ImportCSV
 Clear-Host
+D2rLevels
+QuoteList
 SetQualityRolls
 Menu
 
