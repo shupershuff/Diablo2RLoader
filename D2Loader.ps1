@@ -46,7 +46,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.12.0"
+$CurrentVersion = "1.11.12"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -885,7 +885,6 @@ if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){
 $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 if ((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
 	try {
-		$HandleExtractPath = ($Script:WorkingDirectory + "\Handle\")
 		Write-Host
 		Write-Host " Handle64.exe not in \Handle\ folder. Downloading now..." -foregroundcolor Yellow
 		try {
@@ -2887,11 +2886,22 @@ Function Processing {
 				if ($Script:AccountChoice.CustomLaunchArguments -match $pattern) {
 					$ModName = $matches[1]
 					try {
-						write-Verbose " Trying to get Mod Content..."
-						$Modinfo = ((get-content "$($Config.GamePath)\Mods\$ModName\$ModName.mpq\Modinfo.json" | convertfrom-json).savepath).trim("/")
-						If ($Modinfo -eq $Null) {
-								Write-Verbose " No Custom Save Path Specified for this mod."
+						Write-Verbose "Trying to get Mod Content..."
+						try {
+							$Modinfo = ((Get-Content "$($Config.GamePath)\Mods\$ModName\$ModName.mpq\Modinfo.json" -ErrorAction silentlycontinue | ConvertFrom-Json).savepath).Trim("/") 
+						}
+						catch {
+							try {
+								$Modinfo = ((Get-Content "$($Config.GamePath)\Mods\$ModName\Modinfo.json" -ErrorAction stop -ErrorVariable ModReadError | ConvertFrom-Json).savepath).Trim("/")
 							}
+							catch {
+								FormatFunction -Text "Using standard settings path. Couldn't find Modinfo.json in '$($Config.GamePath)\Mods\$ModName\$ModName.mpq'" -IsWarning $True
+								start-sleep -milliseconds 1500
+							}
+						}
+						If ($Null -eq $Modinfo) {
+							Write-Verbose " No Custom Save Path Specified for this mod."
+						}
 						ElseIf ($Modinfo -ne "../") {
 							$SettingsProfilePath += "mods\$Modinfo\"
 							if (-not (Test-Path $SettingsProfilePath)){
