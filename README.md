@@ -1,7 +1,7 @@
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 <br>
-This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account. 
+This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account, ideal if you want to play single player and switch between mods easily. 
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
 This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
