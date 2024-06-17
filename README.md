@@ -14,7 +14,7 @@ Using this script means you DON'T have to do any of this awful stuff to multibox
 - Use Virtual Machines, multiple computers or multiple user accounts (Windows account switching).
 - Run any dodgy executables where you don't know what's actually running.
  	- Note that this script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool.
- 	- Note that this script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
+ 	- Note that this script also builds an executable called SetTextv2.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
 	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
 Note that this script DOES NOT alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game.
@@ -72,12 +72,12 @@ Other misc stats and info can be seen on the info screen. Statistics are recorde
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7f612465-be54-4883-ba37-5febfa39c58d)<br>
-Data courtesy of d2emu.com<br>
+Data courtesy of [D2Emu.com](https://d2emu.com)<br>
 
 **Check DClone Status**<br>
 You can also manually check the current DClone status by pressing 'd'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/f6f2c934-7fce-47db-a052-97e42874d9be)<br>
-Data courtesy of d2emu.com, d2runewizard.com and diablo2.io. That's right, you can choose your source!<br>
+Data courtesy of [D2Emu.com](https://d2emu.com), [d2runewizard.com](https://d2runewizard.com) and [diablo2.io](https://diablo2.io). That's right, you can choose your source!<br>
 
 **Alarms for DClone Walk status changes**<br>
 If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.<br>
@@ -376,7 +376,7 @@ Happy for you to make any modifications this script for your own needs providing
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
 - Thanks to Mysterio from [D2Emu.com](https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
-- Thanks to Mysterio (https://D2Emu.com), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
+- Thanks to Mysterio ([D2Emu.com](https://D2Emu.com)), Prowner (([d2runewizard.com]https://d2runewizard.com)) and Teebling "Teebs" (([diablo2.io]https://diablo2.io)) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
 - Thanks to v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io for API's providing top notch cringe for us to smirk at.
 - ChatGPT for helping with regex patterns.
