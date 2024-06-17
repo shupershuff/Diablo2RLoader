@@ -283,7 +283,7 @@ Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ).<br>
 Or even just a [message](https://github.com/shupershuff/Diablo2RLoader/discussions) to say thanks :)<br>
 
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
-**A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
+**A:** See instructions [above](#4-run-the-script-manually-for-the-first-time). The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
 
 **Q:** How do I update the script?<br>
 **A:** As of 1.5.0, the script has the ability to update itself. I will also include steps in the script to update config.xml, accounts.csv and stats.csv if new fields are added. For users on older versions, to update manually, all you need to do is download the latest release, extract the .zip and copy the new D2Loader.ps1 over to where the old D2Loader.ps1 file is and overwrite it. If this script shows a warning "Couldn't check for updates. GitHub API limit may have been reached...", it's most likely due to me testing things and exceeding GitHubs API limit, ignore and try again later.
@@ -311,7 +311,7 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
 **A1:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.<br>
-**A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#2-setup-your-accounts)).
+That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. To setup AuthToken authentication, (see Auth Token steps in [Setup Your Accounts](#2-setup-your-accounts)).
 
 **Q:** I have suggestions and/or issues with this, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
@@ -321,6 +321,9 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 
 **Q:** I get prompts to enter captcha's on my accounts randomly. Why is this?<br>
 **A:** I'm not sure exactly why this happens but it does appear to happen more with newer accounts. Ensure you have logged into the battlenet client AND into your webbrowser with the account and approve any verifications/captchas needed. Do not share the account with other people. Do NOT use a VPN when signing into the account (whether it be via this script, bnet client or website).
+
+**Q:** Will you implement a feature to skip intro videos when launching?<br>
+**A:** Could I? Yes. Will I? No as this requires modifying game files (video files really). Whilst the script can cater for mods you want to use, I don't want this script directly modifying any game files, even something as innocent as intro videos. If skipping intro is of interest to you, you can look at the [introskip mod](https://www.nexusmods.com/diablo2resurrected/mods/194).
 
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
