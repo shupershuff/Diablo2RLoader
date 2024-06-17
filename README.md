@@ -32,7 +32,7 @@ What your windows will look like:<br>
 ![GameWindows](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/62129f82-bde4-4744-83f2-cc69d873988a)
 ## But I don't want to use your script you dodgy internet human
 Not everyone wants to use a random script or an app and that's understandable.<br>
-See guides for alternative multiboxing methods here: https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script
+See guides for alternative multiboxing methods here: [https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script](https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script)
 
 ## Exactly what does the script do?
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
@@ -85,7 +85,7 @@ If there's a change in status whilst the script is running, it will activate the
 The alarm will a text warning (as seen in example below) as well as a text to speech alarm notifying you where the walk is happening.<br>
 The voice alarm activates only once but the text warnings will remain in place for 5 minutes. <br>
 You will also be notified after the script has launched if there's any imminent walks about to happen (ie status is 5/6).<br>
-See the [DClone Status Alarms](#8-dclone-status-alarms-optional) and [config](#4-script-config-mostly-optional) sections for more information and how to configure this.<br>
+See the [DClone Status Alarms](#7-dclone-status-alarms-optional) and [config](#3-script-config-mostly-optional) sections for more information and how to configure this.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/929f62d0-a952-449d-bbdc-ad3a9126d008)<br>
 Voice Examples (make sure to unmute, GitHub mutes by default):<br>
 
@@ -186,11 +186,11 @@ All other config options below this are strictly optional:<br>
 - Set 'ShortcutCustomIconPath' to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
 - Set 'ConvertPlainTextPasswords' to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
 - Set 'ForceWindowedMode' to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings. Disabled by default.
-- Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
-- Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section below for more info. Disabled by default.
+- Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#5-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
+- Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#6-manual-settings-switcher-optional) section below for more info. Disabled by default.
 - Set 'TrackAccountUseTime' to False if you don't want accounts.csv or stats.csv to be autoupdated with playtime. Other Stats are still tracked in stats.csv. Mainly added this option in the unlikely case there are any issues with accounts.csv getting corrupted. Enabled by default.
 - Set 'DCloneTrackerSource' to one of the options noted in the config file. Default (and recommended) is d2emu.com as it provides realtime data (not crowdsourced).
-- Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#8-dclone-status-alarms-optional) section below for more info. Blank by default.
+- Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#7-dclone-status-alarms-optional) section below for more info. Blank by default.
 - Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
 - Set 'DCloneAlarmVoice' to the preferred Text to Speech Robot voice. Choices are 'Amazon' or 'Paladin'. Amazon by Default.
 - Set 'DCloneAlarmVolume' to a preferred volume (1-100) to prevent frights and save your ear drums. Default is 69. Nice.
@@ -237,7 +237,7 @@ Do you want to manually choose which settings to use when launching the game? Th
 Setup is exactly the same as the Auto Settings Switcher, except for step 8 as you need to name the settings file settings._name_.json where name is whatever you want it called (eg settings.1440pHigh.json or settings.PotatoGraphics.json)<br>
 - Note: If you name the file settings_name_.json it will not work. The name should be inside two fullstops "."<br>
 
-Don't forget to enable this feature in the [config](#4-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
+Don't forget to enable this feature in the [config](#3-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
 
 ## 7. DClone Status Alarms (Optional)
 You can optionally configure the script to advise when DClone walk status changes.<br>
@@ -251,7 +251,7 @@ If you want to enable it, simply add in the option(s) you want into DcloneAlarmL
 You will only be alarmed for the game options you add into config. EG if you only want Hardcore Ladder notifications you would enter: <DCloneAlarmList>HCL-NA, HCL-EU, HCL-KR</DCloneAlarmList><br>
 You can also optionally change the other configs for DClone Tracking and DClone Alarms, however I recommend leaving the default values here.<br>
 You can also adjust the volume of the alarms if they are too quiet or if it's so loud it's making you jump off your chair.
-See the [Script Config](#4-script-config-mostly-optional) section for more info on each config.<br>
+See the [Script Config](#3-script-config-mostly-optional) section for more info on each config.<br>
 
 # Notes #
 ## Graphics Performance Recommendations ##
@@ -290,7 +290,7 @@ Or even just a [message](https://github.com/shupershuff/Diablo2RLoader/discussio
 
 **Q:** When Diablo opens it won't allow me to select an online character<br>
 **A1:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).<br>
-**A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).
+**A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).<br>
 **A3:** In some circumstances, for no real reason, you might randomly have issues with one or more of your accounts connecting with warnings about "Account locked for suspicious activity" after temporarily switching regions. This only happens when using parameter based authentication. Numerous people have seen this issue across different loaders and for people who launch the game from desktop shortcuts. I've discovered no pattern as to why this happens or how to resolve it. Workaround is to launch problematic accounts using Auth Tokens.
 
 **Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
@@ -311,7 +311,7 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
 **A1:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.<br>
-**A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#3-setup-your-accounts)).
+**A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#2-setup-your-accounts)).
 
 **Q:** I have suggestions and/or issues with this, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
@@ -378,7 +378,7 @@ Happy for you to make any modifications this script for your own needs providing
 - Thanks to Mysterio from [D2Emu.com](https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
 - Thanks to Mysterio (https://D2Emu.com), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
-- Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
+- Thanks to v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io for API's providing top notch cringe for us to smirk at.
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
 - Live, Laugh, Love.
