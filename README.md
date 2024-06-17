@@ -143,17 +143,17 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 **NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
 2. Add number for each account starting from 1.
-	- Note, if you're crazy and have more than 9 accounts, you'll need to start adding letters instead of numbers. Letters cannot be the same as existing menu options. Characters a, b, c, g, r, t, d, j, s, i and x are all reserved. I will look to enable double digit ID's in a future release.
-4. Add your battlenet account sign in address (eg bogan@askjeeves.com).
-5. Add your battlenet account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
+	- Note, if you want you, can also use letters as an ID but take note that characters a, b, c, g, r, t, d, j, s, i and x are all reserved.
+3. Add your battlenet account sign in address (eg bogan@askjeeves.com).
+4. Add your battlenet account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
 	- If you're using a text editor to edit the CSV AND your password has a comma in it, ensure your password is surrounded by quotes eg "fjl3Ng2<,03h%mn"
-6. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames. You could simply set these as "Barb", "Sorc" etc.
-7. [OPTIONAL] If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
+5. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames. You could simply set these as "Barb", "Sorc" etc.
+6. [OPTIONAL] If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
 	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
  	- Don't forget to enable the Batch feature in the config file.
-8. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
+7. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
-9. [OPTIONAL] If you want to be able to use Token based authentication (eg if you have MFA enabled on your account, one of Blizzards Auth servers are down and you can't connect or if you get errors about account being "locked for suspicious activity" on certain regions), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
+8. [OPTIONAL] If you want to be able to use Token based authentication (eg if you have MFA enabled on your account, one of Blizzards Auth servers are down and you can't connect or if you get errors about account being "locked for suspicious activity" on certain regions), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
 	a. Log in with your credentials and approve MFA request (if enabled).<br>
 	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
@@ -193,6 +193,7 @@ All other config options below this are strictly optional:<br>
 - Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#8-dclone-status-alarms-optional) section below for more info. Blank by default.
 - Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
 - Set 'DCloneAlarmVoice' to the preferred Text to Speech Robot voice. Choices are 'Amazon' or 'Paladin'. Amazon by Default.
+- Set 'DCloneAlarmVolume' to a preferred volume (1-100) to prevent frights and save your ear drums. Default is 69. Nice.
 - Set 'ForceAuthTokenForRegion' to enforce AuthToken based authentication for one or more regions. Useful if an Auth server goes down preventing parameter based connections (remember when Asia stopped working for several weeks?) Valid options are NA, EU and KR. Multiple values should be comma separated. Recommend leaving blank unless there are auth issues.
 
 Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
@@ -243,12 +244,13 @@ You can optionally configure the script to advise when DClone walk status change
 This is very handy for when you're playing on another region/game mode or playing another game entirely so you can be audibly warned on status changes without having to manually check a website.<br>
 This will display text warnings on screen for 5 minutes since last status change and will also perform a one off voice alarm advising you what region and game mode the status changed on.
 Checks are performed each time the script refreshes on the main menu (IE, every 30 seconds).<br>
-Note that these check run in a background job that can take 1-2 seconds to complete, so manually refreshing the menu constantly (r) will prevent checks from occuring.<br>
+Note that this check is run in a background job that takes 1-2 seconds to complete. As such manually refreshing the menu constantly (r) will prevent checks from occuring.<br>
 
 This feature is disabled by default.<br>
 If you want to enable it, simply add in the option(s) you want into DcloneAlarmList in config.xml.<br>
 You will only be alarmed for the game options you add into config. EG if you only want Hardcore Ladder notifications you would enter: <DCloneAlarmList>HCL-NA, HCL-EU, HCL-KR</DCloneAlarmList><br>
 You can also optionally change the other configs for DClone Tracking and DClone Alarms, however I recommend leaving the default values here.<br>
+You can also adjust the volume of the alarms if they are too quiet or if it's so loud it's making you jump off your chair.
 See the [Script Config](#4-script-config-mostly-optional) section for more info on each config.<br>
 
 # Notes #
@@ -289,6 +291,7 @@ Or even just a [message](https://github.com/shupershuff/Diablo2RLoader/discussio
 **Q:** When Diablo opens it won't allow me to select an online character<br>
 **A1:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).<br>
 **A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).
+**A3:** In some circumstances, for no real reason, you might randomly have issues with one or more of your accounts connecting with warnings about "Account locked for suspicious activity" after temporarily switching regions. This only happens when using parameter based authentication. Numerous people have seen this issue across different loaders and for people who launch the game from desktop shortcuts. I've discovered no pattern as to why this happens or how to resolve it. Workaround is to launch problematic accounts using Auth Tokens.
 
 **Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
 **A:** Open accounts.csv and clearout the password field. Either enter your new password into the csv file or leave it blank and the script will ask you next time you run it.
