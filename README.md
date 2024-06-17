@@ -125,11 +125,11 @@ Please see the detailed setup steps below, it's not as scary as it looks. I've i
 A basic setup only takes 2 or 3 minutes.
 TL;DR steps are:
 1. Download the latest release, extract and unblock it within file properties. See [1. Download](#1-download).
-2. Download handle viewer and place in the folder. See [2. Setup Handle Viewer](#2-setup-handle-viewer).
-3. Add account info to accounts.csv. See [3. Setup Your Accounts](#3-setup-your-accounts).
-4. Edit config.xml to set game path and enable/configure desired features. See [4. Script Config](#4-script-config-mostly-optional).
-5. Run script for first time. See [5. Run the script manually for the first time](#5-run-the-script-manually-for-the-first-time).
-6. Optionally perform steps to configure game settings that each account should load from. See [6. Auto Settings Switcher](#6-auto-settings-switcher-optional-but-recommended) and [7. Manual Settings Switcher](#7-manual-settings-switcher-optional).
+2. Add account info to accounts.csv. See [2. Setup Your Accounts](#2-setup-your-accounts).
+3. Edit config.xml to set game path and enable/configure desired features. See [3. Script Config](#3-script-config-mostly-optional).
+4. Run script for first time. See [4. Run the script manually for the first time](#4-run-the-script-manually-for-the-first-time).
+5. Optionally perform steps to configure game settings that each account should load from. See [5. Auto Settings Switcher](#5-auto-settings-switcher-optional-but-recommended) and [6. Manual Settings Switcher](#6-manual-settings-switcher-optional).
+6. Optionally enable DClone alarms for your preferred regions and game mode. See [7. DClone Status Alarms](#7-dclone-status-alarms-optional).
 
 If you have any issues I can almost guarantee it's covered in the detailed setup steps below or FAQ section.
 
@@ -139,11 +139,7 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 3. Check the "Unblock" box and click apply.<br>
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
-## 2. Setup Handle viewer
-1. Download handle viewer from https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
-2. Extract the executable files (specifically handle64.exe) to the .\Handle\ folder
-
-## 3. Setup Your Accounts
+## 2. Setup Your Accounts
 **NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
 2. Add number for each account starting from 1.
@@ -175,8 +171,7 @@ Make sure to save it and close the file :)
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ca6ed47-d5b7-486d-8bf2-a1fcfba2a612)<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/982aa776-492b-491d-81da-ee34e4151dca)
 
-
-## 4. Script Config (Mostly Optional)
+## 3. Script Config (Mostly Optional)
 Default settings within config.xml *should* be ok but can be optionally changed. Recommend checking out the features here.
 Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ etc.
 - **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
@@ -202,7 +197,7 @@ All other config options below this are strictly optional:<br>
 
 Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
 
-## 5. Run the script manually for the first time
+## 4. Run the script manually for the first time
 1. Browse to the folder, right click on D2Loader.ps1 and choose run.
 2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
    ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
@@ -216,7 +211,7 @@ Done editing? What are your thoughts on saving the file? I've heard it helps. CT
 
 If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
 
-## 6. Auto Settings Switcher (Optional but recommended)
+## 5. Auto Settings Switcher (Optional but recommended)
 Do you want your primary account to launch with decent graphics settings with your other accounts to be set to poo tier settings? This is for you! This feature is disabled by default, as it will cause confusing behaviour for users who haven't read and understood this first.<br>
 
 What this feature does is create copies Settings.json (found in the "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected" folder) for each account you have.<br>
@@ -235,7 +230,7 @@ NOTE: Any changes you make to non-character options in game (eg graphics, audio,
 8. Rename to Settings1.json
 9. Launch the game and proceed find all of the high runes. All of them.
 
-## 7. Manual Settings Switcher (Optional)
+## 6. Manual Settings Switcher (Optional)
 Do you want to manually choose which settings to use when launching the game? This is for you! This feature is disabled by default, as this needs to be setup first and understood this first.<br>
 <br>
 Setup is exactly the same as the Auto Settings Switcher, except for step 8 as you need to name the settings file settings._name_.json where name is whatever you want it called (eg settings.1440pHigh.json or settings.PotatoGraphics.json)<br>
@@ -243,7 +238,7 @@ Setup is exactly the same as the Auto Settings Switcher, except for step 8 as yo
 
 Don't forget to enable this feature in the [config](#4-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
 
-## 8. DClone Status Alarms (Optional)
+## 7. DClone Status Alarms (Optional)
 You can optionally configure the script to advise when DClone walk status changes.<br>
 This is very handy for when you're playing on another region/game mode or playing another game entirely so you can be audibly warned on status changes without having to manually check a website.<br>
 This will display text warnings on screen for 5 minutes since last status change and will also perform a one off voice alarm advising you what region and game mode the status changed on.
