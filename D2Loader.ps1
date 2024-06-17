@@ -25,20 +25,22 @@ Fixed (albeit inadvertantly) an issue with joining using the -region parameter.
 Fixed numpad numbers not working on full sized keyboards.
 Fixed Custom launch arguments not working when enclosed in quotes. An improvement for folks who use Excel to edit accounts.csv.
 Fixed unavailable batch ID's being selectable on batch screen.
-Relegated the "Account last opened" details to debug mode.
-Minor tidy ups to code and error text.
-Removed irrelevant references to OCR.
 Script now autodetects if usermods are being used and will use the appropriate custom save directory for settings.json. Handy for folks launching for SinglePlayer mods.
-Script will now revert back to the main menu on batch, region and setting selection screens if no input is provided after 30 seconds.
+Script now reverts back to the main menu on batch, region and setting selection screens if no input is provided after 30 seconds.
 Script now detects if there are 2 digit ID's in account csv and allows multiple character inputs on account select screen. Good for those with more than 10 accounts.
-Script now downloads handle64.exe from SysInternals if it's not there (one less setup step)
-Script now checks if folk have entered duplicate ID's in accounts.csv
+Script now downloads handle64.exe from SysInternals if it's not there (one less setup step).
+Script now checks if folk have entered duplicate ID's in accounts.csv.
 Added a volume config option for DClone Voice alarm so it's not as startlingly loud.
 Gave the joke screen some McLovin and added two additional API sources for cringy Dad jokes and Chuck Norris facts.
 To make changing passwords more straightforward, script now checks password and token length to assess if they've been converted to a secure string or not. This means the TokenIsSecureString and PasswordIsSecureString columns in accounts.csv are no longer needed and as such have been removed.
+Relegated the "Account last opened" details to debug mode.
+Removed irrelevant references to OCR.
+Minor tidy ups to code and error text.
 
 1.12.0+ to do list
-Add Capability for D2Emu Websocket connection as the current TZ/dclone API might be getting deprecated.
+Add Capability for D2Emu Websocket connection as the current TZ/DClone API might be getting deprecated. 
+In line with the above, if possible investigate the possibility of realtime DClone Alarms.
+In line with the above, perhaps investigate putting TZ details on main menu and using the TZ screen for recent TZ's only.
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script. Can't really be bothered though :)
 To reduce lines, add repeated commands into functions. Can't really be bothered though :)
 Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windows. Investigate how this could be done. Would need an agent to detect key combos, Possibly via AutoIT or Autohotkey. Likely not possible within powershell and requires a separate project.
@@ -46,7 +48,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.11.12"
+$CurrentVersion = "1.12.0"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -687,7 +689,7 @@ if ($Null -eq $Script:Config.DCloneAlarmVolume){
 	Write-Host
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 	$Pattern = "</DCloneAlarmVoice>"
-	$Replacement = "</DCloneAlarmVoice>`n`t<!--Specify how loud notifications can be. Range from 0 and 100.-->`n`t"
+	$Replacement = "</DCloneAlarmVoice>`n`t<!--Specify how loud notifications can be. Range from 1 to 100.-->`n`t"
 	$Replacement +=	"<DCloneAlarmVolume>69</DCloneAlarmVolume>" #add option to config file if it doesn't exist.
 	$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 	$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
@@ -886,7 +888,7 @@ $Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).sub
 if ((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
 	try {
 		Write-Host
-		Write-Host " Handle64.exe not in \Handle\ folder. Downloading now..." -foregroundcolor Yellow
+		Write-Host " Handle64.exe not in .\Handle\ folder. Downloading now..." -foregroundcolor Yellow
 		try {
 			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\Handle\ExtractTemp\") -ErrorAction stop | Out-Null #create temporary folder to download zip to and extract
 		}
@@ -996,7 +998,7 @@ Function ImportCSV {
 				$Script:AccountOptionsCSV = $Script:AccountOptionsCSV | Select-Object -Property $DesiredColumnOrder
 				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #rewrite to accounts.csv to remove unused columns.
 				FormatFunction -text ("Unused Columns were removed from Accounts.csv: " + ($columnsRemoved -join ", ") + ".`n") -IsWarning $True
-				start-sleep -milliseconds 1000
+				start-sleep -milliseconds 3000
 			}
 			else {
 				Write-Verbose "No columns were removed as they do not exist in the CSV."
@@ -2076,7 +2078,7 @@ Function DCloneVoiceAlarm {
 		}
 		Elseif (($Item.Status -eq 1 -and $Item.PreviousStatus -ne 6) -or $Item.Status -eq 6){#check if status has just changed to 6 or it has changed to 1 from any number other than 6 (to prevent duplicate alarms.
 			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone has just walked in $DCloneRegion on $CoreText $LadderText ($($item.tag)).$X[0m"
-			$Message = ("D Clone Has just walked in $DCloneRegion on " + $CoreText + " " + $LadderText)
+			$Message = ("D Clone has just walked in $DCloneRegion on " + $CoreText + " " + $LadderText)
 		}
 		Elseif ($Script:DCloneAlarmLevel -match $Item.Status) {
 			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone Update! DClone is now $($Item.Status)/6 in $DCloneRegion on $CoreText $LadderText ($($item.tag))$X[0m"
@@ -2910,7 +2912,7 @@ Function Processing {
 								write-host " Created folder: $SettingsProfilePath" -ForegroundColor Green
 							}
 							write-host " Mod: $ModName detected. Using custom path for settings.json." -ForegroundColor Green
-							Write-Verbose "$SettingsProfilePath"
+							Write-Verbose " $SettingsProfilePath"
 						}
 						Else {
 							Write-Verbose " Mod used but save path is standard."
