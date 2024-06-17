@@ -150,12 +150,15 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys) {#u
 	return $(
 		if ($Null -eq $key -or $key.VirtualKeyCode -eq $EnterKey) {
 			""
-		} else {
+		}
+		elseif ($key.VirtualKeyCode -eq 27){ #if key pressed was escape
+			"Esc"
+		}
+		else {
 			$key.Character
 		}
 	)
 }
-
 Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null, [bool]$TwoDigitAcctSelection = $False) {
 	$key = $Null
 	$inputString = ""
@@ -225,6 +228,9 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
 		If ($key.VirtualKeyCode -eq $EnterKey -and $EnterKey -in $AllowedKeyList){
 			""
 		}
+		Elseif ($key.VirtualKeyCode -eq 27){ #if key pressed was escape
+			"Esc"
+		}
 		ElseIf ($inputString.Length -eq 0) {
 			$Default
 		}
@@ -233,7 +239,6 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
 		}
 	)
 }
-
 Function PressTheAnyKey {#Used instead of Pause so folk can hit any key to continue
 	write-host "  Press any key to continue..." -nonewline
 	readkey -NoOutput $True -AllowAllKeys $True | out-null
@@ -258,11 +263,8 @@ Function FormatFunction {
 		[bool] $IsError,
 		[bool] $IsWarning
 	)
-	$MaxLineLength = 75
-	$MaxLineLengthDash = 73
+	$MaxLineLength = 76
 	If ($Indents -ge 1){
-		$MaxLineLength = $MaxLineLength - $Indents
-		$MaxLineLengthDash = $MaxLineLengthDash - $Indents
 		while ($Indents -gt 0){
 			$Indent += " "
 			$Indents --
@@ -271,41 +273,61 @@ Function FormatFunction {
 	$Text -split "`n" | ForEach-Object {
 		$Line = " " + $Indent + $_
 		if ($Line -match '^[\s]*-'){ #For any line starting with a dash (excluding spaces).
-			$script:DashFormat = ($Line -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "`$1`n").trimend()
-			$DashFormat -split "`n" | ForEach-Object {
-				if ($_ -match '^[\s]*-') { #For any line starting with a dash (excluding spaces).
-					if ($IsError -eq $True){
-						write-output $_ | red
-					}
-					Elseif ($IsWarning -eq $True){
-						write-output $_ | Yellow
-					}
-					Else {
-						$_
+			$pattern = "\b\w+(\S*)" # Regular expression pattern to find the last word including any trailing non-space characters
+			$matches = [regex]::Matches($Line, $pattern) # Find all matches of the pattern in the string
+			# Initialize variables to track the match with the highest index
+			$highestIndex = -1
+			$SelectedMatch = $Null
+			# Iterate through each match
+			foreach ($match in $matches) {
+				$matchIndex = $match.Index
+				$matchLength = $match.Length
+				$matchEndIndex = $matchIndex + $matchLength - 1
+				if ($matchEndIndex -lt ($MaxLineLength)) {# Check if the match ends within the first $MaxLineLength characters
+					if ($matchIndex -gt $highestIndex) {# Check if this match has a higher index than the current highest
+						$highestIndex = $matchIndex # This word has a higher index and is the winner thus far.
+						$SelectedMatch = $Match
+						$lastspaceindex = $SelectedMatch.Index + $SelectedMatch.Length - 1
 					}
 				}
-				else {
-					if ($IsError -eq $True){
-						write-output ($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend() | red
-					}
-					ElseIf ($IsError -eq $True){
-						write-output ($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend() | Yellow
-					}
-					Else {
-						($_ -replace "(.{1,$MaxLineLengthDash})(\s+|$)", "   $Indent`$1`n").trimend()
-					}
+			}
+			try {
+				$chunk = $Line.Substring(0, $lastSpaceIndex + 1)
+			}
+			catch {
+				$chunk = $Line.Substring(0, [Math]::Min(($MaxLineLength), ($Line.Length)))
+			}
+			if ($IsError -eq $True){
+				write-output $Chunk | Red
+			}
+			Elseif ($IsWarning -eq $True){
+				write-output $Chunk | Yellow
+			}
+			Else {
+				write-output $Chunk
+			}
+			$Line = $Line.Substring($chunk.Length).trimstart() #remove the string that's been printed on screen from variable.
+			if ($Line.length -gt 0){
+				if ($IsError -eq $True){
+					write-output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) -3)})(\s+|$)", "   $Indent`$1`n").trimend() | Red
+				}
+				ElseIf ($IsWarning-eq $True){
+					write-output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) -3)})(\s+|$)", "   $Indent`$1`n").trimend() | Yellow
+				}
+				Else {
+					write-output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) -3)})(\s+|$)", "   $Indent`$1`n").trimend()	
 				}
 			}
 		}
 		else {
 			if ($IsError -eq $True){
-				write-output ($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend() | red
+				write-output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) -1)})(\s+|$)", "`$1`n $Indent").trimend() | Red
 			}
 			Elseif ($IsWarning -eq $True){
-				write-output ($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend() | Yellow
+				write-output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) -1)})(\s+|$)", "`$1`n $Indent").trimend() | Yellow
 			}
 			Else {
-				($Line -replace "(.{1,$MaxLineLength})(\s+|$)", "`$1`n $Indent").trimend()
+				write-output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) -1)})(\s+|$)", "`$1`n $Indent").trimend()
 			}
 		}
 	}
@@ -360,7 +382,6 @@ do {
 			}
 		}
 } until ($StatsCSVImportSuccess -eq $True)
-
 if (-not ($CurrentStats | Get-Member -Name "LastUpdateCheck" -MemberType NoteProperty -ErrorAction SilentlyContinue)) {#For update 1.8.1+. If LastUpdateCheck column doesn't exist, add it to the CSV data
 	$CurrentStats | ForEach-Object {
 		$_ | Add-Member -NotePropertyName "LastUpdateCheck" -NotePropertyValue "2000.06.28 12:00:00" #previously "28/06/2000 12:00:00 pm"
@@ -759,7 +780,6 @@ if ($Script:Config.DCloneAlarmList -ne ""){
 		PressTheAnyKeyToExit
 	}
 }
-
 $Script:Config = ([xml](Get-Content "$Script:WorkingDirectory\Config.xml" -ErrorAction Stop)).D2loaderconfig #import config.xml again for any updates made by the above.
 $D2CloneTrackerSource = $Script:Config.DCloneTrackerSource # Set tracker source variable
 if ($Script:Config.EnableBatchFeature -eq $true -or $Null -ne $Batch){
@@ -794,19 +814,18 @@ if ($Script:Config.CheckForNextTZ -ne $true -and $Script:Config.CheckForNextTZ -
 } Else {
 	$Script:CheckForNextTZ = $Script:Config.CheckForNextTZ
 }
-
 $ConfigXMLlist = ($Config | Get-Member | Where-Object {$_.membertype -eq "Property" -and $_.name -notlike "#comment"}).name
 Write-Host
 foreach ($Option in $AvailableConfigs){#Config validation
 	if ($Option -notin $ConfigXMLlist){
-		Write-Host "Config.xml file is missing a config option for $Option." -foregroundcolor yellow
+		Write-Host " Config.xml file is missing a config option for $Option." -foregroundcolor yellow
 		Start-Sleep 1
 		PressTheAnyKey
 	}
 }
 if ($Option -notin $ConfigXMLlist){
 	Write-Host
-	Write-Host "Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
+	Write-Host " Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
 	Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
 	Write-Host
 	PressTheAnyKey
@@ -944,7 +963,6 @@ Function ValidateTokenInput {
 	}
 	until ($null -ne $extractedInfo)
 }
-
 #Import Account CSV
 Function ImportCSV {
 	do {
@@ -1163,14 +1181,12 @@ Function ImportCSV {
 	Copy-Item -Path ($Script:WorkingDirectory + "\stats.csv") -Destination ($Script:WorkingDirectory + "\stats.backup.csv")
 	Copy-Item -Path ($Script:WorkingDirectory + "\accounts.csv") -Destination ($Script:WorkingDirectory + "\accounts.backup.csv")
 }
-
 #Set Region Array
 $Script:ServerOptions = @(
 	[pscustomobject]@{Option='1';region='NA';region_server='us.actual.battle.net'}#Americas
 	[pscustomobject]@{Option='2';region='EU';region_server='eu.actual.battle.net'}#Europe
 	[pscustomobject]@{Option='3';region='Asia';region_server='kr.actual.battle.net'}
 )
-
 Function SetQualityRolls {
 	#Set item quality array for randomizing quote colours. A stupid addition to script but meh.
 	$Script:QualityArray = @(#quality and chances for things to drop based on 0MF values in D2r (I think?)
@@ -1210,7 +1226,68 @@ Function SetQualityRolls {
 		[System.Linq.Enumerable]::Repeat($Entry.Key, $Entry.Value) #This creates a hash table with 19036 normal items, 588 magic items, 200 rare items etc etc. Used later as a list to randomly pick from.
 	}
 }
-
+function CowKingKilled {
+	Write-Host
+	Write-Host "                          You Killed the Cow King!" -foregroundcolor green
+	Write-Host "                                $X[38;2;165;146;99;22mMoo.$X[0m"
+	Write-Host "                                    $X[38;2;165;146;99;22mMoooooooo!$X[0m"
+	$voice = New-Object -ComObject Sapi.spvoice
+	$voice.rate = -4 #How quickly the voice message should be
+	$voice.volume = $Config.DCloneAlarmVolume
+	$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}
+	$voice.speak("MooMoo-moo moo-moo, moo-moo, moo moo.") | out-null
+	$CowLogo = @"
+ -)[<-
+   +[[[*
+     *)}]>>=-----                   +:                   =-
+      :=]#}[[[]))])>-               [>-     :------     =)*:
+     :<]<<<][[]))][<*=              <]<>]]<>[%%%##}<><<<]]*
+   :=*)))**)))[[]]>:                 -<)[}#%%%%%%%%%%%%[<
+     -*><)]))))<)][[*:                    -[#%%%%%%%%%}-
+       =*>><<<)<->[}}[*:                 *}#<>%%%)=)%%%}*
+        :+>><)]])]]<[##[*:              *@@%%#[[[[}%%%%%}
+          :-<<)))<)*  *#}[):            -}%@#[]]]]#%%%%%%>
+              -=+><-   :>[#})+          :}%%#[[[]]###%%%%%>
+                          -]#}}-:      -]%#}}[}}[[[[}#%%%%):
+                            :>}})-    +#%%%#}}[][[)[}#%%%%#+
+                               =##%%<=}}}}}}}}}}[[])}#%%%%%#+
+                            :>[[##}}[[}[[[[[][]]]))))]]]]}#%%-
+                            :]##}]<)][}[}#}}}}}[[[]])]][[}##%}:
+                             =<}]>****+<[[}}}}[[[]]]]]][}}}###<
+                                       :#%#[[[]]])))))][%%}[}}[-
+                                       :#%###}[]]]))))][#%}]][]-
+                                       :#%##}}}}[[[]]][[#}))<>-:
+                                       :#####}}}}}[[[[]<>)}[:
+                                         [#}}}}}}}}[}}##}%%+
+                                         :#}}}}}}}}}[[[}}}}>-
+                                         >##}}}}}}}}[[[[[}#[[<
+                                        =}}}##}}}[[[[[[])]##<+
+                                        >#}}#}}[[[[][]]]))#%*
+                                       :]#}}###}[[[[[][[)]#[:
+                                        *#}}#}}}}}}}[[[}[}#[:
+          (__)                          *###}##}}}}}}}}}}#%):
+          (oo)                          :[}}}}<]][[[}###}##+
+   /-------\/                            :}}}}>    :)###}}#]-
+  / |     ||                              +}}}>      +}%#}#%>
+  * ||----||                              >}}[:        -=]}#<
+    ||    ||                             -####*          )}]<:
+                                        +#%%%}           -[]]>
+                                        :-*+-:           -][])
+                                                         =[]))+
+                                                         =}##}):
+"@
+	Write-Host "  $X[38;2;255;165;0;22m$CowLogo$X[0m"
+	$Script:CowKingActivated = $True
+	([int]$CurrentStats.CowKingKilled) ++
+	SetQualityRolls
+	start-sleep -milliseconds 4550
+	try {
+		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv with Total Time played and cow stats.
+	}
+	Catch {
+		Write-host "  Couldn't update stats.csv" -foregroundcolor yellow
+	}
+}
 function HighRune {
 	process { Write-Host "  $X[38;2;255;165;000;48;2;1;1;1;4m$_$X[0m"}
 }
@@ -1229,7 +1306,6 @@ function Magic {#ANSI text colour formatting for "magic" quotes. The variable $X
 function Normal {
     process { Write-Host "  $X[38;2;255;255;255;48;2;1;1;1;4m$_$X[0m"}
 }
-
 function QuoteRoll {#stupid thing to draw a random quote but also draw a random quality.
 	$Quality = get-random $Script:ItemLookup #pick a random entry from ItemLookup hashtable.
 	Write-Host
@@ -1239,6 +1315,9 @@ function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 	$ChunkSize = $ConsoleWidth - $DesiredIndent
 	[RegEx]::Matches($LeQuote, ".{$ChunkSize}|.+").Groups.Value | ForEach-Object {
 		write-output $_ | &$Quality #write the quote and write it in the quality colour
+	}
+	if ($LeQuote -match "Moo" -and $Quality -eq "Unique") {
+		CowKingKilled
 	}
 	$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"
 	if ($Quality -eq "HighRune"){([int]$CurrentStats.HighRunesFound) ++}
@@ -1255,7 +1334,6 @@ function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 		Start-Sleep -Milliseconds 256
 	}
 }
-
 Function Inventory {#Info screen
 	Clear-Host
 	Write-Host
@@ -1326,7 +1404,7 @@ Function Inventory {#Info screen
 	write-host "  $X[4mScript Install Path:$X[0m " -nonewline
 	write-host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.
 	write-host "  $X[4mYour Script Version:$X[0m v$CurrentVersion"
-	write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion"
+	write-host "  $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion$X[0m"
 	if ($null -ne $Script:ForceAuthToken){
 		write-host "  $X[4mForceAuthToken:$X[0m $Script:ForceAuthToken"
 	}
@@ -1344,7 +1422,7 @@ Function Inventory {#Info screen
 	if ($Null -ne $Script:LatestVersion -and $Script:LatestVersion -gt $Script:CurrentVersion) {
 		write-host
 		write-host "  $X[4mLatest Script Version:$X[0m v$LatestVersion" -foregroundcolor yellow
-		write-host "  https://github.com/shupershuff/Diablo2RLoader/releases/latest" -foregroundcolor yellow
+		write-host "  $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
 	}
 	write-host
 	if ($Script:NotificationsAvailable -eq $True){
@@ -1381,7 +1459,6 @@ Function Inventory {#Info screen
 		Write-Host
 	}
 }
-
 Function Notifications {
 	param (
 		[bool] $Check
@@ -1670,7 +1747,7 @@ Function BannerLogo {
   %%%%%%%%%%%%%%# &@@&&&&&(*, @@@&.,,,,. %@@&&*.,(%&&&&&&&/%%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%#.&@@&&&&&(*, @@@@,((#&&%#.&@@&&.*#&&@&&&&/#%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%%*&@@@&&&&#*, @@@@,*(#%&&%#,@@@&@,(%&&&&&&(%%%%%%%%%%%%%%%%
-  %%%%%%%%%%%%%%%*&@&&&%&&(,. @@@@,(%%%%%%#/,@@@& *#&&@&&%(%%%%%%%%%%%%%%%%
+  %%%%%$Script:MOO%%%%%%%*&@&&&%&&(,. @@@@,(%%%%%%#/,@@@& *#&&@&&%(%%%%%%%$Script:MOO%%%%%%
   %%%%%%%%%%%%%%%*&&&@&%&&(,. @@@@,%&%%%%%%(.@@@@ /#&&&&&&(%%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%%,&&&&&%%&(*, @@@@,&&&&&&&%//@@@@./%&&&&@&(%%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%(*&&&&&&&%(,, @@@@,%&&&#(/*.@@@@&./%&&&&@&(%%%%%%%%%%%%%%%%
@@ -1682,7 +1759,7 @@ Function BannerLogo {
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 "@
-	if ($Script:PGemActivated -eq $True){
+	if ($Script:PGemActivated -eq $True -or $Script:CowKingActivated -eq $True ){
 		Write-Host "  $X[38;2;255;165;0;22m$BannerLogo$X[0m"
 	}
 	Else {
@@ -2201,7 +2278,6 @@ Function Killhandle {#kudos goes to the info in this post that helped save me fr
 		}
 	}
 }
-
 Function CheckActiveAccounts {#Note: only works for accounts loaded by the script
 	#check if there's any open instances and check the game title window for which account is being used.
 	try {
@@ -2298,7 +2374,6 @@ Function DisplayActiveAccounts {
 		}
 	}
 }
-
 Function Menu {
 	Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
@@ -2372,16 +2447,16 @@ Function Menu {
 				if ($Null -eq $Batch){
 					Write-Host " Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 				}
-				$Script:BatchToOpen = ReadKeyTimeout "" $MenuRefreshRate "c" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
+				$Script:BatchToOpen = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 				Write-Host
 			}
-			if ($Script:BatchToOpen -notin $AcceptableBatchValues + "c"){
+			if ($Script:BatchToOpen -notin $AcceptableBatchValues + "c" + "Esc"){
 				Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
 				Write-Host
 				$Script:BatchToOpen = ""
 			}
-		} until ($Script:BatchToOpen -in $AcceptableBatchValues + "c")
-		if ($BatchToOpen -ne "c"){
+		} until ($Script:BatchToOpen -in $AcceptableBatchValues + "c" + "Esc")
+		if ($BatchToOpen -ne "c" -and $BatchToOpen -ne "Esc"){
 			$Script:BatchedAccountIDsToOpen = New-Object -TypeName System.Collections.ArrayList
 			foreach ($ID in $Script:AccountOptionsCSV){
 				if ($ID.id -in $Script:AcceptableBatchIDs -and $ID.batches.split(',') -contains $Script:BatchToOpen.tostring()){
@@ -2399,7 +2474,7 @@ Function Menu {
 			$Script:RegionOption = ""
 		}
 	}
-	if ($Script:BatchToOpen -ne "c"){#get next region unless the cancel option has been specified.
+	if ($Script:BatchToOpen -ne "c" -and $Script:BatchToOpen -ne "Esc"){#get next region unless the cancel option has been specified.
 		if ($Script:region.length -eq 0){#if no region parameter has been set already.
 			ChooseRegion
 		}
@@ -2434,7 +2509,7 @@ Function Menu {
 		}
 	}
 	Else {
-		if ($Script:OpenBatches -eq $True -and $Script:RegionOption -ne "c"){
+		if ($Script:OpenBatches -eq $True -and $Script:RegionOption -ne "c" -and $Script:RegionOption -ne "Esc"){
 			Write-Host
 			if ($Script:BatchedAccountIDsToOpen.count -ge 2){# a bunch of lines just to make the script cleanly display which accounts are being opened.
 				if ($Script:BatchedAccountIDsToOpen.count -eq 2){
@@ -2467,7 +2542,7 @@ Function Menu {
 			}
 		}
 		Else {
-			if ($Script:BatchToOpen -ne "c"){
+			if ($Script:BatchToOpen -ne "c" -and $Script:BatchToOpen -ne "Esc"){
 				Processing
 			}
 			if ($Script:ParamsUsed -ne $true){
@@ -2520,23 +2595,19 @@ Function ChooseAccount {
 				$CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"
 				if ($Script:GemActivated -ne $True){
 					$GibberingGemstone = get-random -minimum 0 -maximum  4095
-					if ($GibberingGemstone -eq 69){#nice
+					if ($GibberingGemstone -eq 69 -or $GibberingGemstone -eq 420){#nice
 						Write-Host "  Perfect Gem Activated" -ForegroundColor magenta
 						Write-Host
 						Write-Host "     OMG!" -foregroundcolor green
 						$Script:PGemActivated = $True
 						([int]$CurrentStats.PerfectGems) ++
 						SetQualityRolls
-						Start-Sleep -milliseconds 3750
+						Start-Sleep -milliseconds 4567
 					}
 					else {
 						if ($GibberingGemstone -in 16..32){
-							Write-Host "  You Killed the Cow King!" -foregroundcolor green
-							Write-Host "  $X[38;2;165;146;99;22mMoooooooo!$X[0m"
-							$Script:CowKingActivated = $True
-							([int]$CurrentStats.CowKingKilled) ++
-							SetQualityRolls
-							Start-Sleep -milliseconds 850
+							CowKingKilled
+							$SkipCSVExport = $True
 						}
 						else {
 							Write-Host "  Gem Activated" -ForegroundColor magenta
@@ -2545,11 +2616,13 @@ Function ChooseAccount {
 					}
 					$Script:GemActivated = $True
 					SetQualityRolls
-					try {
-						$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv with Total Time played.
-					}
-					Catch {
-						Write-host "  Couldn't update stats.csv" -foregroundcolor yellow
+					if ($SkipCSVExport -ne $True){
+						try {
+							$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv with Total Time played.
+						}
+						Catch {
+							Write-host "  Couldn't update stats.csv" -foregroundcolor yellow
+						}
 					}
 				}
 				Else {
@@ -2726,10 +2799,10 @@ Function ChooseAccount {
 				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, '$X[38;2;255;165;000;22mt$X[0m' for TZ info, '$X[38;2;255;165;000;22md$X[0m' for DClone status, '$X[38;2;255;165;000;22mj$X[0m' for jokes,"
 				Write-Host "  $ManualSettingSwitcherMenuText'$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
 				if ($Script:TwoDigitIDsUsed -eq $True){
-					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -AdditionalAllowedKeys 27 -TwoDigitAcctSelection $True #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -TwoDigitAcctSelection $True #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
 				}
 				else {
-					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -AdditionalAllowedKeys 27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
+					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
 				}
 				if ($Script:AccountID -notin ($Script:AcceptableValues + "x" + "r" + "t" + "d" + "g" + "j" + "i" + $ManualSettingSwitcherOption + $AllOption + $BatchOption) -and $Null -ne $Script:AccountID){
 					if ($Script:AccountID -eq "a" -and $Script:Config.DisableOpenAllAccountsOption -ne $true){
@@ -2781,14 +2854,14 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 		do {
 			Write-Host " Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
 			Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + "): ") -nonewline
-			$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
+			$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13,27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 			if ("" -eq $Script:RegionOption){
 				$Script:RegionOption = $Config.DefaultRegion #default to NA
 			}
 			else {
 				$Script:RegionOption = $Script:RegionOption.tostring()
 			}
-			if ($Script:RegionOption -notin $Script:ServerOptions.option + "c"){
+			if ($Script:RegionOption -notin $Script:ServerOptions.option + "c" + "Esc"){
 				Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
 				write-Host
 				$Script:RegionOption = ""
@@ -2803,7 +2876,7 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 }
 
 Function Processing {
-	if ($Script:RegionOption -ne "c"){
+	if ($Script:RegionOption -ne "c" -and $Script:RegionOption -ne "Esc"){
 		if (($Script:PW -eq "" -or $Null -eq $Script:PW) -and $Script:PWmanualset -eq 0){
 			$Script:PW = $Script:AccountChoice.PW.tostring()
 		}
@@ -2851,11 +2924,9 @@ Function Processing {
 			# Convert the token and entropy to byte arrays
 			$TokenBytes = [System.Text.Encoding]::UTF8.GetBytes($Token)
 			$EntropyBytes = [byte[]] $Entropy
-
 			# Encrypt the token
 			[void][System.Reflection.Assembly]::LoadWithPartialName("System.Security")
 			$ProtectedData = [System.Security.Cryptography.ProtectedData]::Protect($TokenBytes, $EntropyBytes, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-
 			$Path = "HKCU:\SOFTWARE\Blizzard Entertainment\Battle.net\Launch Options\OSI"
 			Set-ItemProperty -Path $Path -Name "REGION" -Value $Script:Region.Substring(0, 2).ToUpper()
 			Set-ItemProperty -Path $Path -Name "WEB_TOKEN" -Value $ProtectedData -Type Binary
@@ -3012,15 +3083,15 @@ Function Processing {
 						Write-Host "  Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 						$SettingsCancelOption = "c"
 					}
-					$SettingsChoice = ReadKeyTimeout "" $MenuRefreshRate "c" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
+					$SettingsChoice = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 					if ($SettingsChoice -eq ""){$SettingsChoice = 1}
 					Write-Host
-					if ($SettingsChoice.tostring() -notin $SettingsFileOptions.id + $SettingsCancelOption){
+					if ($SettingsChoice.tostring() -notin $SettingsFileOptions.id + $SettingsCancelOption + "Esc"){
 						Write-Host "  Invalid Input. Please enter one of the options above." -foregroundcolor red
 						$SettingsChoice = ""
 					}
-				} until ($SettingsChoice.tostring() -in $SettingsFileOptions.id + $SettingsCancelOption)
-				if ($SettingsChoice -ne "c"){
+				} until ($SettingsChoice.tostring() -in $SettingsFileOptions.id + $SettingsCancelOption + "Esc")
+				if ($SettingsChoice -ne "c" -and $SettingsChoice -ne "Esc"){
 					$SettingsToLoadFrom = $SettingsFileOptions | where-object {$_.id -eq $SettingsChoice.tostring()}
 					try {
 						Copy-item ($SettingsProfilePath + $SettingsToLoadFrom.FileName) -Destination $SettingsJSON #-ErrorAction Stop #overwrite settings.json with settings<Name>.json (<Name> being the name of the config user selects). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
@@ -3043,7 +3114,7 @@ Function Processing {
 				PressTheAnyKey
 			}
 		}
-		if ($SettingsChoice -ne "c"){
+		if ($SettingsChoice -ne "c" -and $SettingsChoice -ne "Esc"){
 			#Start Game
 			killhandle | out-null
 			$process = Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments" -PassThru
