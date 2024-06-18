@@ -325,6 +325,9 @@ That said, it is possible to connect if you utilise the Auth Token method instea
 **Q:** Will you implement a feature to skip intro videos when launching?<br>
 **A:** Could I? Yes. Will I? No as this requires modifying game files (video files really). Whilst the script can cater for mods you want to use, I don't want this script directly modifying any game files, even something as innocent as intro videos. If skipping intro is of interest to you, you can look at the [introskip mod](https://www.nexusmods.com/diablo2resurrected/mods/194).
 
+**Q:** I'm getting an error says "You have not been online in the last 30 days. Please start the game while online to check for any login agreements".
+**A:** As the error suggests, try logging in from the battle.net client. If issues persist, use Google as there are dozens of threads where people have had this issue due to other reasons (eg firewall).
+
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
 
