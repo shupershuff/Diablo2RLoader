@@ -1,10 +1,11 @@
-name: Update Download Count
+name: Update Download Count on Release
 
 on:
   #schedule:
   #  - cron: '0 * * * *'  # Runs every Day
   workflow_dispatch:  # Allows manual triggering
-  types: [published] # when a new release is made
+  release:
+    types: [published] # when a new release is made
   
 jobs:
   update:
