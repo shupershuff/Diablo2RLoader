@@ -50,4 +50,4 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git add download-count.json
           git commit -m 'Update download count'
-          git push https://$TOKEN@github.com/shupershuff/diablo2rloader.git HEAD:main
+          git push https://$TOKEN@github.com/shupershuff/Diablo2RLoader.git HEAD:main
