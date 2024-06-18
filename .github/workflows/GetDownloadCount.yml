@@ -13,31 +13,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch Release Data
-        id: fetch_release
+      - name: Fetch Download Count
+        id: fetch_downloads
         run: |
-          release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest | jq -c '.')
-          echo "release_data=$release_data" >> $GITHUB_OUTPUT
-
-      - name: Calculate Download Count
-        id: calculate_downloads
-        run: |
-          release_data="${{ steps.fetch_release.outputs.release_data }}"
+          release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest)
           download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
+          echo "$download_count"
           echo "download_count=$download_count" >> $GITHUB_OUTPUT
 
-          # Check if download_count is empty or null
-          if [ "$download_count" == "null" ] || [ -z "$download_count" ]; then
-            echo "No download count found, setting to 0"
-            download_count=0
-          fi
-          echo "download_count=$download_count" >> $GITHUB_OUTPUT
       - name: Update JSON File
         run: |
           echo '{
             "schemaVersion": 1,
             "label": "downloads",
-            "message": "'${{ steps.calculate_downloads.outputs.download_count }}'",
+            "message": "'${{ steps.fetch_downloads.outputs.download_count }}'",
             "color": "blue"
           }' > .github/download-count.json
 
