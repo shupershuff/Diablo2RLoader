@@ -1,10 +1,11 @@
 name: Update Download Count
 
 on:
-  schedule:
-    - cron: '0 * * * *'  # Runs every Day
+  #schedule:
+  #  - cron: '0 * * * *'  # Runs every Day
   workflow_dispatch:  # Allows manual triggering
-
+  types: [published] # when a new release is made
+  
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -16,7 +17,9 @@ jobs:
       - name: Fetch Download Count
         id: fetch_downloads
         run: |
-          release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest)
+          #release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest) # Latest Release
+          releases=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases) 
+          release_data=$(echo "$releases" | jq '.[1]')  # Select the second release # Get Previous release details
           download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
           echo "$download_count"
           echo "download_count=$download_count" >> $GITHUB_OUTPUT
@@ -28,7 +31,7 @@ jobs:
             "label": "Downloads",
             "message": "'${{ steps.fetch_downloads.outputs.download_count }}'",
             "color": "blue"
-          }' > .github/download-count.json
+          }' > .github/previous-release-download-count.json
 
       - name: Commit and Push Changes
         env:
@@ -36,6 +39,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add .github/download-count.json
+          git add .github/previous-release-download-count.json
           git commit -m 'Update download count'
           git push https://$TOKEN@github.com/shupershuff/Diablo2RLoader.git HEAD:main
