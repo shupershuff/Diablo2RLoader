@@ -2,11 +2,9 @@ name: Update Download Count
 
 on:
   schedule:
-    #- cron: '0 0 * * *'  # Runs daily at midnight
     - cron: '0 * * * *'  # Runs every hour
   workflow_dispatch:  # Allows manual triggering
-permissions:
-  contents: write
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -20,21 +18,19 @@ jobs:
         run: |
           release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest)
           echo "Fetched release data: $release_data"
-          #echo "release_data=${release_data}" >> $GITHUB_OUTPUT
-  
+          echo "::set-output name=release_data::$release_data"
+
       - name: Calculate Download Count
         id: calculate_downloads
         run: |
-          echo "Release data JSON: ${{ steps.fetch_release.outputs.release_data }}"
-          download_count=$('${{ steps.fetch_release.outputs.release_data }}' | jq '[.assets[].download_count] | add')
-          echo "Download count: $download_count"
+          release_data="${{ steps.fetch_release.outputs.release_data }}"
           download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
+          echo "Download count: $download_count"
           if [ -z "$download_count" ]; then
-            #echo "No download count found, setting to 0"
+            echo "No download count found, setting to 0"
             download_count=0
           fi
-          echo "Download count: $download_count"
-          echo "download_count=$download_count" >> $GITHUB_OUTPUT
+          echo "::set-output name=download_count::$download_count"
 
       - name: Update JSON File
         run: |
@@ -44,7 +40,7 @@ jobs:
             "message": "'${{ steps.calculate_downloads.outputs.download_count }}'",
             "color": "blue"
           }' > .github/download-count.json
-          
+
       - name: Commit and Push Changes
         env:
           TOKEN: ${{ secrets.ACTIONS_PUSH_TOKEN }}
