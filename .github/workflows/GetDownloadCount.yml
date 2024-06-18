@@ -17,7 +17,8 @@ jobs:
         id: fetch_release
         run: |
           release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest)
-          echo "Fetched release data: $release_data"
+          echo "Fetched release data:"
+          echo "$release_data"
           echo "::set-output name=release_data::$release_data"
 
       - name: Calculate Download Count
@@ -25,18 +26,12 @@ jobs:
         run: |
           release_data="${{ steps.fetch_release.outputs.release_data }}"
           
-          # Check if release_data is valid JSON
-          if ! jq -e . >/dev/null 2>&1 <<<"$release_data"; then
-            echo "Invalid JSON data retrieved"
-            exit 1
-          fi
-          
-          # Use jq to sum the download counts of all assets
-          download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
+          # Use jq to extract download_count from assets array
+          download_count=$(echo "$release_data" | jq '.assets[0].download_count')
           echo "Download count: $download_count"
           
-          # Set download_count to 0 if it's empty
-          if [ -z "$download_count" ]; then
+          # Check if download_count is empty or null
+          if [ "$download_count" == "null" ] || [ -z "$download_count" ]; then
             echo "No download count found, setting to 0"
             download_count=0
           fi
