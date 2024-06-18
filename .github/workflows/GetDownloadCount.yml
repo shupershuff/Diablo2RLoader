@@ -39,7 +39,7 @@ jobs:
           echo '{
             "schemaVersion": 1,
             "label": "downloads",
-            "message": "$download_count",
+            "message": "'"$download_count"'",
             "color": "blue"
           }' > .github/download-count.json
           
