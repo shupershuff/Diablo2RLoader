@@ -41,7 +41,7 @@ jobs:
             "label": "downloads",
             "message": "$download_count",
             "color": "blue"
-          }' > download-count.json
+          }' > /.github/download-count.json
           
       - name: Commit and Push Changes
         env:
