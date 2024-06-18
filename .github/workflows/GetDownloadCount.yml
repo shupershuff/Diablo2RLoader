@@ -25,7 +25,7 @@ jobs:
         run: |
           echo '{
             "schemaVersion": 1,
-            "label": "downloads",
+            "label": "Downloads",
             "message": "'${{ steps.fetch_downloads.outputs.download_count }}'",
             "color": "blue"
           }' > .github/download-count.json
