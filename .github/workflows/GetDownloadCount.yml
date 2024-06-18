@@ -41,7 +41,7 @@ jobs:
             "label": "downloads",
             "message": "$download_count",
             "color": "blue"
-          }' > /.github/download-count.json
+          }' > .github/download-count.json
           
       - name: Commit and Push Changes
         env:
@@ -49,6 +49,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add /.github/download-count.json
+          git add .github/download-count.json
           git commit -m 'Update download count'
           git push https://$TOKEN@github.com/shupershuff/Diablo2RLoader.git HEAD:main
