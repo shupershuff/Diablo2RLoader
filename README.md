@@ -390,8 +390,9 @@ Happy for you to make any modifications this script for your own needs providing
 Proudly made in NZ<br>
 ![nzmade](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/39e332b8-71cb-4149-8afd-2fcfdac14abf)
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/746968fa-6be2-4846-bc62-850717d84daa)<br>
-
-[![Github All Releases](https://img.shields.io/github/downloads/shupershuff/Diablo2RLoader/total.svg)]()
-
+<br>
+Latest Version Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/shupershuff/diablo2rloader/latest/total?label=Downloads&link=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader%2Freleases%2Flatest)<br>
+Previous Version Downloads:&nbsp;&nbsp;![Downloads](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/shupershuff/Diablo2RLoader/main/.github/previous-release-download-count.json?Label=Downloads)<br>
+All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [![Github All Releases](https://img.shields.io/github/downloads/shupershuff/Diablo2RLoader/total.svg?label=Downloads)]()<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
