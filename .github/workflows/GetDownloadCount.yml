@@ -41,5 +41,5 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add .github/previous-release-download-count.json
-          git commit -m 'Update download count'
-          git push https://$TOKEN@github.com/shupershuff/Diablo2RLoader.git HEAD:main
+          git diff --cached --exit-code || git commit -m 'Update download count' || echo "No changes to commit"
+          git push https://$TOKEN@github.com/shupershuff/Diablo2RLoader.git HEAD:main || echo "No changes to push"
