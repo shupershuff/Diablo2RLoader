@@ -1,0 +1,42 @@
+name: Update Download Count
+
+on:
+  schedule:
+    #- cron: '0 0 * * *'  # Runs daily at midnight
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Fetch Release Data
+        id: fetch_release
+        run: |
+          release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest)
+          echo "::set-output name=release_data::${release_data}"
+
+      - name: Calculate Download Count
+        id: calculate_downloads
+        run: |
+          download_count=$(echo "${{ steps.fetch_release.outputs.release_data }}" | jq '[.assets[].download_count] | add')
+          echo "::set-output name=download_count::${download_count}"
+
+      - name: Update JSON File
+        run: |
+          echo '{
+            "schemaVersion": 1,
+            "label": "downloads",
+            "message": "'${{ steps.calculate_downloads.outputs.download_count }}'",
+            "color": "blue"
+          }' > download-count.json
+          
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add download-count.json
+          git commit -m 'Update download count'
+          git push
