@@ -22,7 +22,8 @@ jobs:
       - name: Calculate Download Count
         id: calculate_downloads
         run: |
-          download_count=$(echo "${{ steps.fetch_release.outputs.release_data }}" | jq '[.assets[].download_count] | add')
+          release_data="${{ steps.fetch_release.outputs.release_data }}"
+          download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
           echo "download_count=$download_count" >> $GITHUB_OUTPUT
 
           # Check if download_count is empty or null
@@ -30,8 +31,6 @@ jobs:
             echo "No download count found, setting to 0"
             download_count=0
           fi
-          
-          #echo "::set-output name=download_count::$download_count"
           echo "download_count=$download_count" >> $GITHUB_OUTPUT
       - name: Update JSON File
         run: |
