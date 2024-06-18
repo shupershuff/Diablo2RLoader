@@ -2,7 +2,7 @@ name: Update Download Count
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Runs every hour
+    - cron: '0 * * * *'  # Runs every Day
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
