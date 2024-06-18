@@ -1,8 +1,9 @@
 name: Update Download Count on Release
 
 on:
-  #schedule:
+  schedule:
   #  - cron: '0 * * * *'  # Runs every Day
+    - cron: '0 0 * * 0'  # Runs once a week at midnight.
   workflow_dispatch:  # Allows manual triggering
   release:
     types: [published] # when a new release is made
