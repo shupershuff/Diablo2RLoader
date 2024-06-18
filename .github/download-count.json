@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
   "label": "downloads",
-  "message": "$download_count",
+  "message": "",
   "color": "blue"
 }
