@@ -5,7 +5,8 @@ on:
     #- cron: '0 0 * * *'  # Runs daily at midnight
     - cron: '0 * * * *'  # Runs every hour
   workflow_dispatch:  # Allows manual triggering
-
+permissions:
+  contents: write
 jobs:
   update:
     runs-on: ubuntu-latest
