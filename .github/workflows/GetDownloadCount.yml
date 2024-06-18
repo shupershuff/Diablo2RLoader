@@ -24,12 +24,23 @@ jobs:
         id: calculate_downloads
         run: |
           release_data="${{ steps.fetch_release.outputs.release_data }}"
+          
+          # Check if release_data is valid JSON
+          if ! jq -e . >/dev/null 2>&1 <<<"$release_data"; then
+            echo "Invalid JSON data retrieved"
+            exit 1
+          fi
+          
+          # Use jq to sum the download counts of all assets
           download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
           echo "Download count: $download_count"
+          
+          # Set download_count to 0 if it's empty
           if [ -z "$download_count" ]; then
             echo "No download count found, setting to 0"
             download_count=0
           fi
+          
           echo "::set-output name=download_count::$download_count"
 
       - name: Update JSON File
