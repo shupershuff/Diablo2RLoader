@@ -23,7 +23,6 @@ jobs:
         id: calculate_downloads
         run: |
           release_data="${{ steps.fetch_release.outputs.release_data }}"
-          echo "Fetched release data: $release_data"
           # Use jq to extract download_count from assets array
           download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
           echo "download_count=$download_count" >> $GITHUB_OUTPUT
