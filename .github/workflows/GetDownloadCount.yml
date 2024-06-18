@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Fetch Release Data
         id: fetch_release
@@ -31,7 +31,6 @@ jobs:
             download_count=0
           fi
           echo "Download count: $download_count"
-          echo "::set-output name=download_count::${download_count}"
           echo "download_count=$download_count" >> $GITHUB_OUTPUT
 
       - name: Update JSON File
@@ -43,8 +42,12 @@ jobs:
             "color": "blue"
           }' > download-count.json
           
+      - name: Commit and Push Changes
+        env:
+          TOKEN: ${{ secrets.ACTIONS_PUSH_TOKEN }}
+        run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add download-count.json
           git commit -m 'Update download count'
-          git push
+          git push https://$TOKEN@github.com/shupershuff/diablo2rloader.git HEAD:main
