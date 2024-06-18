@@ -18,12 +18,19 @@ jobs:
         id: fetch_release
         run: |
           release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest)
+          echo "Fetched release data: $release_data"
           echo "::set-output name=release_data::${release_data}"
 
       - name: Calculate Download Count
         id: calculate_downloads
         run: |
-          download_count=$(echo "${{ steps.fetch_release.outputs.release_data }}" | jq '[.assets[].download_count] | add')
+          echo "Release data JSON: ${{ steps.fetch_release.outputs.release_data }}"
+          download_count=$(echo '${{ steps.fetch_release.outputs.release_data }}' | jq '[.assets[].download_count] | add')
+          if [ -z "$download_count" ]; then
+            #echo "No download count found, setting to 0"
+            download_count=0
+          fi
+          echo "Download count: $download_count"
           echo "::set-output name=download_count::${download_count}"
 
       - name: Update JSON File
