@@ -20,7 +20,7 @@ jobs:
         run: |
           release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest)
           echo "Fetched release data: $release_data"
-          echo "release_data=${release_data}" >> $GITHUB_OUTPUT
+          #echo "release_data=${release_data}" >> $GITHUB_OUTPUT
   
       - name: Calculate Download Count
         id: calculate_downloads
