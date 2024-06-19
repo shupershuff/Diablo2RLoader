@@ -1,5 +1,5 @@
 {
-    "Notification":  "D2r is discounted on the Blizzard store right now. Looks like sale ends on 2nd July.",
+    "Notification":  "D2r is discounted on the Blizzard store right now. Looks like the sale ends on 2nd July.",
     "PublishDate":  "2024.06.19 14:00:00",
     "ExpiryDate":  "2024.07.02 10:00:00"
 }
