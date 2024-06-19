@@ -55,7 +55,7 @@
 	Specify as many of the following options as you like: SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR
 	EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>
 	If left blank this feature is disabled. Default is blank as this may be annoying for some people-->
-	<DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>
+	<DCloneAlarmList></DCloneAlarmList>
 
 	<!--Specify what Statuses you want to be alarmed on.
 	Enter "All" to be alarmed of all status changes
