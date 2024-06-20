@@ -141,7 +141,7 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 
 ## 2. Setup Your Accounts
 **NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**
-1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
+1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor. Can recommend [moderncsv](https://www.moderncsv.com/) as a csv editor.
 2. Add number for each account starting from 1.
 	- Note, if you want you, can also use letters as an ID but take note that characters a, b, c, g, r, t, d, j, s, i and x are all reserved.
 3. Add your battlenet account sign in address (eg bogan@askjeeves.com).
