@@ -131,7 +131,7 @@ TL;DR steps are:
 5. Optionally perform steps to configure game settings that each account should load from. See [5. Auto Settings Switcher](#5-auto-settings-switcher-optional-but-recommended) and [6. Manual Settings Switcher](#6-manual-settings-switcher-optional).
 6. Optionally enable DClone alarms for your preferred regions and game mode. See [7. DClone Status Alarms](#7-dclone-status-alarms-optional).
 
-If you have any issues I can almost guarantee it's covered in the detailed setup steps below or FAQ section.
+&#x1F536;If you have any issues, come back and read these instructions properly. I can almost guarantee it's covered in the detailed setup steps below and/or FAQ section.&#x1F536;
 
 ## 1. Download
 1. Download the latest [release](https://github.com/shupershuff/Diablo2RLoader/releases) this and extract the zip file to a folder of your choosing.
@@ -140,7 +140,8 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
 ## 2. Setup Your Accounts
-**NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**
+**NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**<br>
+&#x1F536;&#x1F536; **Special Note - READ THIS PLEASE** &#x1F536;&#x1F536; Please pay attention to these instructions and particularly to step 8 around auth token setup. Almost all setup issues are due to missing or incorrectly performing one or more of these steps.  
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor. Can recommend [moderncsv](https://www.moderncsv.com/) as a csv editor.
 2. Add number for each account starting from 1.
 	- Note, if you want you, can also use letters as an ID but take note that characters a, b, c, g, r, t, d, j, s, i and x are all reserved.
@@ -153,15 +154,17 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
  	- Don't forget to enable the Batch feature in the config file.
 7. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
-8. [OPTIONAL] If you want to be able to use Token based authentication (eg if you have MFA enabled on your account, one of Blizzards Auth servers are down and you can't connect or if you get errors about account being "locked for suspicious activity" on certain regions), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
-	a. Log in with your credentials and approve MFA request (if enabled).<br>
-	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
+8. [OPTIONAL BUT RECOMMENDED] If you want or need to use Token based authentication (eg if you have MFA enabled on your account / Blizzards Auth servers are down / You get errors about account being "locked for suspicious activity" on certain regions), you will need to populate the 'Token' column.<br>
+&#x1F536;&#x1F536; **Special Note - READ THIS PLEASE** &#x1F536;&#x1F536;Due to some kind of Blizzard issue, it's becoming more common for username and password authentication (via Parameters) to not work for *some* accounts. There is no apparent pattern or reason for this. Whilst launching with Parameters offers the best experience, if you have issues you should try using the Auth Token method instead for any impacted accounts.<br>
+	a. Open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI<br>
+	b. Log in with your credentials and approve MFA request (if enabled).<br>
+	c. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
 		![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/dfde17f7-a068-4060-9304-f92bee4bd067)<br>
-	c. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues. Generally speaking you will have the best experience launching with parameters. You can toggle the script to temporarily use auth tokens instead of parameters from the info menu.<br>
-	d. Close the browser, reopen in private mode, log into each of your other accounts and repeat the steps A to C above.<br>
-	e. The token will be converted to an encrypted string when script is next run.<br>
-	f. You will need to redo this step if you add/remove MFA to your account.<br>
+	d. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues. Generally speaking you will have the best experience launching with parameters. You can toggle the script to temporarily use auth tokens instead of parameters from the info menu.<br>
+	e. Close the browser, reopen in private mode, log into each of your other accounts and repeat the steps A to C above.<br>
+	f. The token will be converted to an encrypted string when script is next run.<br>
+	g. You will need to redo this step if you add/remove MFA to your account.<br>
 
 Make sure to save it and close the file :)
 
