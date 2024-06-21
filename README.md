@@ -131,7 +131,7 @@ TL;DR steps are:
 5. Optionally perform steps to configure game settings that each account should load from. See [5. Auto Settings Switcher](#5-auto-settings-switcher-optional-but-recommended) and [6. Manual Settings Switcher](#6-manual-settings-switcher-optional).
 6. Optionally enable DClone alarms for your preferred regions and game mode. See [7. DClone Status Alarms](#7-dclone-status-alarms-optional).
 
-&#x1F536;If you have any issues, come back and read these instructions properly. I can almost guarantee it's covered in the detailed setup steps below and/or FAQ section.&#x1F536;
+&#x1F534; If you have any issues, come back and fully read these instructions. I can almost guarantee any issue you see is covered in the detailed setup steps below and/or FAQ section.
 
 ## 1. Download
 1. Download the latest [release](https://github.com/shupershuff/Diablo2RLoader/releases) this and extract the zip file to a folder of your choosing.
@@ -141,7 +141,7 @@ TL;DR steps are:
 
 ## 2. Setup Your Accounts
 **NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**<br>
-&#x1F536;&#x1F536; **Special Note - READ THIS PLEASE** &#x1F536;&#x1F536; Please pay attention to these instructions and particularly to step 8 around auth token setup. Almost all setup issues are due to missing or incorrectly performing one or more of these steps.  
+&#x1F536;&#x1F536; **Special Note - PLEASE READ THIS** &#x1F536;&#x1F536; Please pay attention to these instructions and particularly to step 8 around auth token setup. Almost all setup issues are due to missing or incorrectly performing one or more of these steps.  
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor. Can recommend [moderncsv](https://www.moderncsv.com/) as a csv editor.
 2. Add number for each account starting from 1.
 	- Note, if you want you, can also use letters as an ID but take note that characters a, b, c, g, r, t, d, j, s, i and x are all reserved.
@@ -155,7 +155,7 @@ TL;DR steps are:
 7. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
 8. [OPTIONAL BUT RECOMMENDED] If you want or need to use Token based authentication (eg if you have MFA enabled on your account / Blizzards Auth servers are down / You get errors about account being "locked for suspicious activity" on certain regions), you will need to populate the 'Token' column.<br>
-&#x1F536;&#x1F536; **Special Note - READ THIS PLEASE** &#x1F536;&#x1F536;Due to some kind of Blizzard issue, it's becoming more common for username and password authentication (via Parameters) to not work for *some* accounts. There is no apparent pattern or reason for this. Whilst launching with Parameters offers the best experience, if you have issues you should try using the Auth Token method instead for any impacted accounts.<br>
+&#x1F536;&#x1F536; **Special Note - PLEASE READ THIS** &#x1F536;&#x1F536;Due to some kind of Blizzard issue, it's becoming more common for username and password authentication (via Parameters) to not work for *some* accounts. There is no apparent pattern or reason for this. Whilst launching with Parameters offers the best experience, if you have issues you should try using the Auth Token method instead for any impacted accounts.<br>
 	a. Open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI<br>
 	b. Log in with your credentials and approve MFA request (if enabled).<br>
 	c. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
