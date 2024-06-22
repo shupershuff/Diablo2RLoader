@@ -122,7 +122,9 @@ There are ways to improve your script MaGic Find...
 
 # Setup Steps
 Please see the detailed setup steps below, it's not as scary as it looks. I've included details for all of the features you may or may not want to use.
-A basic setup only takes 2 or 3 minutes.
+A basic setup only takes 3-5 minutes.<br>
+For those allergic to reading, have a gander at [this youtube video tutorial here](https://www.youtube.com/watch?v=JYMs-soQr_c) that a great bloke made. I promise it's not a rick roll video :)<br>
+
 TL;DR steps are:
 1. Download the latest release, extract and unblock it within file properties. See [1. Download](#1-download).
 2. Add account info to accounts.csv. See [2. Setup Your Accounts](#2-setup-your-accounts).
