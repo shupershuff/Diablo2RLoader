@@ -2328,7 +2328,7 @@ Function DisplayActiveAccounts {
 		Write-Host "  ID   Account Label"
 	}
 	$Pattern = "(?<=- [^\(]+ \()([a-z]+)" #Regex pattern to pull the region characters out of the window title.
-	foreach ($AccountOption in ($Script:AccountOptionsCSV | Sort-Object -Property @{Expression = {[int]$_.ID}} )){
+	foreach ($AccountOption in ($Script:AccountOptionsCSV | Sort-Object -Property @{Expression = {$_.ID}} )){
 		$RegionDisplayPostIndent = ""
 		$RegionDisplayPreIndent = ""
 		if ($AccountOption.ID.length -ge 2){#keep table formatting looking lovely if some crazy user has 10+ accounts.
