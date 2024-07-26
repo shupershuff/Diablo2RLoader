@@ -2259,23 +2259,14 @@ Function TerrorZone {
 		PressTheAnyKey
 	}
 }
-Function Killhandle {#kudos goes to the info in this post that helped save me from figuring it out myself: https://forums.d2jsp.org/topic.php?t=90563264&f=87
-	& "$PSScriptRoot\handle\handle64.exe" -accepteula -a -p D2R.exe > $PSScriptRoot\d2r_handles.txt
-	$proc_id_populated = ""
-	$handle_id_populated = ""
-	foreach($Line in Get-Content $PSScriptRoot\d2r_handles.txt) {
-		$proc_id = $Line | Select-String -Pattern '^D2R.exe pid\: (?<g1>.+) ' | ForEach-Object{$_.Matches.Groups[1].value}
-		if ($proc_id){
-			$proc_id_populated = $proc_id
-		}
-		$script:handle_id = $Line | Select-String -Pattern '^(?<g2>.+): Event.*DiabloII Check For Other Instances' | ForEach-Object{$_.Matches.Groups[1].value}
-		if ($handle_id){
-			$handle_id_populated = $handle_id
-		}
-		if ($handle_id){
-			Write-Verbose "Closing $proc_id_populated $handle_id_populated"
-			& "$PSScriptRoot\handle\handle64.exe" -p $proc_id_populated -c $handle_id_populated -y
-		}
+Function Killhandle {
+	$handle64 = "$PSScriptRoot\handle\handle64.exe"
+	$handle = & $handle64 -accepteula -a -p D2R.exe "Check For Other Instances" -nobanner | Out-String
+	if ($handle -match "pid:\s+(?<d2pid>\d+)\s+type:\s+Event\s+(?<eventHandle>\w+):") {
+		$d2pid = $matches["d2pid"]
+		$eventHandle = $matches["eventHandle"]
+		Write-Verbose "Closing handle: $eventHandle on pid: $d2pid"
+		& $handle64 -c $eventHandle -p $d2pid -y -nobanner
 	}
 }
 Function CheckActiveAccounts {#Note: only works for accounts loaded by the script
