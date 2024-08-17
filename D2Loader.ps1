@@ -39,9 +39,7 @@ Fixed display issues for users with lots of accounts.
 Error handling improvements.
 Other minor tidy ups.
 
-TO DO config removal not working. Writes not happening.
 TO DO Check if web request to count.txt actually works
-
 
 1.12.0+ to do list
 SinglePlayer autobackup
@@ -54,7 +52,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.12.5"
+$CurrentVersion = "1.12.6"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -1566,21 +1564,10 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool GetWindowRect(
 				IntPtr hWnd, out RECT lpRect);
-
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public extern static bool MoveWindow(
 				IntPtr handle, int x, int y, int width, int height, bool redraw);
-				
-			[DllImport("user32.dll")]
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public extern static bool ResizeWindow(
-				IntPtr handle, int x, int y, bool redraw);
-
-			[DllImport("user32.dll")]
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool ShowWindow(
-				IntPtr handle, int state);
 		}
 		public struct RECT
 		{
@@ -1597,13 +1584,19 @@ Function SaveWindowLocations {# Get Window Location coordinates and save to Acco
 	FormatFunction -indents 2 -text "Saving locations of each open account so that they the windows launch in the same place next time. Assumes you've configured the game to launch in windowed mode." 
 	CheckActiveAccounts
 	#If Feature is enabled, add 'WindowXCoordinates' and 'WindowYCoordinates' columns to accounts.csv with empty values.
-	if (-not ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowYCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.10.0. If token columns don't exist, add them. As of 1.12.0 onwards, TokenSecureString is no longer used.
+	if (-not ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowYCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowWidth" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowHeight" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 		# Column does not exist, so add it to the CSV data
 		if (-not ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 			$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "WindowXCoordinates" -NotePropertyValue $Null}
 		}
 		if (-not ($Script:AccountOptionsCSV | Get-Member -Name "WindowYCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
 			$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "WindowYCoordinates" -NotePropertyValue $Null}
+		}
+		if (-not ($Script:AccountOptionsCSV | Get-Member -Name "WindowHeight" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
+			$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "WindowHeight" -NotePropertyValue $Null}
+		}
+		if (-not ($Script:AccountOptionsCSV | Get-Member -Name "WindowWidth" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
+			$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "WindowWidth" -NotePropertyValue $Null}
 		}
 		# Export the updated CSV data back to the file
 		$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
@@ -1622,12 +1615,14 @@ Function SaveWindowLocations {# Get Window Location coordinates and save to Acco
 			[Window]::GetWindowRect($handle, [ref]$rectangle) | Out-Null
 			Write-Host
 			FormatFunction -indents 2 -text "Saved Coordinates for account $($account.id) ($($account.AccountLabel))" -IsSuccess
-			Write-Host "    X Position = $($rectangle.Left)" -Foregroundcolor Green
-			Write-Host "    Y Position = $($rectangle.Top)" -Foregroundcolor Green
-			write-verbose "Width is $($rectangle.Right - $rectangle.Left)"
-			write-verbose "Height is $($rectangle.Bottom - $rectangle.Top)"
+			Write-Host "     X Position = $($rectangle.Left)" -Foregroundcolor Green
+			Write-Host "     Y Position = $($rectangle.Top)" -Foregroundcolor Green
+			write-Host "     Width = $($rectangle.Right - $rectangle.Left)" -Foregroundcolor Green
+			write-Host "     Height = $($rectangle.Bottom - $rectangle.Top)" -Foregroundcolor Green
 			$Account.WindowXCoordinates = $rectangle.Left
 			$Account.WindowYCoordinates = $rectangle.Top
+			$Account.WindowWidth = $rectangle.Right - $rectangle.Left
+			$Account.WindowHeight = $rectangle.Bottom - $rectangle.Top	
 			$Account
 		}
 		Else {#Leave as is.
@@ -1637,21 +1632,18 @@ Function SaveWindowLocations {# Get Window Location coordinates and save to Acco
 	}
 	$NewCSV | Export-CSV "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
 	Write-Host "`n   Updated CSV with window positions." -foregroundcolor green
-	start-sleep 2
+	start-sleep -milliseconds 2500
 }
 Function SetWindowLocations {#
 	param(
 		[int]$Id,
 		[int]$X,
-		[int]$Y
+		[int]$Y,
+		[int]$Width,
+		[int]$Height
 	)
 	LoadWindowClass
-	$process = Get-Process -Id $Id -ErrorAction SilentlyContinue
-	$handle = $process.MainWindowHandle
-	$rectangle = New-Object RECT
-	[Window]::GetWindowRect($handle, [ref]$rectangle) | Out-Null
-	$Width = $rectangle.Right - $rectangle.Left
-	$Height = $rectangle.Bottom - $rectangle.Top
+	$handle = (Get-Process -Id $Id).MainWindowHandle
 	[Window]::MoveWindow($handle, $x, $y, $Width, $Height, $True)
 	$Script:MovedWindowLocations = $True
 }
@@ -1687,14 +1679,19 @@ Function Options {
 		Write-Host "  $X[38;2;255;165;000;22m9$X[0m - $X[4mDCloneAlarmVolume$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneAlarmVolume)$X[0m)"
 	}
 	if ($Script:TokensConfigured -eq $True){
-		$OptionList += "t"
-		Write-Host
-		Write-Host "  $X[38;2;255;165;000;22mt$X[0m - Temporarily force token authentication (for configured accounts ONLY)."
-		if ($Script:ForceAuthToken -eq $True){
-			Write-Host "      $X[4mForceAuthToken$X[0m (Currently $X[38;2;5;250;5;22mEnabled$X[0m)."
+		foreach ($row in $Script:AccountOptionsCSV){
+			if ($row.AuthenticationMethod -eq "Parameter"){$ParametersUsed = $True}
 		}
-		else {
-			Write-Host "      $X[4mForceAuthToken$X[0m (Currently $X[38;2;230;145;38;22mDisabled$X[0m)."
+		if ($ParametersUsed -eq $True){
+			$OptionList += "t"
+			Write-Host
+			Write-Host "  $X[38;2;255;165;000;22mt$X[0m - Temporarily force token authentication (for configured accounts ONLY)."
+			if ($Script:ForceAuthToken -eq $True){
+				Write-Host "      $X[4mForceAuthToken$X[0m (Currently $X[38;2;5;250;5;22mEnabled$X[0m)."
+			}
+			else {
+				Write-Host "      $X[4mForceAuthToken$X[0m (Currently $X[38;2;255;165;000;22mDisabled$X[0m)."
+			}
 		}
 	}
 	Write-Host "`n Enter one of the above options to change the setting."
@@ -1763,7 +1760,7 @@ Function Options {
 				ForEach ($Account in $Script:AccountOptionsCSV){
 					if ($account.id -in $Script:ActiveAccountsList.id){
 						if ($account.WindowXCoordinates -ne "" -and $account.WindowYCoordinates -ne ""){
-							SetWindowLocations -x $Account.WindowXCoordinates -y $Account.WindowYCoordinates -Id ($Script:ActiveAccountsList | where-object {$_.id -eq $account.id}).ProcessID | out-null
+							SetWindowLocations -X $Account.WindowXCoordinates -Y $Account.WindowYCoordinates -Width $Account.WindowWidth -height $Account.WindowHeight -Id ($Script:ActiveAccountsList | where-object {$_.id -eq $account.id}).ProcessID | out-null
 						}
 					}
 				}
@@ -1814,7 +1811,7 @@ Function Options {
 			$CurrentState = "Enabled"
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "ManualSettingSwitcherEnabled" -OptionsList $Options -Current $CurrentState `
-		-Description "This enables you to choose which settings file to use when launching the game.`nFor example if you want to launch with potato graphics.`nPlease see GitHub for instructions on setting this up/editing settings." `
+		-Description "This enables you to manually choose which settings file the game should use launching another game instance.`nFor example if you want to choose to launch with potato graphics or good graphics.`nPlease see GitHub for instructions on how to set this up and how to edit settings." `
 		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n"
 	}
 	ElseIf ($Option -eq "4"){ #RememberWindowLocations
@@ -1827,8 +1824,11 @@ Function Options {
 		Else {
 			$Options = @{"1" = "False";"S" = "PlaceholderValue Only :)";"R" = "PlaceholderValue Only :)"} # SaveWindowLocations function used if user chooses "S"
 			$OptionsSubText = "disable"
-			$OptionsSubTextAgain = "    Choose '$X[38;2;255;165;000;22ms$X[0m' to save current window locations.`n    Choose '$X[38;2;255;165;000;22mr$X[0m' to reset window locations.`n"
-			$DescriptionSubText = "`nChoosing the '$X[38;2;255;165;000;22ms$X[0m' option will save coordinates of any open game instances.`nChoosing the '$X[38;2;255;165;000;22mr$X[0m' option will move your windows back to their default placements."
+			$OptionsSubTextAgain = "    Choose '$X[38;2;255;165;000;22ms$X[0m' to save current window locations and sizes.`n"
+			if ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue){
+				$OptionsSubTextAgain += "    Choose '$X[38;2;255;165;000;22mr$X[0m' to reset window locations and sizes.`n"
+			}
+			$DescriptionSubText = "`nChoosing the '$X[38;2;255;165;000;22ms$X[0m' option will save coordinates (and window sizes) of any open game instances.`nChoosing the '$X[38;2;255;165;000;22mr$X[0m' option will move your windows back to their default placements."
 			$CurrentState = "Enabled"
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "RememberWindowLocations" -OptionsList $Options -Current $CurrentState `
@@ -1894,7 +1894,7 @@ Function Options {
 		}
 		else {
 			$Script:ForceAuthToken = $False
-			Write-Host "  ForceAuthToken now $X[38;2;230;145;38;22mdisabled$X[0m." -foregroundcolor yellow
+			Write-Host "  ForceAuthToken now $X[38;2;255;165;000;22mdisabled$X[0m." -foregroundcolor yellow
 			Write-Host "  For authentication, script will now use what's configured in the " -foregroundcolor green
 			Write-Host "  AuthenticationMethod column in accounts.csv" -foregroundcolor green
 		}
@@ -1906,6 +1906,14 @@ Function Options {
 	if ($XMLChanged -eq $True){
 		Write-Host "   Config Updated!" -foregroundcolor green
 		ImportXML
+		If ($Option -eq "4" -and $Script:Config.RememberWindowLocations -eq $True -and -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#if this is the first time it's been enabled display a setup message
+			Formatfunction -indents 2 -IsWarning -Text "`nYou've enabled RememberWindowsLocations but you still need to set it up. To set this up you need to perform the following steps:"
+			FormatFunction -indents 3 -iswarning -SubsequentLineIndents 3 -text "`n1. Open all of your D2r account instances.`n2. Move the window for each game instance to your preferred layout and size."
+			FormatFunction -indents 3 -iswarning -SubsequentLineIndents 3 -text "3. Come back to this options menu and go into the 'RememberWindowLocations' setting.`n4. Once in this menu, choose the option 's' to save coordinates of any open game instances."
+			FormatFunction -indents 2 -iswarning -text  "`n`nNow when you open these accounts they will open in this screen location each time :)`n"
+			PressTheAnyKey
+		}
+		
 		start-sleep -milliseconds 2500
 	}
 }
@@ -3641,7 +3649,7 @@ Function Processing {
 				} until ($WebTokenChangeCounter -eq 1)
 			}
 			If ($Script:Config.RememberWindowLocations -eq $True){ #If user has enabled the feature to automatically move game Windows to preferred screen locations.
-				if ($Script:AccountChoice.WindowXCoordinates -ne "" -or $Script:AccountChoice.WindowXCoordinates -ne ""){
+				if ($Script:AccountChoice.WindowXCoordinates -ne "" -and $Script:AccountChoice.WindowXCoordinates -ne "" -and $Script:AccountChoice.WindowXCoordinates -ne $Null -and $Script:AccountChoice.WindowXCoordinates -and $Null -and $Script:AccountChoice.WindowWidth -ne "" -and $Script:AccountChoice.Height -ne "" -and $Script:AccountChoice.WindowWidth -ne $Null -and $Script:AccountChoice.WindowHeight -and $Null){ #Check if the account has had coordinates saved yet.
 					$GetLoadWindowClassFunc = $(Get-Command LoadWindowClass).Definition
 					$GetSetWindowLocationsFunc = $(Get-Command SetWindowLocations).Definition
 					$JobID = (Start-Job -ScriptBlock { # Run this in a background job so we don't have to wait for it to complete
@@ -3653,14 +3661,18 @@ Function Processing {
 					$Script:MovedWindowLocations = $True
 					$Script:JobIDs += $JobID
 				}
-				Else {
-					FormatFunction -iswarning -text "`n'RememberWindowLocations' config is enabled but can't move game window to preferred location as coordinates need to be defined for the account first.`n`nTo setup, go to the options menu, go to the 'RememberWindowLocations' setting and choose the option 's' to save coordinates of any open game instances.`n"
+				Else { #Show a warning if user has RememberWindowLocations but hasn't configured it for this account yet.
+					FormatFunction -iswarning -text "`n'RememberWindowLocations' config is enabled but can't move game window to preferred location as coordinates need to be defined for the account first.`n`nTo setup follow the quick steps below:"
+					FormatFunction -iswarning -indents 1 -SubsequentLineIndents 3 -text "1. Open all of your D2r account instances.`n2. Move the window for each game instance to your preferred layout."
+					FormatFunction -iswarning -indents 1 -SubsequentLineIndents 3 -text "3. Go to the options menu in the script and go into the 'RememberWindowLocations' setting.`n4. Once in this menu, choose the option 's' to save coordinates of any open game instances."
+					FormatFunction -iswarning -text  "`nNow when you open these accounts they will open in this screen location each time :)`n"
 					PressTheAnyKey
 				}
 			}
 			if ($Script:LastAccount -eq $True -or ($Script:OpenAllAccounts -ne $True -and $Script:OpenBatches -ne $True)){
 				if ($Script:MovedWindowLocations -eq $True){
 					FormatFunction -IsSuccess -indents 1 -text "Moved game windows to preferred locations."
+					Start-Sleep -milliseconds 750
 				}
 				Write-Host
 				Write-Host "Good luck hero..." -foregroundcolor magenta
