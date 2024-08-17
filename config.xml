@@ -9,17 +9,6 @@
 	<!--Disable the functionality of being able to open all accounts at once. This is for any crazy people who have a lot of accounts and want to prevent accidentally opening all at once.-->
 	<DisableOpenAllAccountsOption>False</DisableOpenAllAccountsOption>
 
-	<!--Choose whether or not TZ checker should look online for Next TZ updates.
-	Choose False if Next TZ data is unreliable and you want faster updates for current TZ.-->
-	<CheckForNextTZ>True</CheckForNextTZ>
-	
-	<!--Enable the ability to open a group of accounts. EG if you have 5 accounts but only regularly use 3 of them that you want to open up all at once.
-	Requires accounts.csv to be updated. See readme for more details.-->
-	<EnableBatchFeature>False</EnableBatchFeature>
-
-	<!--Whether script should only prompt you once for region-->
-	<AskForRegionOnceOnly>False</AskForRegionOnceOnly>
-
 	<!--Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to false.-->
 	<CreateDesktopShortcut>True</CreateDesktopShortcut>
 	
@@ -27,8 +16,11 @@
 	<ShortcutCustomIconPath></ShortcutCustomIconPath>
 	
 	<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->
-	<ConvertPlainTextPasswords>True</ConvertPlainTextPasswords>
+	<ConvertPlainTextSecrets>True</ConvertPlainTextSecrets>
 	
+	<!--Make game launch each instance in the same screen location so you don't have to move your game windows around when starting the game.-->
+	<RememberWindowLocations>True</RememberWindowLocations>
+
 	<!--Make sure game always starts in Windowed mode rather than full screen. Note that this seems to cause issues remembering your last window size. Recommend leaving false-->
 	<ForceWindowedMode>False</ForceWindowedMode>
 	
