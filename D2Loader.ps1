@@ -39,7 +39,7 @@ Fixed display issues for users with lots of accounts.
 Error handling improvements.
 Other minor tidy ups.
 
-TO DO Check if web request to count.txt actually works to see how many people use this script.
+TO DO Check if web request to count.txt actually works for usage stats
 
 1.12.0+ to do list
 SinglePlayer autobackup
@@ -478,7 +478,7 @@ Function CheckForUpdates {
 			"x-requested-with" = "XMLHttpRequest"
 		}
 		Invoke-webrequest -Uri "https://github.com/shupershuff/Diablo2RLoader/blob/main/.github/Count.txt" -Method GET -Headers $headers
-	} #| Out-Null # todo DOESNT WORK 
+	} | Out-Null # todo DOESNT WORK 
 	#Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
 	if ($Script:CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.dd HH:mm:ss')){# Compare current date and time to LastUpdateCheck date & time.
 		try {
@@ -1410,7 +1410,7 @@ Function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 	}
 }
 Function Inventory {#Info screen
-	#Clear-Host
+	Clear-Host
 	Write-Host "`n          Stay a while and listen! Here's your D2r Loader info.`n`n" -foregroundcolor yellow
 	Write-Host "  $X[38;2;255;255;255;4mNote:$X[0m D2r Playtime is based on the time the script has been running"
 	Write-Host "  whilst D2r is running. In other words, if you use this script when you're"
@@ -1603,7 +1603,7 @@ Function SetWindowLocations {#
 }
 Function Options {
 	ImportXML
-	#Clear-Host
+	Clear-Host
 	Write-Host "`n This screen allows you to change script config options."
 	Write-Host " Note that you can also change these settings (and more) in config.xml."
 	Write-Host " Options you can change/toggle below:`n"
@@ -2756,7 +2756,7 @@ Function DisplayActiveAccounts {
 	}
 }
 Function Menu {
-	#Clear-Host
+	Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
 		if ($DebugMode -eq $true){
@@ -3007,7 +3007,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
-				#Clear-Host
+				Clear-Host
 				if ($Script:ScriptHasBeenRun -eq $true){
 					if ($DebugMode -eq $true){
 						DisplayPreviousAccountOpened
@@ -3608,7 +3608,7 @@ CheckForUpdates
 ImportXML
 ValidationAndSetup
 ImportCSV
-#Clear-Host
+Clear-Host
 D2rLevels
 QuoteList
 SetQualityRolls
