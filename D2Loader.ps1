@@ -19,6 +19,8 @@ Servers:
  Asia - kr.actual.battle.net
 
 Changes since 1.12.0 (next version edits):
+New feature! You can now enable 'RememberWindowLocations' so that the script moves the game windows to your preferred locations at launch. To use, go to the options menu and choose to save coordinates (once enabled). Big thanks to Sir-Wilhelm for providing code to repurpose.
+Added Options menu to be able to edit some of the common config from within script.
 Fixed a typo when launching with Authtokens.
 Fixed region display not working properly for account labels with brackets.
 Minor change to notifications (it won't announce if todays date is less than publishdate).
@@ -32,14 +34,12 @@ Fixed non-numeric account ID's not displaying (Thanks loodakrawa)
 Script now removes any empty rows accidentally left in accounts.csv to prevent issues.
 Script now specifies friendly name if none is entered into accounts.csv.
 Improvements to batch screen, now autopicks batch to open if there's only one available.
-Added Options menu to be able to edit some of the config from within script.
-New feature! You can now enable 'RememberWindowLocations' so that the script moves the game windows to your preferred locations at launch. To use, go to the options menu and choose to save coordinates (once enabled). Big thanks to Sir-Wilhelm for providing code to repurpose.
 Improved Formatting function.
 Fixed display issues for users with lots of accounts.
 Error handling improvements.
 Other minor tidy ups.
 
-TO DO Check if web request to count.txt actually works
+TO DO Check if web request to count.txt actually works to see how many people use this script.
 
 1.12.0+ to do list
 SinglePlayer autobackup
@@ -455,10 +455,30 @@ Function InitialiseCurrentStats {
 	}
 }
 Function CheckForUpdates {
-	Start-Job -ScriptBlock {
-		$headers = @{"User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"}
+	Start-Job -ScriptBlock { #testing, unsure if this will go in the release or not
+		$headers = @{ #A non intrusive means for me to roughly see how many people use this script by utilising GitHub Insights for page views.
+			"accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+			"accept-encoding" = "gzip, deflate, br, zstd"
+			"accept-language" = "en-GB,en;q=0.9"
+			"content-type" = "application/json"
+			#"Cookie" = ""
+			"dnt" = "1"
+			"github-verified-fetch" = "True"
+			#"if-none-match" = ""
+			"priority" = "u=1, i"
+			"user-agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+			"referer" = "ShupershuffsStats.com"
+			"sec-ch-ua" = "`"Not)A;Brand`";v=`"99`", `"Google Chrome`";v=`"127`", `"Chromium`";v=`"127`""
+			"sec-ch-ua-mobile" = "?0"
+			"sec-ch-ua-platform" = "`"Windows`""
+			"sec-fetch-dest" = "empty"
+			"sec-fetch-mode" = "cors"
+			"sec-fetch-site" = "same-origin"
+			"sec-gpc" = "1"
+			"x-requested-with" = "XMLHttpRequest"
+		}
 		Invoke-webrequest -Uri "https://github.com/shupershuff/Diablo2RLoader/blob/main/.github/Count.txt" -Method GET -Headers $headers
-	} | Out-Null # todo DOESNT WORK A non intrusive means for me to roughly see how many people use this script by utilising GitHub Insights for page views.
+	} #| Out-Null # todo DOESNT WORK 
 	#Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
 	if ($Script:CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.dd HH:mm:ss')){# Compare current date and time to LastUpdateCheck date & time.
 		try {
@@ -763,7 +783,7 @@ Function ValidationAndSetup {
 		$Replacement = "</DCloneTrackerSource>`n`n`t<!--Allow you to have the script audibly warn you of upcoming dclone walks.`n`t"
 		$Replacement +=	"Specify as many of the following options as you like: SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR`n`t"
 		$Replacement +=	"EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>`n`t"
-		$Replacement +=	"If left blank this feature is disabled. Default is blank as this may be annoying for some people-->`n`t"
+		$Replacement +=	"If left blank, this feature is disabled. Default is blank as this may be annoying for some people.-->`n`t"
 		$Replacement +=	"<DCloneAlarmList></DCloneAlarmList>" #add option to config file if it doesn't exist.
 		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
@@ -1390,7 +1410,7 @@ Function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 	}
 }
 Function Inventory {#Info screen
-	Clear-Host
+	#Clear-Host
 	Write-Host "`n          Stay a while and listen! Here's your D2r Loader info.`n`n" -foregroundcolor yellow
 	Write-Host "  $X[38;2;255;255;255;4mNote:$X[0m D2r Playtime is based on the time the script has been running"
 	Write-Host "  whilst D2r is running. In other words, if you use this script when you're"
@@ -1484,7 +1504,7 @@ Function Inventory {#Info screen
 	Write-Host
 	PressTheAnyKey
 }
-Function LoadWindowClass { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of sir-wilhelm
+Function LoadWindowClass { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
 	try {
 		[void][Window]
 	}
@@ -1500,10 +1520,12 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public extern static bool MoveWindow(
-				IntPtr handle, int x, int y, int width, int height, bool redraw);
+				IntPtr handle, int x, int y, int width, int height, bool redraw);	
+			[DllImport("user32.dll")]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool SetForegroundWindow(IntPtr hWnd);
 		}
-		public struct RECT
-		{
+		public struct RECT {
 			public int Left;        // x position of upper-left corner
 			public int Top;         // y position of upper-left corner
 			public int Right;       // x position of lower-right corner
@@ -1577,10 +1599,11 @@ Function SetWindowLocations {#
 	LoadWindowClass
 	$handle = (Get-Process -Id $Id).MainWindowHandle
 	[Window]::MoveWindow($handle, $x, $y, $Width, $Height, $True)
+	[Window]::SetForegroundWindow($handle)
 }
 Function Options {
 	ImportXML
-	Clear-Host
+	#Clear-Host
 	Write-Host "`n This screen allows you to change script config options."
 	Write-Host " Note that you can also change these settings (and more) in config.xml."
 	Write-Host " Options you can change/toggle below:`n"
@@ -1691,7 +1714,7 @@ Function Options {
 						}
 					}
 				}
-				FormatFunction -indents 2 -text "Moved game windows back to their saved screen coordinates.`n" -IsSuccess
+				FormatFunction -indents 2 -text "Moved game windows back to their saved screen coordinates and reset window sizes.`n" -IsSuccess
 				start-sleep -milliseconds 1500
 				Return $False
 			}
@@ -1825,7 +1848,7 @@ Function Options {
 			Write-Host "  For authentication, script will now use what's configured in the " -foregroundcolor green
 			Write-Host "  AuthenticationMethod column in accounts.csv" -foregroundcolor green
 		}
-		start-sleep -milliseconds 2500
+		start-sleep -milliseconds 3000
 	}
 	else {#go to main menu if no valid option was specified.
 		return
@@ -1840,7 +1863,6 @@ Function Options {
 			FormatFunction -indents 2 -iswarning -text  "`n`nNow when you open these accounts they will open in this screen location each time :)`n"
 			PressTheAnyKey
 		}
-		
 		start-sleep -milliseconds 2500
 	}
 }
@@ -2734,7 +2756,7 @@ Function DisplayActiveAccounts {
 	}
 }
 Function Menu {
-	Clear-Host
+	#Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
 		if ($DebugMode -eq $true){
@@ -2985,7 +3007,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
-				Clear-Host
+				#Clear-Host
 				if ($Script:ScriptHasBeenRun -eq $true){
 					if ($DebugMode -eq $true){
 						DisplayPreviousAccountOpened
@@ -3586,7 +3608,7 @@ CheckForUpdates
 ImportXML
 ValidationAndSetup
 ImportCSV
-Clear-Host
+#Clear-Host
 D2rLevels
 QuoteList
 SetQualityRolls
