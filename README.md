@@ -101,6 +101,7 @@ Jokes courtesy of v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.
 
 **Remember Windows Layout**<br>
 If configured, the script can launch each game instance to the preferred screen location and window size so that you don't have to rearrange your game windows at launch.<br>
+![image](https://github.com/user-attachments/assets/a416e4d2-c337-49d3-868e-0828b23dd66e)
 
 **Launch Parameters**<br>
 You can run the script using launch parameters instead.<br>
@@ -396,7 +397,7 @@ Happy for you to make any modifications this script for your own needs providing
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
 - Thanks to Mysterio from [D2Emu.com](https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
-- Thanks to Mysterio ([D2Emu.com](https://D2Emu.com)), Prowner (([d2runewizard.com]https://d2runewizard.com)) and Teebling "Teebs" (([diablo2.io]https://diablo2.io)) for providing their awesome respective API's for DClone status for you to choose from.
+- Thanks to Mysterio ([D2Emu.com](https://D2Emu.com)), Prowner ([d2runewizard.com](https://d2runewizard.com)) and Teebling "Teebs" ([diablo2.io](https://diablo2.io)) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
 - Thanks to v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io for API's providing top notch cringe for us to smirk at.
 - Thanks to Sir-Wilhelm for tidying up Handle killer and providing code for resizing and relocating windows.
