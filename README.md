@@ -1,7 +1,7 @@
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 <br>
-This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account. 
+This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account, ideal if you want to play single player and switch between mods easily. 
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
 This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
@@ -14,7 +14,7 @@ Using this script means you DON'T have to do any of this awful stuff to multibox
 - Use Virtual Machines, multiple computers or multiple user accounts (Windows account switching).
 - Run any dodgy executables where you don't know what's actually running.
  	- Note that this script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool.
- 	- Note that this script also builds an executable called SetText.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
+ 	- Note that this script also builds an executable called SetTextv2.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
 	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
 Note that this script DOES NOT alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game.
@@ -23,7 +23,7 @@ If you want to use additional scripts, programs or mods to achieve any of the ab
 This is a labour of love, for a game I love, for what I feel is a pretty good gaming community :)<br>
 This Readme is a bit wordy sorry, I've tried to capture all the information that anyone might ever ask for.<br>
 
-I've put several 100's of hours into making this, so if you like it, consider buying me a beer at https://www.buymeacoffee.com/shupershuff or here [https://github.com/sponsors/shupershuff](https://github.com/sponsors/shupershuff?frequency=one-time&sponsor=shupershuff&amount=5).<br>
+I've put several 100's of hours into making this, so if you like it, consider buying me a beer at https://www.buymeacoffee.com/shupershuff or here [https://github.com/sponsors/shupershuff](https://github.com/sponsors/shupershuff?frequency=one-time&sponsor=shupershuff&amount=5) or here https://paypal.me/Shupershuff.<br>
 Cheers!
 
 Script Screenshot:<br>
@@ -32,7 +32,7 @@ What your windows will look like:<br>
 ![GameWindows](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/62129f82-bde4-4744-83f2-cc69d873988a)
 ## But I don't want to use your script you dodgy internet human
 Not everyone wants to use a random script or an app and that's understandable.<br>
-See guides for alternative multiboxing methods here: https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script
+See guides for alternative multiboxing methods here: [https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script](https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script)
 
 ## Exactly what does the script do?
 Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
@@ -71,13 +71,13 @@ Other misc stats and info can be seen on the info screen. Statistics are recorde
 
 **Terror Zone Details**<br>
 You can also check the current and next Terror Zone by pressing 't'.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/2bb22b1e-3ea7-4d47-bac4-25c9d6ceda61)<br>
-Data courtesy of d2emu.com<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7f612465-be54-4883-ba37-5febfa39c58d)<br>
+Data courtesy of [D2Emu.com](https://d2emu.com)<br>
 
 **Check DClone Status**<br>
 You can also manually check the current DClone status by pressing 'd'.<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/f6f2c934-7fce-47db-a052-97e42874d9be)<br>
-Data courtesy of d2emu.com, d2runewizard.com and diablo2.io. That's right, you can choose your source!<br>
+Data courtesy of [D2Emu.com](https://d2emu.com), [d2runewizard.com](https://d2runewizard.com) and [diablo2.io](https://diablo2.io). That's right, you can choose your source!<br>
 
 **Alarms for DClone Walk status changes**<br>
 If configured, you can select which regions and modes to monitor for D Clone (Über Diablo) walk status changes.<br>
@@ -85,8 +85,8 @@ If there's a change in status whilst the script is running, it will activate the
 The alarm will a text warning (as seen in example below) as well as a text to speech alarm notifying you where the walk is happening.<br>
 The voice alarm activates only once but the text warnings will remain in place for 5 minutes. <br>
 You will also be notified after the script has launched if there's any imminent walks about to happen (ie status is 5/6).<br>
-See the [DClone Status Alarms](#8-dclone-status-alarms-optional) and [config](#4-script-config-mostly-optional) sections for more information and how to configure this.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/22288449-6088-4d1c-b559-689907ea0afa)<br>
+See the [DClone Status Alarms](#7-dclone-status-alarms-optional) and [config](#3-script-config-mostly-optional) sections for more information and how to configure this.<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/929f62d0-a952-449d-bbdc-ad3a9126d008)<br>
 Voice Examples (make sure to unmute, GitHub mutes by default):<br>
 
 https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50e9a49d-a01c-40e4-8654-a8da9fe40c05
@@ -96,8 +96,11 @@ https://github.com/shupershuff/Diablo2RLoader/assets/63577525/56bd87d5-157f-4119
 **Be an Entertainer in Baals Comedy Club**<br>
 If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
 That way instead of providing any real value in terms of damage, you can provide entertainment value instead.<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ba83409-eeba-4ae6-ba1e-b68d03e850e3)<br>
-Jokes courtesy of v2.jokeapi.dev and official-joke-api.appspot.com<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/55f47b81-c86e-424b-9954-9a1796ae5f9b)<br>
+Jokes courtesy of v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io<br>
+
+**Remember Windows Layout**<br>
+If configured, the script can launch each game instance to the preferred screen location and window size so that you don't have to rearrange the windows at launch.<br>
 
 **Launch Parameters**<br>
 You can run the script using launch parameters instead.<br>
@@ -122,16 +125,18 @@ There are ways to improve your script MaGic Find...
 
 # Setup Steps
 Please see the detailed setup steps below, it's not as scary as it looks. I've included details for all of the features you may or may not want to use.
-A basic setup only takes 2 or 3 minutes.
+A basic setup only takes 3-5 minutes.<br>
+For those allergic to reading, have a gander at [this youtube video tutorial here](https://www.youtube.com/watch?v=JYMs-soQr_c) that a great bloke made. I promise it's not a rick roll video :)<br>
+
 TL;DR steps are:
 1. Download the latest release, extract and unblock it within file properties. See [1. Download](#1-download).
-2. Download handle viewer and place in the folder. See [2. Setup Handle Viewer](#2-setup-handle-viewer).
-3. Add account info to accounts.csv. See [3. Setup Your Accounts](#3-setup-your-accounts).
-4. Edit config.xml to set game path and enable/configure desired features. See [4. Script Config](#4-script-config-mostly-optional).
-5. Run script for first time. See [5. Run the script manually for the first time](#5-run-the-script-manually-for-the-first-time).
-6. Optionally perform steps to configure game settings that each account should load from. See [6. Auto Settings Switcher](#6-auto-settings-switcher-optional-but-recommended) and [7. Manual Settings Switcher](#7-manual-settings-switcher-optional).
+2. Add account info to accounts.csv. See [2. Setup Your Accounts](#2-setup-your-accounts).
+3. Edit config.xml to set game path and enable/configure desired features. See [3. Script Config](#3-script-config-mostly-optional).
+4. Run script for first time. See [4. Run the script manually for the first time](#4-run-the-script-manually-for-the-first-time).
+5. Optionally perform steps to configure game settings that each account should load from. See [5. Auto Settings Switcher](#5-auto-settings-switcher-optional-but-recommended) and [6. Manual Settings Switcher](#6-manual-settings-switcher-optional).
+6. Optionally enable DClone alarms for your preferred regions and game mode. See [7. DClone Status Alarms](#7-dclone-status-alarms-optional).
 
-If you have any issues I can almost guarantee it's covered in the detailed setup steps below or FAQ section.
+&#x1F534; If you have any issues, come back and fully read these instructions. I can almost guarantee any issue you see is covered in the detailed setup steps below and/or FAQ section.
 
 ## 1. Download
 1. Download the latest [release](https://github.com/shupershuff/Diablo2RLoader/releases) this and extract the zip file to a folder of your choosing.
@@ -139,85 +144,81 @@ If you have any issues I can almost guarantee it's covered in the detailed setup
 3. Check the "Unblock" box and click apply.<br>
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
-## 2. Setup Handle viewer
-1. Download handle viewer from https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
-2. Extract the executable files (specifically handle64.exe) to the .\Handle\ folder
-
-## 3. Setup Your Accounts
-**NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**
-1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor.
-2. Add number for each account starting from 1
-	- Note, if you're crazy and have more than 9 accounts, you'll need to start adding letters instead of numbers. Letters cannot be the same as existing menu options. Characters a, b, c, g, r, t, d, j, s, i and x are all reserved.
-4. Add your account sign in address.
-5. Add your account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
+## 2. Setup Your Accounts
+**NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**<br>
+&#x1F536;&#x1F536; **Special Note - PLEASE READ THIS** &#x1F536;&#x1F536; Please pay attention to these instructions and particularly to step 8 around auth token setup. Almost all setup issues are due to missing or incorrectly performing one or more of these steps.  
+1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor. Can recommend [moderncsv](https://www.moderncsv.com/) as a csv editor.
+2. Add number for each account starting from 1.
+	- Note, if you want you, can also use letters as an ID but take note that characters a, b, c, g, r, t, d, j, s, i and x are all reserved.
+3. Add your battlenet account sign in address (eg bogan@askjeeves.com).
+4. Add your battlenet account password. This will be converted to an encrypted string after first run. If left empty, you will be prompted to enter it when running script and the encrypted password string will be added to the csv.
 	- If you're using a text editor to edit the CSV AND your password has a comma in it, ensure your password is surrounded by quotes eg "fjl3Ng2<,03h%mn"
-6. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames.
-7. If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
+5. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames. You could simply set these as "Barb", "Sorc" etc.
+6. [OPTIONAL] If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
 	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
  	- Don't forget to enable the Batch feature in the config file.
-8. If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
+7. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
-9. Leave the PWIsSecureString and TimeActive columns blank. These will be auto filled in.
-10. OPTIONAL, if you want to be able to use Token based authentication (eg if you have MFA enabled on your account or a one of Blizzards Auth servers are down and you can't connect), you will need to populate the 'Token' column. To do this, open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI
-	a. Log in with your credentials and approve MFA request (if enabled).<br>
-	b. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
+8. [OPTIONAL BUT RECOMMENDED] If you want or need to use Token based authentication (eg if you have MFA enabled on your account / Blizzards Auth servers are down / You get errors about account being "locked for suspicious activity" on certain regions), you will need to populate the 'Token' column.<br>
+&#x1F536;&#x1F536; **Special Note - PLEASE READ THIS** &#x1F536;&#x1F536;Due to some kind of Blizzard issue, it's becoming more common for username and password authentication (via Parameters) to not work for *some* accounts. There is no apparent pattern or reason for this. Whilst launching with Parameters offers the best experience, if you have issues you should try using the Auth Token method instead for any impacted accounts.<br>
+	a. Open your preferred internet browser in private mode and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI<br>
+	b. Log in with your credentials and approve MFA request (if enabled).<br>
+	c. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
 		![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/dfde17f7-a068-4060-9304-f92bee4bd067)<br>
-	c. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues. Generally speaking you will have the best experience launching with parameters. You can toggle the script to temporarily use auth tokens instead of parameters from the info menu.<br>
-	d. Close the browser, reopen in private mode, log into each of your other accounts and repeat the steps A to C above.<br>
-	e. The token will be converted to an encrypted string when script is next run.<br>
-	f. You will need to redo this step if you add/remove MFA to your account.<br>
+	d. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues. Generally speaking you will have the best experience launching with parameters. You can toggle the script to temporarily use auth tokens instead of parameters from the info menu.<br>
+	e. Close the browser, reopen in private mode, log into each of your other accounts and repeat the steps A to C above.<br>
+	f. The token will be converted to an encrypted string when script is next run.<br>
+	g. You will need to redo this step if you add/remove MFA to your account.<br>
 
 Make sure to save it and close the file :)
 
 **Account CSV BEFORE running script:**<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/0e3c26c5-8c71-431c-8bf7-06bde4c36c91)<br>
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/4b53981e-4915-46b1-afaf-54d59f77f041)<br>
 **What it will look like AFTER running the script (in a later step):**<br>
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/7ca6ed47-d5b7-486d-8bf2-a1fcfba2a612)<br>
-![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/d5453bf8-0af4-43ac-af5b-b16d31590c26)
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/982aa776-492b-491d-81da-ee34e4151dca)
 
-
-## 4. Script Config (Mostly Optional)
+## 3. Script Config (Mostly Optional)
 Default settings within config.xml *should* be ok but can be optionally changed. Recommend checking out the features here.
 Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ etc.
 - **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
 
 All other config options below this are strictly optional:<br>
 - Set 'DefaultRegion' to your preferred default region if you just want to mash enter instead of choosing the region. Default is 1 for NA.
-- Set 'EnableBatchFeature' to True if you want the ability to launch accounts in batches. You must also define the batches in your accounts.csv file. Disabled by default.
 - Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False. Disabled by default.
-- Set 'CheckForNextTZ' to True if you want to enable the web request to find NextTZ details. Enabled by default.
-- Set 'AskForRegionOnceOnly' to True if you only want to choose the region once. Disabled by default.
 - Set 'CreateDesktopShortcut' to False if you don't want a handy dandy shortcut on your desktop. Enabled by default.
 - Set 'ShortcutCustomIconPath' to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
-- Set 'ConvertPlainTextPasswords' to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
+- Set 'ConvertPlainTextSecrets' to False if you want your passwords and tokens to be ~~stolen~~ stored in plain text. This will not convert already encrypted passwords & tokens back to plain text if disabled.
+- Set 'RememberWindowLocations' to True if you want to each game instance to launch to a preferred window layout.
 - Set 'ForceWindowedMode' to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings. Disabled by default.
-- Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#6-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
-- Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#7-manual-settings-switcher-optional) section below for more info. Disabled by default.
+- Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#5-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
+- Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#6-manual-settings-switcher-optional) section below for more info. Disabled by default.
 - Set 'TrackAccountUseTime' to False if you don't want accounts.csv or stats.csv to be autoupdated with playtime. Other Stats are still tracked in stats.csv. Mainly added this option in the unlikely case there are any issues with accounts.csv getting corrupted. Enabled by default.
 - Set 'DCloneTrackerSource' to one of the options noted in the config file. Default (and recommended) is d2emu.com as it provides realtime data (not crowdsourced).
-- Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#8-dclone-status-alarms-optional) section below for more info. Blank by default.
+- Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#7-dclone-status-alarms-optional) section below for more info. Blank by default.
 - Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
 - Set 'DCloneAlarmVoice' to the preferred Text to Speech Robot voice. Choices are 'Amazon' or 'Paladin'. Amazon by Default.
+- Set 'DCloneAlarmVolume' to a preferred volume (1-100) to prevent frights and save your ear drums. Default is 69. Nice.
 - Set 'ForceAuthTokenForRegion' to enforce AuthToken based authentication for one or more regions. Useful if an Auth server goes down preventing parameter based connections (remember when Asia stopped working for several weeks?) Valid options are NA, EU and KR. Multiple values should be comma separated. Recommend leaving blank unless there are auth issues.
 
 Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
 
-## 5. Run the script manually for the first time
+## 4. Run the script manually for the first time
 1. Browse to the folder, right click on D2Loader.ps1 and choose run.
 2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
    ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
-   a) If you instead get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following steps:   
-   b) Open the start menu and type in powershell. Open PowerShell.<br>
+   a) If the script opens up and immediately closes or you instead get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following steps:   
+   b) Open the start menu and type in powershell. Right click on PowerShell and click "Run as administrator".<br>
    c) Enter the following command: **Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser**<br>
-   d) Type in y and press enter to confirm.<br>
+   d) Type in "y" and press enter to confirm.<br>
    e) Run the D2Loader.ps1 script again.<br>
 3. If the script prompts to trust it and add it to the unblock list, type in y and press enter to confirm.
 4. This will perform the first time setup for compiling settext.exe, encrypting your passwords and will create a shortcut on your desktop.
 
 If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
 
-## 6. Auto Settings Switcher (Optional but recommended)
+## 5. Auto Settings Switcher (Optional but recommended)
 Do you want your primary account to launch with decent graphics settings with your other accounts to be set to poo tier settings? This is for you! This feature is disabled by default, as it will cause confusing behaviour for users who haven't read and understood this first.<br>
 
 What this feature does is create copies Settings.json (found in the "C:\Users\\\<yourusername>\Saved Games\Diablo II Resurrected" folder) for each account you have.<br>
@@ -236,26 +237,27 @@ NOTE: Any changes you make to non-character options in game (eg graphics, audio,
 8. Rename to Settings1.json
 9. Launch the game and proceed find all of the high runes. All of them.
 
-## 7. Manual Settings Switcher (Optional)
+## 6. Manual Settings Switcher (Optional)
 Do you want to manually choose which settings to use when launching the game? This is for you! This feature is disabled by default, as this needs to be setup first and understood this first.<br>
 <br>
 Setup is exactly the same as the Auto Settings Switcher, except for step 8 as you need to name the settings file settings._name_.json where name is whatever you want it called (eg settings.1440pHigh.json or settings.PotatoGraphics.json)<br>
 - Note: If you name the file settings_name_.json it will not work. The name should be inside two fullstops "."<br>
 
-Don't forget to enable this feature in the [config](#4-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
+Don't forget to enable this feature in the [config](#3-script-config-mostly-optional) file by setting 'ManualSettingSwitcherEnabled' to True.
 
-## 8. DClone Status Alarms (Optional)
+## 7. DClone Status Alarms (Optional)
 You can optionally configure the script to advise when DClone walk status changes.<br>
 This is very handy for when you're playing on another region/game mode or playing another game entirely so you can be audibly warned on status changes without having to manually check a website.<br>
 This will display text warnings on screen for 5 minutes since last status change and will also perform a one off voice alarm advising you what region and game mode the status changed on.
 Checks are performed each time the script refreshes on the main menu (IE, every 30 seconds).<br>
-Note that these check run in a background job that can take 1-2 seconds to complete, so manually refreshing the menu constantly (r) will prevent checks from occuring.<br>
+Note that this check is run in a background job that takes 1-2 seconds to complete. As such manually refreshing the menu constantly (r) will prevent checks from occuring.<br>
 
 This feature is disabled by default.<br>
 If you want to enable it, simply add in the option(s) you want into DcloneAlarmList in config.xml.<br>
 You will only be alarmed for the game options you add into config. EG if you only want Hardcore Ladder notifications you would enter: <DCloneAlarmList>HCL-NA, HCL-EU, HCL-KR</DCloneAlarmList><br>
 You can also optionally change the other configs for DClone Tracking and DClone Alarms, however I recommend leaving the default values here.<br>
-See the [Script Config](#4-script-config-mostly-optional) section for more info on each config.<br>
+You can also adjust the volume of the alarms if they are too quiet or if it's so loud it's making you jump off your chair.
+See the [Script Config](#3-script-config-mostly-optional) section for more info on each config.<br>
 
 # Notes #
 ## Graphics Performance Recommendations ##
@@ -287,17 +289,18 @@ Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ).<br>
 Or even just a [message](https://github.com/shupershuff/Diablo2RLoader/discussions) to say thanks :)<br>
 
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
-**A:** See Instructions above. The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
+**A:** See instructions [above](#4-run-the-script-manually-for-the-first-time). The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
 
 **Q:** How do I update the script?<br>
 **A:** As of 1.5.0, the script has the ability to update itself. I will also include steps in the script to update config.xml, accounts.csv and stats.csv if new fields are added. For users on older versions, to update manually, all you need to do is download the latest release, extract the .zip and copy the new D2Loader.ps1 over to where the old D2Loader.ps1 file is and overwrite it. If this script shows a warning "Couldn't check for updates. GitHub API limit may have been reached...", it's most likely due to me testing things and exceeding GitHubs API limit, ignore and try again later.
 
 **Q:** When Diablo opens it won't allow me to select an online character<br>
 **A1:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).<br>
-**A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).
+**A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).<br>
+**A3:** In some circumstances, for no real reason, you might randomly have issues with one or more of your accounts connecting with warnings about "Account locked for suspicious activity" after temporarily switching regions. This only happens when using parameter based authentication. Numerous people have seen this issue across different loaders and for people who launch the game from desktop shortcuts. I've discovered no pattern as to why this happens or how to resolve it. Workaround is to launch problematic accounts using Auth Tokens.
 
 **Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
-**A:** Open accounts.csv and clearout the password field and the PWIsSecureString field. Leave the PWIsSecureString field blank. Either enter your password into the csv file or leave it blank and the script will ask you next time you run it.
+**A:** Open accounts.csv and clearout the password field. Either enter your new password into the csv file or leave it blank and the script will ask you next time you run it.
 
 **Q:** When I run this I'm unable to use Push to Talk (PTT) in Discord.<br>
 **A:** As the script needs to run as administrator, this also means it starts the game with elevated rights. As such this can mess with Discord PTT. This is a known issue with Discord. To resolve this you can run [Discord in Administrator mode](https://support.discord.com/hc/en-us/articles/205082178-How-do-I-enable-push-to-talk-if-I-am-running-my-game-in-administrator-mode).<br>
@@ -314,7 +317,7 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 
 **Q:** I get 2FA/MFA Battlenet prompts on my screen but even though I approve, when the game loads it won't show online characters.<br>
 **A1:** Bad news here sorry, Diablo does not work with MFA enabled when launching the game from a shortcut with parameters. Blame Blizzard, their MFA solution overall isn't great either.<br>
-**A2:** That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. You need to set this up (See Auth Token steps in [Setup Your Accounts](#3-setup-your-accounts)).
+That said, it is possible to connect if you utilise the Auth Token method instead of Parameters. To setup AuthToken authentication, (see Auth Token steps in [Setup Your Accounts](#2-setup-your-accounts)).
 
 **Q:** I have suggestions and/or issues with this, where do I post these?<br>
 **A:** Please use GitHub issues for any feedback. Thanks!
@@ -324,6 +327,12 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 
 **Q:** I get prompts to enter captcha's on my accounts randomly. Why is this?<br>
 **A:** I'm not sure exactly why this happens but it does appear to happen more with newer accounts. Ensure you have logged into the battlenet client AND into your webbrowser with the account and approve any verifications/captchas needed. Do not share the account with other people. Do NOT use a VPN when signing into the account (whether it be via this script, bnet client or website).
+
+**Q:** Will you implement a feature to skip intro videos when launching?<br>
+**A:** Could I? Yes. Will I? No as this requires modifying game files (video files really). Whilst the script can cater for mods you want to use, I don't want this script directly modifying any game files, even something as innocent as intro videos. If skipping intro is of interest to you, you can look at the [introskip mod](https://www.nexusmods.com/diablo2resurrected/mods/194).
+
+**Q:** I'm getting an error says "You have not been online in the last 30 days. Please start the game while online to check for any login agreements".
+**A:** As the error suggests, try logging in from the battle.net client. If issues persist, use Google as there are dozens of threads where people have had this issue due to other reasons (eg firewall).
 
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
@@ -378,15 +387,22 @@ Happy for you to make any modifications this script for your own needs providing
   - After using the above for several months, I built my own to work with Process ID instead of process name for improved accuracy. Posted to the thread above.
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
-- Thanks to Mysterio from [D2Emu.com}(https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
-- Thanks to Mysterio (https://D2Emu.com), Prowner (https://d2runewizard.com) and Teebling "Teebs" (https://diablo2.io) for providing their awesome respective API's for DClone status for you to choose from.
+- Thanks to Mysterio from [D2Emu.com](https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
+- Thanks to Mysterio ([D2Emu.com](https://D2Emu.com)), Prowner (([d2runewizard.com]https://d2runewizard.com)) and Teebling "Teebs" (([diablo2.io]https://diablo2.io)) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
-- Thanks to v2.jokeapi.dev and official-joke-api.appspot.com for API's providing top notch cringe for us to smirk at.
+- Thanks to v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io for API's providing top notch cringe for us to smirk at.
+- Thanks to Sir-Wilhelm for code for resizing and relocating windows.
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
 - Live, Laugh, Love.
 - Lastly big thanks to everyone that's messaged me with issues, ideas, performed testing, sent FG donations, or simply messaged to say thanks. It's awesome to be able to help out and bring some QOL to folks across the world :)
 
-[![Github All Releases](https://img.shields.io/github/downloads/shupershuff/Diablo2RLoader/total.svg)]()
+Proudly made in NZ<br>
+![nzmade](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/39e332b8-71cb-4149-8afd-2fcfdac14abf)
+![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/746968fa-6be2-4846-bc62-850717d84daa)<br>
+<br>
+Latest Version Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/shupershuff/diablo2rloader/latest/total?label=Downloads&link=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader%2Freleases%2Flatest)<br>
+Previous Version Downloads:&nbsp;&nbsp;![Downloads](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/shupershuff/Diablo2RLoader/main/.github/previous-release-download-count.json?Label=Downloads)<br>
+All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [![Github All Releases](https://img.shields.io/github/downloads/shupershuff/Diablo2RLoader/total.svg?label=Downloads)]()<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, d2r multibox, chat Gem workinG as intended
