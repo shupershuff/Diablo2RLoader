@@ -99,6 +99,10 @@ That way instead of providing any real value in terms of damage, you can provide
 ![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/55f47b81-c86e-424b-9954-9a1796ae5f9b)<br>
 Jokes courtesy of v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io<br>
 
+**Remember Windows Layout**<br>
+If configured, the script can launch each game instance to the preferred screen location and window size so that you don't have to rearrange your game windows at launch.<br>
+![image](https://github.com/user-attachments/assets/a416e4d2-c337-49d3-868e-0828b23dd66e)
+
 **Launch Parameters**<br>
 You can run the script using launch parameters instead.<br>
 This is ideal if you want to create a desktop shortcut to open a set of accounts, or if you're a super nerd and you want to launch the accounts from a scheduled task or from Home Assistant so that your game is ready to go when you get home from work :)<br>
@@ -183,13 +187,11 @@ Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ e
 
 All other config options below this are strictly optional:<br>
 - Set 'DefaultRegion' to your preferred default region if you just want to mash enter instead of choosing the region. Default is 1 for NA.
-- Set 'EnableBatchFeature' to True if you want the ability to launch accounts in batches. You must also define the batches in your accounts.csv file. Disabled by default.
 - Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False. Disabled by default.
-- Set 'CheckForNextTZ' to True if you want to enable the web request to find NextTZ details. Enabled by default.
-- Set 'AskForRegionOnceOnly' to True if you only want to choose the region once. Disabled by default.
 - Set 'CreateDesktopShortcut' to False if you don't want a handy dandy shortcut on your desktop. Enabled by default.
 - Set 'ShortcutCustomIconPath' to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
-- Set 'ConvertPlainTextPasswords' to False if you want your passwords to be ~~stolen~~ in plain text. This will not convert already encrypted passwords back to plain text.
+- Set 'ConvertPlainTextSecrets' to False if you want your passwords and tokens to be ~~stolen~~ stored in plain text. This will not convert already encrypted passwords & tokens back to plain text if disabled.
+- Set 'RememberWindowLocations' to True if you want to each game instance to launch to a preferred window layout.
 - Set 'ForceWindowedMode' to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings. Disabled by default.
 - Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#5-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
 - Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#6-manual-settings-switcher-optional) section below for more info. Disabled by default.
@@ -258,6 +260,16 @@ You can also optionally change the other configs for DClone Tracking and DClone 
 You can also adjust the volume of the alarms if they are too quiet or if it's so loud it's making you jump off your chair.
 See the [Script Config](#3-script-config-mostly-optional) section for more info on each config.<br>
 
+## 7. Setup your preferred window layout (Optional)
+Perform these steps if you've enabled the feature for remembering window layout and size.
+1. Enable the feature if not already enabled (you can do this from the options menu or by setting 'RememberWindowLocations' to 'true' config.xml).
+2. Open all of your D2r account instances.
+3. Move/adjust the window for each game instance to your preferred layout and size.
+4. Go to options menu and go into the 'RememberWindowLocations' setting.
+5. Once in this menu, choose the option 's' to save coordinates of any open game instances.
+
+Now whenever you launch the accounts they will open in the same positions with the same window sizes. Use the 'r' option within that menu to reset them if need be.
+
 # Notes #
 ## Graphics Performance Recommendations ##
 If you don't want your Diablo games to run like a slideshow, here are some tips. You'll of course need to adjust based on your hardware and setup.
@@ -290,15 +302,12 @@ Or even just a [message](https://github.com/shupershuff/Diablo2RLoader/discussio
 **Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
 **A:** See instructions [above](#4-run-the-script-manually-for-the-first-time). The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
 
-**Q:** How do I update the script?<br>
-**A:** As of 1.5.0, the script has the ability to update itself. I will also include steps in the script to update config.xml, accounts.csv and stats.csv if new fields are added. For users on older versions, to update manually, all you need to do is download the latest release, extract the .zip and copy the new D2Loader.ps1 over to where the old D2Loader.ps1 file is and overwrite it. If this script shows a warning "Couldn't check for updates. GitHub API limit may have been reached...", it's most likely due to me testing things and exceeding GitHubs API limit, ignore and try again later.
-
 **Q:** When Diablo opens it won't allow me to select an online character<br>
 **A1:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).<br>
 **A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).<br>
 **A3:** In some circumstances, for no real reason, you might randomly have issues with one or more of your accounts connecting with warnings about "Account locked for suspicious activity" after temporarily switching regions. This only happens when using parameter based authentication. Numerous people have seen this issue across different loaders and for people who launch the game from desktop shortcuts. I've discovered no pattern as to why this happens or how to resolve it. Workaround is to launch problematic accounts using Auth Tokens.
 
-**Q:** I have reset one of my Bnet account passwords, how do I update accounts.csv<br>
+**Q:** I have reset one of my Battle.net account passwords, how do I update accounts.csv?<br>
 **A:** Open accounts.csv and clearout the password field. Either enter your new password into the csv file or leave it blank and the script will ask you next time you run it.
 
 **Q:** When I run this I'm unable to use Push to Talk (PTT) in Discord.<br>
@@ -308,8 +317,8 @@ I recommend that you find the Discord Shortcut or app, go into properties > Comp
 **Q:** A UAC prompt opens each time asking me to run as Admin. This is annoying. Can I disable this?<br>
 **A:** Yes, there are a couple ways to do this, see here: https://silicophilic.com/add-program-to-uac-exception/#Method_2_Run_Programs_With_Admin_Privileges_Without_UAC_Prompt
 
-**Q:** Will this work if I've extracted game files with Casc viewer in an attempt to make the game load faster<br>
-**A:** Yes, if you're one of the people that have done this, you can still run the game using this script. Make sure to specify "-direct -txt" as commandline options in accounts.csv
+**Q:** Will this work if I've extracted game files with Casc viewer in an attempt to make the game load faster?<br>
+**A:** Yes, if you're one of the people that have done this, you can still run the game using this script. Make sure to specify "-direct -txt" in the CustomLaunchArguments column in Accounts.csv.
 
 **Q:** Why does the script need to run as admin?<br>
 **A:** The script needs to run as admin in order to kill the "Check for Other instances" process handle and to be able to rename your D2r windows once launched. The script uses the names of these Windows to detect which accounts are currently active.
@@ -336,12 +345,14 @@ That said, it is possible to connect if you utilise the Auth Token method instea
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
 
-Outside of killing this handle and changing the window title, there are absolutely no modifications to the game made by this script, it's simply an improved alternative way to start the application.
-To be clear, this script in no way enhances or assists with actual game play and I would strongly advise against seeking/using any tools.
-The script is essentially launching the game the same way you would if you had setup shortcuts to the game with account,region,pw parameters, launching that way and then killing the "Check for other instances" handle (as suggested in several guides). This script is a QoL tool to help consolidate your accounts to one simple launcher to simply open the game with account(s) and region(s) you want.
+Outside of killing this handle and changing the window title, there are absolutely no modifications to the game made by this script, it's simply an improved, alternative way to start the application.
+To be clear, this script in no way enhances or assists with actual game play and I would strongly advise against seeking/using any tools for automation.
+The script is essentially launching the game the same way you would if you had setup shortcuts to the game with parameters (account, region and password), launching that way and then killing the "Check for other instances" handle (as suggested in several guides). This script is a QoL tool to help consolidate your accounts to one simple launcher to simply open the game with the account(s) and region(s) you want.
 
 So the real question is, regardless of this script, is using procexp or another method to kill the "check for other instances" handle against ToS? Stricly speaking yes and this topic has been broached in Blizzard forums many times without an official response either for or against.
 If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances' handle?" which to that I'm confident the answer is no. If I wasn't confident, this script wouldn't exist and people wouldn't be using procexp/handle.exe to multibox through traditional methods. Given the widespread use of procexp/handle being used to multibox, this method (and therefore also this script), is considered safe.
+
+This script can also be used for folk who have one account and want to track playtime details or simply want to be able to use an interface to launch different single player mods.
 
 ## Notes about the Window title rename (SetTextv2.exe)
 
@@ -366,30 +377,30 @@ Optional: If you don't trust me and want to build the .exe yourself you can do t
 See this site for more information on what this does, this contains the original version and the updated version that I've made: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
 
 # What's Next #
-If there's something you want to see added or improved then let me know. Future updates may include:<br>
-* Possibly add the ability to mute minimised windows (as long as it can be done within windows without additional software)
-* Investigate Ability to skip intro
+You tell me. If there's something you want to see added or improved then let me know. Future updates may include:<br>
+* ~~Possibly add the ability to mute minimised windows (as long as it can be done within windows without additional software)~~ - Would require an external script or software.
+* ~~Investigate Ability to skip intro~~ - Not possible without mods.
 * Fixing anything I broke in the last release.
-* Adding whatever features you fools ask for.
+* Adding whatever features you fools ask for (InB4 questions for autojoining etc. I will never add any in game automation activities to this script).
 * Perhaps make a GUI *if* there's enough interest. Probably not though as there would be a lot of brain activity involved. Pay my mortgage and we'll perhaps maybe talk... probably.
 
 # Usage and Limitations #
 Happy for you to make any modifications this script for your own needs providing:
  - Any variants of this script are never sold.
  - Any variants of this script published online should always be open source.
- - Any variants of this script are never modifed to enable or assist in any game altering or malicious behaviour including (but not limited to): Bannable Mods, Cheats, Exploits, Phishing, Botting.
+ - Any variants of this script are never modifed to enable or assist in any game altering or malicious behaviour including (but not limited to): Bannable Mods, Cheats, Exploits, Phishing, Botting, Game Automation.
 
 # Credit for things I stole #
-- Handle64 tool (replaces procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
-- Handle killer script: https://forums.d2jsp.org/topic.php?t=90563264&f=87
+- Handle64 tool (replaces process explorer aka procexp) - https://learn.microsoft.com/en-gb/sysinternals/downloads/handle
 - Set Text method: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
   - After using the above for several months, I built my own to work with Process ID instead of process name for improved accuracy. Posted to the thread above.
 - Thanks to MoonUnit for contributing thoughts around converting plain text passwords to encrypted strings.
 - Thanks to never147 for contributing improvements for menu refresh and inputs. Huge QOL feature and allowed for more features to be implemented.
 - Thanks to Mysterio from [D2Emu.com](https://d2emu.com/tz) for providing TZ source API. Consider buying Mysterio a coffee [here](https://www.buymeacoffee.com/d2emu).
-- Thanks to Mysterio ([D2Emu.com](https://D2Emu.com)), Prowner (([d2runewizard.com]https://d2runewizard.com)) and Teebling "Teebs" (([diablo2.io]https://diablo2.io)) for providing their awesome respective API's for DClone status for you to choose from.
+- Thanks to Mysterio ([D2Emu.com](https://D2Emu.com)), Prowner ([d2runewizard.com](https://d2runewizard.com)) and Teebling "Teebs" ([diablo2.io](https://diablo2.io)) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
 - Thanks to v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io for API's providing top notch cringe for us to smirk at.
+- Thanks to Sir-Wilhelm for tidying up Handle killer and providing code for resizing and relocating windows.
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
 - Live, Laugh, Love.

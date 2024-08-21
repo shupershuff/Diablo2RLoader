@@ -9,17 +9,6 @@
 	<!--Disable the functionality of being able to open all accounts at once. This is for any crazy people who have a lot of accounts and want to prevent accidentally opening all at once.-->
 	<DisableOpenAllAccountsOption>False</DisableOpenAllAccountsOption>
 
-	<!--Choose whether or not TZ checker should look online for Next TZ updates.
-	Choose False if Next TZ data is unreliable and you want faster updates for current TZ.-->
-	<CheckForNextTZ>True</CheckForNextTZ>
-	
-	<!--Enable the ability to open a group of accounts. EG if you have 5 accounts but only regularly use 3 of them that you want to open up all at once.
-	Requires accounts.csv to be updated. See readme for more details.-->
-	<EnableBatchFeature>False</EnableBatchFeature>
-
-	<!--Whether script should only prompt you once for region-->
-	<AskForRegionOnceOnly>False</AskForRegionOnceOnly>
-
 	<!--Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to false.-->
 	<CreateDesktopShortcut>True</CreateDesktopShortcut>
 	
@@ -27,8 +16,11 @@
 	<ShortcutCustomIconPath></ShortcutCustomIconPath>
 	
 	<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->
-	<ConvertPlainTextPasswords>True</ConvertPlainTextPasswords>
+	<ConvertPlainTextSecrets>True</ConvertPlainTextSecrets>
 	
+	<!--Make game launch each instance in the same screen location so you don't have to move your game windows around when starting the game.-->
+	<RememberWindowLocations>True</RememberWindowLocations>
+
 	<!--Make sure game always starts in Windowed mode rather than full screen. Note that this seems to cause issues remembering your last window size. Recommend leaving false-->
 	<ForceWindowedMode>False</ForceWindowedMode>
 	
@@ -49,12 +41,12 @@
 
 	<!--Options are d2emu.com, D2runewizard.com and diablo2.io.
 	Default and recommended option is d2emu.com as this pulls live data from the game as opposed to crowdsourced data.-->
-	<DCloneTrackerSource>d2emu.com</DCloneTrackerSource>
+	<DCloneTrackerSource>D2Emu.com</DCloneTrackerSource>
 
 	<!--Allow you to have the script audibly warn you of upcoming dclone walks.
 	Specify as many of the following options as you like: SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR
 	EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>
-	If left blank this feature is disabled. Default is blank as this may be annoying for some people-->
+	If left blank, this feature is disabled. Default is blank as this may be annoying for some people.-->
 	<DCloneAlarmList></DCloneAlarmList>
 
 	<!--Specify what Statuses you want to be alarmed on.
@@ -65,7 +57,8 @@
 	<DCloneAlarmLevel>All</DCloneAlarmLevel>
 	<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->
 	<DCloneAlarmVoice>Amazon</DCloneAlarmVoice>
-	<!--Specify how loud notifications can be. Range from 0 and 100.-->
+	
+	<!--Specify how loud notifications can be. Range from 1 and 100.-->
 	<DCloneAlarmVolume>69</DCloneAlarmVolume>
 	
 	<!--Select regions which should be forced to use Tokens over parameters (overrides config in accounts.csv).
