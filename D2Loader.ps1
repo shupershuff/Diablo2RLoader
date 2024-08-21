@@ -27,7 +27,7 @@ Minor change to notifications (it won't announce if todays date is less than pub
 Made window size slightly taller.
 Script now checks accounts.csv to see if batches are used. EnableBatchFeature in config.xml is now redundant and will be removed.
 Removed CheckForNextTZ from config.xml as it's redundant.
-Removed AskForRegionOnceOnly from config.xml as it's not really useful.
+Removed AskForRegionOnceOnly from config.xml as it's not that useful.
 Change 'ConvertPlainTextPasswords' to 'ConvertPlainTextSecrets'. This now aligns to both Passwords and tokens for those that would prefer to store in plain text. Will not convert already secured secrets to plain text.
 Fixed up some error handling with the Joke screen.
 Fixed non-numeric account ID's not displaying (Thanks loodakrawa)
@@ -39,10 +39,8 @@ Fixed display issues for users with lots of accounts.
 Error handling improvements.
 Other minor tidy ups.
 
-TO DO Check if web request to count.txt actually works for usage stats
-
-1.12.0+ to do list
-SinglePlayer autobackup
+1.13.0+ to do list
+Look at adding SinglePlayer autobackup feature
 Add Capability for D2Emu Websocket connection as the current TZ/DClone API might be getting deprecated. 
 In line with the above, if possible investigate the possibility of realtime DClone Alarms.
 In line with the above, perhaps investigate putting TZ details on main menu and using the TZ screen for recent TZ's only.
@@ -52,7 +50,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.12.7"
+$CurrentVersion = "1.13.0"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -119,7 +117,7 @@ $Script:NotificationHasBeenChecked = $False
 $Script:AllowedKeyList = @(48,49,50,51,52,53,54,55,56,57) #0 to 9
 $Script:AllowedKeyList += @(96,97,98,99,100,101,102,103,104,105) #0 to 9 on numpad
 $Script:AllowedKeyList += @(65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90) # A to Z
-$Script:MenuOptions = @(65,66,67,68,71,73,74,79,82,83,84,88) #a, b, c, d, g, i, j, o ,r, s, t and x. Used to detect singular valid entries where script can have two characters entered.
+$Script:MenuOptions = @(65,66,67,68,71,73,74,79,82,83,84,88) #a, b, c, d, g, i, j, o, r, s, t and x. Used to detect singular valid entries where script can have two characters entered.
 $EnterKey = 13
 Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys){#used to receive user input
 	$key = $Null
@@ -303,9 +301,12 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 	}
 	$Text -split "`n" | ForEach-Object {
 		$Line = " " + $Indent + $_	
-		$StartsWithDash = $False
-		if ($Line -match '^[\s]*-'){ #For any line starting with a dash (excluding spaces).
-			$StartsWithDash = $True
+		$SecondLineDeltaIndent = ""
+		if ($Line -match '^[\s]*-'){ #For any line starting with any preceding spaces and a dash.
+			$SecondLineDeltaIndent = "  "
+		}
+		if ($Line -match '^[\s]*\d+\.\s'){ #For any line starting with any preceding spaces, a number, a '.' and a space. Eg "1. blah".
+			$SecondLineDeltaIndent = "   "
 		}
 		Function Formatter ([string]$line){
 			$pattern = "[\e]?[\[]?[`"-,`.!']?\b[\w\-,'`"]+(\S*)" # Regular expression pattern to find the last word including any trailing non-space characters. Also looks to include any preceding special characters or ANSI escape character.
@@ -335,35 +336,30 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 				}
 			}
 			try {
-				$script:chunk = $Line.Substring(0, $lastSpaceIndex + 1) #Chunk of words to print to screen. Uses all words from the start of $line up until $lastspaceindex so that only text that fits on a single line is printed. Prevents words being cut in half and prevents loss of indenting.
+				$script:chunk = $Line.Substring(0, $lastSpaceIndex + 1) #Chunk of text to print to screen. Uses all words from the start of $line up until $lastspaceindex so that only text that fits on a single line is printed. Prevents words being cut in half and prevents loss of indenting.
 			}
 			catch {
 				$script:chunk = $Line.Substring(0, [Math]::Min(($MaxLineLength), ($Line.Length))) #If the above fails for whatever reason. Can't exactly remember why I put this in here but leaving it in to be safe LOL.
 			}	
 		}
 		Formatter $Line
-		if ($Script:ANSIUsed -eq $True){
+		if ($Script:ANSIUsed -eq $True){ #if fancy pants coloured text (ANSI) is used, write out the first line. Check if ANSI was used in any overflow lines.
 			do {
 				$Script:ANSIUsed = $False
-				Write-Output $Chunk | out-host
-				$Line = " " + $SubsequentLineIndent + $Indent + $Line.Substring($chunk.Length).trimstart()
+				Write-Output $Chunk | out-host #have to use out-host due to pipeline shenanigans and at this point was too lazy to do things properly :)
+				$Line = " " + $SubsequentLineIndent + $Indent + $Line.Substring($chunk.Length).trimstart() #$Line is equal to $Line but without the text that's already been outputted.
 				Formatter $Line
 			} until ($Script:ANSIUsed -eq $False)
-			if ($Chunk -ne " " -and $Chunk.lenth -ne 0){
+			if ($Chunk -ne " " -and $Chunk.lenth -ne 0){#print any remaining text.
 				Write-Output $Chunk | out-host
 			}
 		}
-		Else {
+		Else { #if line has no ANSI formatting.
 			Write-Output $Chunk | &$Colour
 		}
 		$Line = $Line.Substring($chunk.Length).trimstart() #remove the string that's been printed on screen from variable.
-		if ($Line.length -gt 0){
-			if ($StartsWithDash -eq $True){
-				Write-Output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) - $($SubsequentLineIndent.length) -3)})(\s+|$)", " $SubsequentLineIndent  $Indent`$1`n").trimend() | &$Colour
-			}
-			else {
-				Write-Output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) - $($SubsequentLineIndent.length) -1)})(\s+|$)", "$SubsequentLineIndent $Indent`$1`n").trimend() | &$Colour
-			}
+		if ($Line.length -gt 0){ # I see you're reading my comment. How thorough of you! This whole function was an absolute mindf#$! to come up with and took probably 30 hours of trial, error and rage (in ascending order of frequency). Odd how the most boring of functions can take up the most time :)
+				Write-Output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) - $($SubsequentLineIndent.length) -1 - $($SecondLineDeltaIndent.length))})(\s+|$)", " $SubsequentLineIndent$SecondLineDeltaIndent$Indent`$1`n").trimend() | &$Colour
 		}
 	}
 }
@@ -455,30 +451,6 @@ Function InitialiseCurrentStats {
 	}
 }
 Function CheckForUpdates {
-	Start-Job -ScriptBlock { #testing, unsure if this will go in the release or not
-		$headers = @{ #A non intrusive means for me to roughly see how many people use this script by utilising GitHub Insights for page views.
-			"accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
-			"accept-encoding" = "gzip, deflate, br, zstd"
-			"accept-language" = "en-GB,en;q=0.9"
-			"content-type" = "application/json"
-			#"Cookie" = ""
-			"dnt" = "1"
-			"github-verified-fetch" = "True"
-			#"if-none-match" = ""
-			"priority" = "u=1, i"
-			"user-agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
-			"referer" = "ShupershuffsStats.com"
-			"sec-ch-ua" = "`"Not)A;Brand`";v=`"99`", `"Google Chrome`";v=`"127`", `"Chromium`";v=`"127`""
-			"sec-ch-ua-mobile" = "?0"
-			"sec-ch-ua-platform" = "`"Windows`""
-			"sec-fetch-dest" = "empty"
-			"sec-fetch-mode" = "cors"
-			"sec-fetch-site" = "same-origin"
-			"sec-gpc" = "1"
-			"x-requested-with" = "XMLHttpRequest"
-		}
-		Invoke-webrequest -Uri "https://github.com/shupershuff/Diablo2RLoader/blob/main/.github/Count.txt" -Method GET -Headers $headers
-	} | Out-Null # todo DOESNT WORK 
 	#Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
 	if ($Script:CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.dd HH:mm:ss')){# Compare current date and time to LastUpdateCheck date & time.
 		try {
@@ -491,11 +463,11 @@ Function CheckForUpdates {
 				if ([version]$CurrentVersion -in (($Releases.name.Trim('v') | ForEach-Object { [version]$_ } | Sort-Object -desc)[2..$releases.count])){
 					Write-Host ".`n There have been several releases since your version." -foregroundcolor Yellow
 					Write-Host " Checkout Github releases for fixes/features added. " -foregroundcolor Yellow
-					Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/$X[0m"
-				} Else {
-					Write-Host ":`n $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
+					Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/$X[0m`n"
 				}
-				Write-Host
+				Else {
+					Write-Host ":`n $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m`n"
+				}
 				FormatFunction -Text $ReleaseInfo.body #Output the latest release notes in an easy to read format.
 				Write-Host; Write-Host
 				Do {
@@ -1490,7 +1462,7 @@ Function Inventory {#Info screen
 		Write-Host "`n  $X[4mLatest Script Version:$X[0m v$LatestVersion" -foregroundcolor yellow
 		Write-Host "  $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
 	}
-	Write-Host "`n  $X[4mLike this script and want to Donate?$X[0m"
+	Write-Host "`n  $X[38;2;0;225;0;22mConsider donating as a way to say thanks via an option below:$X[0m"
 	Write-Host "    - $X[38;2;69;155;245;4mhttps://www.buymeacoffee.com/shupershuff$X[0m"
 	Write-Host "    - $X[38;2;69;155;245;4mhttps://paypal.me/Shupershuff$X[0m"
 	Write-Host "    - $X[38;2;69;155;245;4mhttps://github.com/sponsors/shupershuff?frequency=one-time&amount=5$X[0m`n"
@@ -2631,7 +2603,7 @@ Function TerrorZone {
 	Write-Host "  TZ info courtesy of:       $TZProvider`n"
 	PressTheAnyKey
 }
-Function Killhandle { #Thanks to sir-wilhelm for tidying this up.
+Function KillHandle { #Thanks to sir-wilhelm for tidying this up.
 	$handle64 = "$PSScriptRoot\handle\handle64.exe"
 	$handle = & $handle64 -accepteula -a -p D2R.exe "Check For Other Instances" -nobanner | Out-String
 	if ($handle -match "pid:\s+(?<d2pid>\d+)\s+type:\s+Event\s+(?<eventHandle>\w+):"){
@@ -3514,12 +3486,12 @@ Function Processing {
 		}
 		if ($SettingsChoice -ne "c" -and $SettingsChoice -ne "Esc"){
 			#Start Game
-			killhandle | out-null
+			KillHandle | out-null
 			$process = Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments" -PassThru
 			Start-Sleep -milliseconds 1500 #give D2r a bit of a chance to start up before trying to kill handle
 			#Close the 'Check for other instances' handle
 			Write-Host " Attempting to close `"Check for other instances`" handle..."
-			$Output = killhandle | out-string #run killhandle function.
+			$Output = KillHandle | out-string #run KillHandle function.
 			if (($Output.contains("DiabloII Check For Other Instances")) -eq $true){
 				$handlekilled = $true
 				Write-Host " `"Check for Other Instances`" Handle closed." -foregroundcolor green
