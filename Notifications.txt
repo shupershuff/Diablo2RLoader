@@ -1,5 +1,5 @@
 {
-    "Notification":  "Season 7 Ladder is not far away! Season 7 starts May 23rd 5:00 PM PDT",
-    "PublishDate":  "2024.05.17 15:27:00",
-    "ExpiryDate":  "2024.05.23 17:00:00"
+    "Notification":  "Season 8 is just around the corner! New Ladder starts August 23, 5 pm. PDT.",
+    "PublishDate":  "2024.08.11 11:45:00",
+    "ExpiryDate":  "2024.08.24 12:00:00"
 }

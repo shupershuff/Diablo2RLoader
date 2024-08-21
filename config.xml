@@ -43,7 +43,7 @@
 	Default and recommended option is d2emu.com as this pulls live data from the game as opposed to crowdsourced data.-->
 	<DCloneTrackerSource>D2Emu.com</DCloneTrackerSource>
 
-	<!--Allow you to have the script audibly warn you of upcoming DClone walks.
+	<!--Allow you to have the script audibly warn you of upcoming dclone walks.
 	Specify as many of the following options as you like: SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR
 	EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>
 	If left blank, this feature is disabled. Default is blank as this may be annoying for some people.-->
@@ -55,7 +55,6 @@
 	Enter "Imminent" to be only alarmed when status is 5/6 or has just walked.
 	Recommend setting to "All"-->
 	<DCloneAlarmLevel>All</DCloneAlarmLevel>
-
 	<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->
 	<DCloneAlarmVoice>Amazon</DCloneAlarmVoice>
 	

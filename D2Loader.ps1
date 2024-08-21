@@ -1276,7 +1276,7 @@ Function SetQualityRolls {
 }
 Function CowKingKilled {
 	Write-Host "`n                          You Killed the Cow King!" -foregroundcolor green
-    Write-Host "                                $X[38;2;165;146;99;22mMoo.$X[0m"
+	Write-Host "                                $X[38;2;165;146;99;22mMoo.$X[0m"
 	Write-Host "                                    $X[38;2;165;146;99;22mMoooooooo!$X[0m"
 	$voice = New-Object -ComObject Sapi.spvoice
 	$voice.rate = -4 #How quickly the voice message should be

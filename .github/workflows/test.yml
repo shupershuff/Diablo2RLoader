@@ -21,7 +21,7 @@ jobs:
         run: |
           Invoke-Pester tests/*.ps1 -Passthru | Export-CliXml -Path Unit.Tests.xml
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
             name: ubuntu-Unit-Tests
             path: Unit.Tests.xml
