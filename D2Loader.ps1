@@ -310,13 +310,13 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 		}
 		Function Formatter ([string]$line){
 			$pattern = "[\e]?[\[]?[`"-,`.!']?\b[\w\-,'`"]+(\S*)" # Regular expression pattern to find the last word including any trailing non-space characters. Also looks to include any preceding special characters or ANSI escape character.
-			$matches = [regex]::Matches($Line, $pattern) # Find all matches of the pattern in the string
+			$LastWordMatches = [regex]::Matches($Line, $pattern) # Find all matches of the pattern in the string
 			# Initialize variables to track the match with the highest index
 			$highestIndex = -1
 			$SelectedMatch = $Null
 			$PatternLengthCount = 0
 			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
-			ForEach ($match in $matches){# Iterate through each match (match being a block of characters, ie each word).
+			ForEach ($match in $LastWordMatches){# Iterate through each match (match being a block of characters, ie each word).
 				ForEach ($ANSIPattern in $ANSIPatterns){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
 					$ANSIMatches = $match.value | Select-String -Pattern $ANSIPattern -AllMatches
 					ForEach ($ANSIMatch in $ANSIMatches){
