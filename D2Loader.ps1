@@ -3586,6 +3586,7 @@ QuoteList
 SetQualityRolls
 Menu
 
+
 #For Diablo II: Resurrected
 #Dedicated to my cat Toby.
 
