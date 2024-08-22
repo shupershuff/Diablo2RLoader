@@ -3520,7 +3520,7 @@ Function Processing {
 				Write-Host " Couldn't rename window :(" -foregroundcolor red
 				PressTheAnyKey
 			}
-			If ($Script:Config.RememberWindowLocations -eq $True){ #If user has enabled the feature to automatically move game Windows to preferred screen locations
+			If ($Script:Config.RememberWindowLocations -eq $True){ #If user has enabled the feature to automatically move game Windows to preferred screen locations.
 				if ($Script:AccountChoice.WindowXCoordinates -ne "" -and $Script:AccountChoice.WindowYCoordinates -ne "" -and $Null -ne $Script:AccountChoice.WindowXCoordinates -and $Null -ne $Script:AccountChoice.WindowYCoordinates -and $Script:AccountChoice.WindowWidth -ne "" -and $Script:AccountChoice.WindowHeight -ne "" -and $Null -ne $Script:AccountChoice.WindowWidth -and $Null -ne $Script:AccountChoice.WindowHeight){ #Check if the account has had coordinates saved yet.
 					$GetLoadWindowClassFunc = $(Get-Command LoadWindowClass).Definition
 					$GetSetWindowLocationsFunc = $(Get-Command SetWindowLocations).Definition
