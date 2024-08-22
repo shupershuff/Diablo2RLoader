@@ -1476,36 +1476,8 @@ Function Inventory {#Info screen
 	Write-Host
 	PressTheAnyKey
 }
-Function LoadWindowClass { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
-	try {
-		[void][Window]
-	}
-	catch {
-		Add-Type @"
-		using System;
-		using System.Runtime.InteropServices;
-		public class Window {
-			[DllImport("user32.dll")]
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool GetWindowRect(
-				IntPtr hWnd, out RECT lpRect);			
-			[DllImport("user32.dll")]
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public extern static bool MoveWindow(
-				IntPtr handle, int x, int y, int width, int height, bool redraw);	
-			[DllImport("user32.dll")]
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool SetForegroundWindow(IntPtr hWnd);
-		}
-		public struct RECT {
-			public int Left;        // x position of upper-left corner
-			public int Top;         // y position of upper-left corner
-			public int Right;       // x position of lower-right corner
-			public int Bottom;      // y position of lower-right corner
-		}
-"@
-	}
-}
+
+
 Function SaveWindowLocations {# Get Window Location coordinates and save to Accounts.csv
 	LoadWindowClass
 	FormatFunction -indents 2 -text "Saving locations of each open account so that they the windows launch in the same place next time. Assumes you've configured the game to launch in windowed mode." 
