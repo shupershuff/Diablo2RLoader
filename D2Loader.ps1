@@ -3522,11 +3522,11 @@ Function Processing {
 			}
 			If ($Script:Config.RememberWindowLocations -eq $True){ #If user has enabled the feature to automatically move game Windows to preferred screen locations.
 				if ($Script:AccountChoice.WindowXCoordinates -ne "" -and $Script:AccountChoice.WindowYCoordinates -ne "" -and $Null -ne $Script:AccountChoice.WindowXCoordinates -and $Null -ne $Script:AccountChoice.WindowYCoordinates -and $Script:AccountChoice.WindowWidth -ne "" -and $Script:AccountChoice.WindowHeight -ne "" -and $Null -ne $Script:AccountChoice.WindowWidth -and $Null -ne $Script:AccountChoice.WindowHeight){ #Check if the account has had coordinates saved yet.
-					$GetAdd-WindowTypeFunc = $(Get-Command Add-WindowType).Definition
+					$GetAddWindowTypeFunc = $(Get-Command Add-WindowType).Definition
 					$GetSetWindowLocationsFunc = $(Get-Command SetWindowLocations).Definition
 					$JobID = (Start-Job -ScriptBlock { # Run this in a background job so we don't have to wait for it to complete
 						start-sleep -milliseconds 2024 # We need to wait for about 2 seconds for game to load as if we move it too early, the game itself will reposition the window. Absolute minimum is 420 milliseconds (funnily enough). Delay may need to be a bit higher for people with wooden computers.
-						Invoke-Expression "function Add-WindowType {$using:GetAdd-WindowTypeFunc}"
+						Invoke-Expression "function Add-WindowType {$using:GetAddWindowTypeFunc}"
 						Invoke-Expression "function SetWindowLocations {$using:GetSetWindowLocationsFunc}"
 						SetWindowLocations -x $Using:AccountChoice.WindowXCoordinates -y $Using:AccountChoice.WindowYCoordinates -Width $Using:AccountChoice.WindowWidth -height $Using:AccountChoice.WindowHeight -Id $Using:process.id
 					}).id
