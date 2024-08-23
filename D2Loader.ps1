@@ -1476,24 +1476,26 @@ Function Inventory {#Info screen
 	Write-Host
 	PressTheAnyKey
 }
-Function Add-WindowType { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
+Function WindowMover { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
 	if ($Script:WindowClassLoaded -ne $True){
 		$Script:WindowClassLoaded = $True
+		$user = "user"
+		$num = "32"
 		Add-Type @"
 		using System;
 		using System.Runtime.InteropServices;
 		public class WindowAPI {
-			[DllImport("user32.dll")] //we have to import this Dynamic link library as this contains methods for getting and setting window locations.
+			[DllImport("$user$num")] //we have to import this Dynamic link library as this contains methods for getting and setting window locations.
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool GetWindowRect( //Used to get Window coordinates
 				IntPtr hWnd, out RECT lpRect);
 				
-			[DllImport("user32.dll")]
+			[DllImport("$user$num")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public extern static bool MoveWindow( //Used to move windows
 				IntPtr handle, int x, int y, int width, int height, bool redraw);
 				
-			[DllImport("user32.dll")]
+			[DllImport("$user$num")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool SetForegroundWindow(IntPtr hWnd); //Used to bring window to foreground :)
 		}
@@ -1507,7 +1509,7 @@ Function Add-WindowType { #Used to get window locations and place them in the sa
 	}
 }
 Function SaveWindowLocations {# Get Window Location coordinates and save to Accounts.csv
-	Add-WindowType
+	WindowMover
 	FormatFunction -indents 2 -text "Saving locations of each open account so that they the windows launch in the same place next time. Assumes you've configured the game to launch in windowed mode." 
 	CheckActiveAccounts
 	#If Feature is enabled, add 'WindowXCoordinates' and 'WindowYCoordinates' columns to accounts.csv with empty values.
@@ -1568,7 +1570,7 @@ Function SetWindowLocations {#
 		[int]$Width,
 		[int]$Height
 	)
-	Add-WindowType
+	WindowMover
 	$handle = (Get-Process -Id $Id).MainWindowHandle
 	[WindowAPI]::MoveWindow($handle, $x, $y, $Width, $Height, $True)
 	[WindowAPI]::SetForegroundWindow($handle)
@@ -1672,7 +1674,7 @@ Function Options {
 				}
 			}
 			ElseIf ($NewOptionValue -eq "r"){
-				Add-WindowType
+				WindowMover
 				CheckActiveAccounts
 				if ($null -eq $Script:ActiveAccountsList){
 					FormatFunction -text "`nThere are no open games.`nTo reset window positions, you need to launch one or more instances first.`n" -indents 2 -IsWarning
@@ -3522,11 +3524,11 @@ Function Processing {
 			}
 			If ($Script:Config.RememberWindowLocations -eq $True){ #If user has enabled the feature to automatically move game Windows to preferred screen locations.
 				if ($Script:AccountChoice.WindowXCoordinates -ne "" -and $Script:AccountChoice.WindowYCoordinates -ne "" -and $Null -ne $Script:AccountChoice.WindowXCoordinates -and $Null -ne $Script:AccountChoice.WindowYCoordinates -and $Script:AccountChoice.WindowWidth -ne "" -and $Script:AccountChoice.WindowHeight -ne "" -and $Null -ne $Script:AccountChoice.WindowWidth -and $Null -ne $Script:AccountChoice.WindowHeight){ #Check if the account has had coordinates saved yet.
-					$GetAddWindowTypeFunc = $(Get-Command Add-WindowType).Definition
+					$GetAddWindowTypeFunc = $(Get-Command WindowMover).Definition
 					$GetSetWindowLocationsFunc = $(Get-Command SetWindowLocations).Definition
 					$JobID = (Start-Job -ScriptBlock { # Run this in a background job so we don't have to wait for it to complete
 						start-sleep -milliseconds 2024 # We need to wait for about 2 seconds for game to load as if we move it too early, the game itself will reposition the window. Absolute minimum is 420 milliseconds (funnily enough). Delay may need to be a bit higher for people with wooden computers.
-						Invoke-Expression "function Add-WindowType {$using:GetAddWindowTypeFunc}"
+						Invoke-Expression "function WindowMover {$using:GetAddWindowTypeFunc}"
 						Invoke-Expression "function SetWindowLocations {$using:GetSetWindowLocationsFunc}"
 						SetWindowLocations -x $Using:AccountChoice.WindowXCoordinates -y $Using:AccountChoice.WindowYCoordinates -Width $Using:AccountChoice.WindowWidth -height $Using:AccountChoice.WindowHeight -Id $Using:process.id
 					}).id
