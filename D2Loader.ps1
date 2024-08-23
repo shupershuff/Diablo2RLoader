@@ -1477,25 +1477,25 @@ Function Inventory {#Info screen
 	PressTheAnyKey
 }
 Function LoadWindowClass { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
-	try {
-		[void][Window]
-	}
-	catch {
+	if ($Script:WindowClassLoaded -ne $True){
+		$Script:WindowClassLoaded = $True
 		Add-Type @"
 		using System;
 		using System.Runtime.InteropServices;
-		public class Window {
+		public class WindowAPI {
+			[DllImport("user32.dll")] //we have to import this Dynamic link library as this contains methods for getting and setting window locations.
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool GetWindowRect( //Used to get Window coordinates
+				IntPtr hWnd, out RECT lpRect);
+				
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool GetWindowRect(
-				IntPtr hWnd, out RECT lpRect);			
+			public extern static bool MoveWindow( //Used to move windows
+				IntPtr handle, int x, int y, int width, int height, bool redraw);
+				
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
-			public extern static bool MoveWindow(
-				IntPtr handle, int x, int y, int width, int height, bool redraw);	
-			[DllImport("user32.dll")]
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool SetForegroundWindow(IntPtr hWnd);
+			public static extern bool SetForegroundWindow(IntPtr hWnd); //Used to bring window to foreground :)
 		}
 		public struct RECT {
 			public int Left;        // x position of upper-left corner
@@ -1539,7 +1539,7 @@ Function SaveWindowLocations {# Get Window Location coordinates and save to Acco
 			$handle = $process.MainWindowHandle
 			Write-Verbose "$($process.ProcessName) `(Id=$($process.Id), Handle=$handle`, Path=$($process.Path))"
 			$rectangle = New-Object RECT
-			[Window]::GetWindowRect($handle, [ref]$rectangle) | Out-Null
+			[WindowAPI]::GetWindowRect($handle, [ref]$rectangle) | Out-Null
 			FormatFunction -indents 2 -text "`nSaved Coordinates for account $($account.id) ($($account.AccountLabel))" -IsSuccess
 			Write-Host "     X Position = $($rectangle.Left)" -Foregroundcolor Green
 			Write-Host "     Y Position = $($rectangle.Top)" -Foregroundcolor Green
@@ -1570,8 +1570,8 @@ Function SetWindowLocations {#
 	)
 	LoadWindowClass
 	$handle = (Get-Process -Id $Id).MainWindowHandle
-	[Window]::MoveWindow($handle, $x, $y, $Width, $Height, $True)
-	[Window]::SetForegroundWindow($handle)
+	[WindowAPI]::MoveWindow($handle, $x, $y, $Width, $Height, $True)
+	[WindowAPI]::SetForegroundWindow($handle)
 }
 Function Options {
 	ImportXML
