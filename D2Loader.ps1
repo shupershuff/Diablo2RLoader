@@ -1476,7 +1476,32 @@ Function Inventory {#Info screen
 	Write-Host
 	PressTheAnyKey
 }
+# Function to add the type for interacting with user32.dll
+function Add-WindowType {
+    Add-Type @"
+        using System;
+        using System.Runtime.InteropServices;
+        public class WindowAPI {
+            [DllImport("user32.dll")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
+            [DllImport("user32.dll")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public extern static bool MoveWindow(IntPtr handle, int x, int y, int width, int height, bool redraw);
+
+            [DllImport("user32.dll")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool SetForegroundWindow(IntPtr hWnd);
+        }
+        public struct RECT {
+            public int Left;        
+            public int Top;         
+            public int Right;       
+            public int Bottom;      
+        }
+"@
+}
 Function SaveWindowLocations {# Get Window Location coordinates and save to Accounts.csv
 	LoadWindowClass
 	FormatFunction -indents 2 -text "Saving locations of each open account so that they the windows launch in the same place next time. Assumes you've configured the game to launch in windowed mode." 
