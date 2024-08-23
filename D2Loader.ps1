@@ -1476,34 +1476,38 @@ Function Inventory {#Info screen
 	Write-Host
 	PressTheAnyKey
 }
-# Function to add the type for interacting with user32.dll
-function Add-WindowType {
-    Add-Type @"
-        using System;
-        using System.Runtime.InteropServices;
-        public class WindowAPI {
-            [DllImport("user32.dll")]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-
-            [DllImport("user32.dll")]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public extern static bool MoveWindow(IntPtr handle, int x, int y, int width, int height, bool redraw);
-
-            [DllImport("user32.dll")]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool SetForegroundWindow(IntPtr hWnd);
-        }
-        public struct RECT {
-            public int Left;        
-            public int Top;         
-            public int Right;       
-            public int Bottom;      
-        }
+Function Add-WindowType { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
+	if ($Script:WindowClassLoaded -ne $True){
+		$Script:WindowClassLoaded = $True
+		Add-Type @"
+		using System;
+		using System.Runtime.InteropServices;
+		public class WindowAPI {
+			[DllImport("user32.dll")] //we have to import this Dynamic link library as this contains methods for getting and setting window locations.
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool GetWindowRect( //Used to get Window coordinates
+				IntPtr hWnd, out RECT lpRect);
+				
+			[DllImport("user32.dll")]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public extern static bool MoveWindow( //Used to move windows
+				IntPtr handle, int x, int y, int width, int height, bool redraw);
+				
+			[DllImport("user32.dll")]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool SetForegroundWindow(IntPtr hWnd); //Used to bring window to foreground :)
+		}
+		public struct RECT {
+			public int Left;        // x position of upper-left corner
+			public int Top;         // y position of upper-left corner
+			public int Right;       // x position of lower-right corner
+			public int Bottom;      // y position of lower-right corner
+		}
 "@
+	}
 }
 Function SaveWindowLocations {# Get Window Location coordinates and save to Accounts.csv
-	LoadWindowClass
+	Add-WindowType
 	FormatFunction -indents 2 -text "Saving locations of each open account so that they the windows launch in the same place next time. Assumes you've configured the game to launch in windowed mode." 
 	CheckActiveAccounts
 	#If Feature is enabled, add 'WindowXCoordinates' and 'WindowYCoordinates' columns to accounts.csv with empty values.
@@ -1535,7 +1539,7 @@ Function SaveWindowLocations {# Get Window Location coordinates and save to Acco
 			$handle = $process.MainWindowHandle
 			Write-Verbose "$($process.ProcessName) `(Id=$($process.Id), Handle=$handle`, Path=$($process.Path))"
 			$rectangle = New-Object RECT
-			[Window]::GetWindowRect($handle, [ref]$rectangle) | Out-Null
+			[WindowAPI]::GetWindowRect($handle, [ref]$rectangle) | Out-Null
 			FormatFunction -indents 2 -text "`nSaved Coordinates for account $($account.id) ($($account.AccountLabel))" -IsSuccess
 			Write-Host "     X Position = $($rectangle.Left)" -Foregroundcolor Green
 			Write-Host "     Y Position = $($rectangle.Top)" -Foregroundcolor Green
@@ -1564,10 +1568,10 @@ Function SetWindowLocations {#
 		[int]$Width,
 		[int]$Height
 	)
-	LoadWindowClass
+	Add-WindowType
 	$handle = (Get-Process -Id $Id).MainWindowHandle
-	[Window]::MoveWindow($handle, $x, $y, $Width, $Height, $True)
-	[Window]::SetForegroundWindow($handle)
+	[WindowAPI]::MoveWindow($handle, $x, $y, $Width, $Height, $True)
+	[WindowAPI]::SetForegroundWindow($handle)
 }
 Function Options {
 	ImportXML
@@ -1668,7 +1672,7 @@ Function Options {
 				}
 			}
 			ElseIf ($NewOptionValue -eq "r"){
-				LoadWindowClass
+				Add-WindowType
 				CheckActiveAccounts
 				if ($null -eq $Script:ActiveAccountsList){
 					FormatFunction -text "`nThere are no open games.`nTo reset window positions, you need to launch one or more instances first.`n" -indents 2 -IsWarning
@@ -3518,11 +3522,11 @@ Function Processing {
 			}
 			If ($Script:Config.RememberWindowLocations -eq $True){ #If user has enabled the feature to automatically move game Windows to preferred screen locations.
 				if ($Script:AccountChoice.WindowXCoordinates -ne "" -and $Script:AccountChoice.WindowYCoordinates -ne "" -and $Null -ne $Script:AccountChoice.WindowXCoordinates -and $Null -ne $Script:AccountChoice.WindowYCoordinates -and $Script:AccountChoice.WindowWidth -ne "" -and $Script:AccountChoice.WindowHeight -ne "" -and $Null -ne $Script:AccountChoice.WindowWidth -and $Null -ne $Script:AccountChoice.WindowHeight){ #Check if the account has had coordinates saved yet.
-					$GetLoadWindowClassFunc = $(Get-Command LoadWindowClass).Definition
+					$GetAddWindowTypeFunc = $(Get-Command Add-WindowType).Definition
 					$GetSetWindowLocationsFunc = $(Get-Command SetWindowLocations).Definition
 					$JobID = (Start-Job -ScriptBlock { # Run this in a background job so we don't have to wait for it to complete
 						start-sleep -milliseconds 2024 # We need to wait for about 2 seconds for game to load as if we move it too early, the game itself will reposition the window. Absolute minimum is 420 milliseconds (funnily enough). Delay may need to be a bit higher for people with wooden computers.
-						Invoke-Expression "function LoadWindowClass {$using:GetLoadWindowClassFunc}"
+						Invoke-Expression "function Add-WindowType {$using:GetAddWindowTypeFunc}"
 						Invoke-Expression "function SetWindowLocations {$using:GetSetWindowLocationsFunc}"
 						SetWindowLocations -x $Using:AccountChoice.WindowXCoordinates -y $Using:AccountChoice.WindowYCoordinates -Width $Using:AccountChoice.WindowWidth -height $Using:AccountChoice.WindowHeight -Id $Using:process.id
 					}).id
