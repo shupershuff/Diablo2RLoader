@@ -707,6 +707,12 @@ Function ValidationAndSetup {
 		Start-Sleep -milliseconds 1500
 		PressTheAnyKey
 	}
+	if ($Script:Config.RememberWindowLocations -eq $True){
+		if ((Test-Path -Path ($workingdirectory + 'WindowMover.ps1')) -ne $True){
+			$WindowMoverUrl = "https://raw.githubusercontent.com/shupershuff/Diablo2RLoader/main/WindowMover.ps1"
+			Invoke-WebRequest -Uri $WindowMoverUrl -OutFile "$WorkingDirectory\WindowMover.ps1"
+		}
+	}
 	if ($Null -eq $Script:Config.DCloneTrackerSource){
 		Write-Host "`n Config option 'DCloneTrackerSource' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -1804,12 +1810,18 @@ Function Options {
 	if ($XMLChanged -eq $True){
 		Write-Host "   Config Updated!" -foregroundcolor green
 		ImportXML
-		If ($Option -eq "4" -and $Script:Config.RememberWindowLocations -eq $True -and -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#if this is the first time it's been enabled display a setup message
-			Formatfunction -indents 2 -IsWarning -Text "`nYou've enabled RememberWindowsLocations but you still need to set it up. To set this up you need to perform the following steps:"
-			FormatFunction -indents 3 -iswarning -SubsequentLineIndents 3 -text "`n1. Open all of your D2r account instances.`n2. Move the window for each game instance to your preferred layout and size."
-			FormatFunction -indents 3 -iswarning -SubsequentLineIndents 3 -text "3. Come back to this options menu and go into the 'RememberWindowLocations' setting.`n4. Once in this menu, choose the option 's' to save coordinates of any open game instances."
-			FormatFunction -indents 2 -iswarning -text  "`n`nNow when you open these accounts they will open in this screen location each time :)`n"
-			PressTheAnyKey
+		If ($Option -eq "4"){
+			if ((Test-Path -Path ($workingdirectory + 'WindowMover.ps1')) -ne $True){
+				$WindowMoverUrl = "https://raw.githubusercontent.com/shupershuff/Diablo2RLoader/main/WindowMover.ps1"
+				Invoke-WebRequest -Uri $WindowMoverUrl -OutFile "$WorkingDirectory\WindowMover.ps1"
+			}
+			if ($Script:Config.RememberWindowLocations -eq $True -and -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#if this is the first time it's been enabled display a setup message
+				Formatfunction -indents 2 -IsWarning -Text "`nYou've enabled RememberWindowsLocations but you still need to set it up. To set this up you need to perform the following steps:"
+				FormatFunction -indents 3 -iswarning -SubsequentLineIndents 3 -text "`n1. Open all of your D2r account instances.`n2. Move the window for each game instance to your preferred layout and size."
+				FormatFunction -indents 3 -iswarning -SubsequentLineIndents 3 -text "3. Come back to this options menu and go into the 'RememberWindowLocations' setting.`n4. Once in this menu, choose the option 's' to save coordinates of any open game instances."
+				FormatFunction -indents 2 -iswarning -text  "`n`nNow when you open these accounts they will open in this screen location each time :)`n"
+				PressTheAnyKey
+			}
 		}
 		start-sleep -milliseconds 2500
 	}
@@ -3506,9 +3518,9 @@ Function Processing {
 						. "$Using:WorkingDirectory\WindowMover.ps1"
 						Invoke-Expression "function SetWindowLocations {$using:GetSetWindowLocationsFunc}"
 						SetWindowLocations -x $Using:AccountChoice.WindowXCoordinates -y $Using:AccountChoice.WindowYCoordinates -Width $Using:AccountChoice.WindowWidth -Height $Using:AccountChoice.WindowHeight -Id $Using:process.id
-					}).id
+					})
 					$Script:MovedWindowLocations ++
-					$Script:JobIDs += $JobID
+					$Script:JobIDs += $JobID.id
 					start-sleep -milliseconds 2024
 				}
 				Else { #Show a warning if user has RememberWindowLocations but hasn't configured it for this account yet.
