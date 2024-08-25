@@ -434,7 +434,7 @@ Function InitialiseCurrentStats {
 					$StatsCSVRecoveryAttempt = 2
 				}
 				if ($StatsCSVImportSuccess -eq $False -or $StatsCSVRecoveryAttempt -eq 2){
-					Write-Host "`n Stats.csv is corrupted or empty." -foregroundcolor red
+					Write-Host;Write-Host " Stats.csv is corrupted or empty." -foregroundcolor red
 					Write-Host " Replace with data from stats.backup.csv or delete stats.csv`n" -foregroundcolor red
 					PressTheAnyKeyToExit
 				}
@@ -459,7 +459,7 @@ Function CheckForUpdates {
 			$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
 			$Script:LatestVersion = [version[]]$ReleaseInfo.Name.Trim('v')
 			if ($Script:LatestVersion -gt $Script:CurrentVersion){ #If a newer version exists, prompt user about update details and ask if they want to update.
-				Write-Host "`n Update available! See Github for latest version and info" -foregroundcolor Yellow -nonewline
+				Write-Host;Write-Host " Update available! See Github for latest version and info" -foregroundcolor Yellow -nonewline
 				if ([version]$CurrentVersion -in (($Releases.name.Trim('v') | ForEach-Object { [version]$_ } | Sort-Object -desc)[2..$releases.count])){
 					Write-Host ".`n There have been several releases since your version." -foregroundcolor Yellow
 					Write-Host " Checkout Github releases for fixes/features added. " -foregroundcolor Yellow
@@ -478,11 +478,11 @@ Function CheckForUpdates {
 						$UpdateResponseValid = $True
 					}
 					Else {
-						Write-Host "`n Invalid response. Choose $X[38;2;255;165;000;22mY$X[0m $X[38;2;231;072;086;22mor$X[0m $X[38;2;255;165;000;22mN$X[0m.`n" -ForegroundColor red
+						Write-Host;Write-Host " Invalid response. Choose $X[38;2;255;165;000;22mY$X[0m $X[38;2;231;072;086;22mor$X[0m $X[38;2;255;165;000;22mN$X[0m.`n" -ForegroundColor red
 					}
 				} Until ($UpdateResponseValid -eq $True)
 				if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes"){#if user wants to update script, download .zip of latest release, extract to temporary folder and replace old D2Loader.ps1 with new D2Loader.ps1
-					Write-Host "`n Updating... :)" -foregroundcolor green
+					Write-Host;Write-Host " Updating... :)" -foregroundcolor green
 					try {
 						New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") -ErrorAction stop | Out-Null #create temporary folder to download zip to and extract
 					}
@@ -512,7 +512,7 @@ Function CheckForUpdates {
 			$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update stats.csv with the new time played.
 		}
 		Catch {
-			Write-Host "`n Couldn't check for updates. GitHub API limit may have been reached..." -foregroundcolor Yellow
+			Write-Host;Write-Host " Couldn't check for updates. GitHub API limit may have been reached..." -foregroundcolor Yellow
 			Start-Sleep -milliseconds 3500
 		}
 	}
@@ -547,7 +547,7 @@ Function ImportXML { #Import Config XML
 		Write-Verbose "Config imported successfully."
 	}
 	Catch {
-		Write-Host "`n Config.xml Was not able to be imported. This could be due to a typo or a special character such as `'&`' being incorrectly used." -foregroundcolor red
+		Write-Host;Write-Host " Config.xml Was not able to be imported. This could be due to a typo or a special character such as `'&`' being incorrectly used." -foregroundcolor red
 		Write-Host " The error message below will show which line in the config.xml is invalid:" -foregroundcolor red
 		Write-Host (" " + $PSitem.exception.message + "`n") -foregroundcolor red
 		PressTheAnyKeyToExit
@@ -579,11 +579,11 @@ Function ValidationAndSetup {
 		$NewXML = $NewXML -replace $Pattern, "-->;;"
 		$NewXML = $NewXML -replace ";;","`r`n"
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Write-Host "`n Corrected the description for GamePath in config.xml." -foregroundcolor Green
+		Write-Host;Write-Host " Corrected the description for GamePath in config.xml." -foregroundcolor Green
 		Start-Sleep -milliseconds 1500
 	}
 	if ($Null -ne $Script:Config.CommandLineArguments){#remove this config option as arguments are now stored in accounts.csv so that different arguments can be set for each account
-		Write-Host "`n Config option 'CommandLineArguments' is being moved to accounts.csv" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'CommandLineArguments' is being moved to accounts.csv" -foregroundcolor Yellow
 		Write-Host " This is to enable different CMD arguments per account." -foregroundcolor Yellow
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = ";;\t<!--Optionally add any command line arguments that you'd like the game to start with-->;;\t<CommandLineArguments>.*?</CommandLineArguments>;;"
@@ -596,7 +596,7 @@ Function ValidationAndSetup {
 		Start-Sleep -milliseconds 1500
 	}
 	if ($Null -eq $Script:Config.ManualSettingSwitcherEnabled){#not to be confused with the AutoSettingSwitcher.
-		Write-Host "`n Config option 'ManualSettingSwitcherEnabled' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'ManualSettingSwitcherEnabled' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This is an optional config option to allow you to manually select which " -foregroundcolor Yellow
 		Write-Host " config file you want to use for each account when launching." -foregroundcolor Yellow
@@ -614,7 +614,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.TrackAccountUseTime){
-		Write-Host "`n Config option 'TrackAccountUseTime' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'TrackAccountUseTime' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This is an optional config option to track time played per account." -foregroundcolor Yellow
 		Write-Host " Added this missing option into .xml file :)`n" -foregroundcolor green
@@ -629,7 +629,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.ConvertPlainTextSecrets){
-		Write-Host "`n Renaming ConvertPlainTextPasswords to ConvertPlainTextSecrets in config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Renaming ConvertPlainTextPasswords to ConvertPlainTextSecrets in config.xml" -foregroundcolor Yellow
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = "<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->"
 		$Replacement = "<!--Whether script should convert plain text tokens and passwords in accounts.csv to a secure string. Recommend leaving this set to True.-->"
@@ -644,7 +644,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -ne $Script:Config.EnableBatchFeature){ # remove from config.xml. Not needed anymore as script checks accounts.csv to see if batches are used.
-		Write-Host "`n Config option 'EnableBatchFeature' is no longer needed." -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'EnableBatchFeature' is no longer needed." -foregroundcolor Yellow
 		Write-Host " Removed this option from config.xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = ";;\t<!--Enable the ability to open a group of accounts.*?</EnableBatchFeature>;;"
@@ -656,7 +656,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -ne $Script:Config.CheckForNextTZ){
-		Write-Host "`n Config option 'CheckForNextTZ' is no longer needed." -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'CheckForNextTZ' is no longer needed." -foregroundcolor Yellow
 		Write-Host " Removed this option from config.xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = ";;\t<!--Choose whether or not TZ checker.*?</CheckForNextTZ>;;"
@@ -668,7 +668,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -ne $Script:Config.AskForRegionOnceOnly){
-		Write-Host "`n Config option 'AskForRegionOnceOnly' is no longer needed." -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'AskForRegionOnceOnly' is no longer needed." -foregroundcolor Yellow
 		Write-Host " Removed this option from config.xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = ";;\t<!--Whether script should only prompt you once for region.*?</AskForRegionOnceOnly>;;"
@@ -680,7 +680,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.DisableOpenAllAccountsOption){
-		Write-Host "`n Config option 'DisableOpenAllAccountsOption' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'DisableOpenAllAccountsOption' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This is an optional config option to disable the functionality for opening all accounts." -foregroundcolor Yellow
 		Write-Host " Added this missing option into .xml file :)`n" -foregroundcolor green
@@ -694,7 +694,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.RememberWindowLocations){
-		Write-Host "`n Config option 'RememberWindowLocations' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'RememberWindowLocations' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This is an optional config option to remember game window locations/sizes." -foregroundcolor Yellow
 		Write-Host " Added this missing option into .xml file :)`n" -foregroundcolor green
@@ -714,7 +714,7 @@ Function ValidationAndSetup {
 		}
 	}
 	if ($Null -eq $Script:Config.DCloneTrackerSource){
-		Write-Host "`n Config option 'DCloneTrackerSource' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'DCloneTrackerSource' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This is a required config option to determine which source should be used" -foregroundcolor Yellow
 		Write-Host " for obtaining current DClone status." -foregroundcolor Yellow
@@ -731,7 +731,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.DCloneAlarmLevel){
-		Write-Host "`n Config option 'DCloneAlarmLevel' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'DCloneAlarmLevel' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This field determines if alarms should activate for all DClone status " -foregroundcolor Yellow
 		Write-Host " changes or just when DClone is about to walk." -foregroundcolor Yellow
@@ -751,7 +751,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.DCloneAlarmList){
-		Write-Host "`n Config option 'DCloneAlarmList' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'DCloneAlarmList' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This is an optional config option to enable both audible and text based" -foregroundcolor Yellow
 		Write-Host " alarms for DClone Status changes." -foregroundcolor Yellow
@@ -773,14 +773,14 @@ Function ValidationAndSetup {
 		$pattern = "^(HC|SC)(L?)-(NA|EU|KR)$" #set pattern: must start with HC or SC, optionally has L after it, must end in -NA -EU or -KR
 		ForEach ($Alarm in $Script:Config.DCloneAlarmList.split(",").trim()){
 			if ($Alarm -notmatch $pattern){
-				Write-Host "`n $Alarm is not a valid Alarm entry."  -foregroundcolor Red
+				Write-Host;Write-Host " $Alarm is not a valid Alarm entry."  -foregroundcolor Red
 				Write-Host " See valid options in Config.xml`n"  -foregroundcolor Red
 				PressTheAnyKeyToExit
 			}
 		}
 	}
 	if ($Null -eq $Script:Config.DCloneAlarmVoice){
-		Write-Host "`n Config option 'DCloneAlarmVoice' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'DCloneAlarmVoice' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This config allows you to choose between a Woman or Man's robot voice." -foregroundcolor Yellow
 		Write-Host " Added this missing option into .xml file :)`n" -foregroundcolor green
@@ -794,7 +794,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.DCloneAlarmVolume){
-		Write-Host "`n Config option 'DCloneAlarmVolume' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'DCloneAlarmVolume' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " Added this missing option into .xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
@@ -807,7 +807,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.ForceAuthTokenForRegion){
-		Write-Host "`n Config option 'ForceAuthTokenForRegion' missing from config.xml" -foregroundcolor Yellow
+		Write-Host;Write-Host " Config option 'ForceAuthTokenForRegion' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This config allows you to force AuthToken based authentication for any." -foregroundcolor Yellow
 		Write-Host " regions specified in config. Useful for when Blizzard have bricked." -foregroundcolor Yellow
@@ -827,7 +827,7 @@ Function ValidationAndSetup {
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml" -raw
 	$Pattern = "d2rapi.fly.dev"
 	if ($Null -ne (Select-Xml -Content $xml -XPath "//*[contains(.,'$pattern')]")){
-		Write-Host "`n Replaced 'd2rapi.fly.dev' in config with 'd2emu.com'." -foregroundcolor Yellow
+		Write-Host;Write-Host " Replaced 'd2rapi.fly.dev' in config with 'd2emu.com'." -foregroundcolor Yellow
 		$Replacement = "d2emu.com"
 		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
@@ -843,7 +843,7 @@ Function ValidationAndSetup {
 			"Wench",
 			"Bloke"
 		if ($Script:Config.DCloneAlarmVoice -notin $ValidVoiceOptions){
-			Write-Host "`n Error: DCloneAlarmVoice in config has an invalid option set." -Foregroundcolor red
+			Write-Host;Write-Host " Error: DCloneAlarmVoice in config has an invalid option set." -Foregroundcolor red
 			Write-Host " Open config.xml and set this to either Paladin or Amazon.`n" -Foregroundcolor red
 			PressTheAnyKeyToExit
 		}
@@ -875,7 +875,7 @@ Function ValidationAndSetup {
 		}
 	}
 	if ($Option -notin $ConfigXMLlist){
-		Write-Host "`n Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
+		Write-Host;Write-Host " Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
 		Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m`n"
 		PressTheAnyKey
 	}
@@ -923,7 +923,7 @@ Function ValidationAndSetup {
 	}
 	#Check if SetTextv2.exe exists, if not, compile from SetTextv2.bas. SetTextv2.exe is what's used to rename the windows.
 	if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
-		Write-Host "`n First Time run!`n" -foregroundcolor Yellow
+		Write-Host;Write-Host " First Time run!`n" -foregroundcolor Yellow
 		Write-Host " SetTextv2.exe not in .\SetText\ folder and needs to be built."
 		if ((Test-Path -Path "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe") -ne $True){#check that .net4.0 is actually installed or compile will fail.
 			Write-Host " .Net v4.0 not installed. This is required to compile the Window Renamer for Diablo." -foregroundcolor red
@@ -944,7 +944,7 @@ Function ValidationAndSetup {
 	$Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
 	if ((Test-Path -Path ($workingdirectory + '\Handle\Handle64.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
 		try {
-			Write-Host "`n Handle64.exe not in .\Handle\ folder. Downloading now..." -foregroundcolor Yellow
+			Write-Host;Write-Host " Handle64.exe not in .\Handle\ folder. Downloading now..." -foregroundcolor Yellow
 			try {
 				New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\Handle\ExtractTemp\") -ErrorAction stop | Out-Null #create temporary folder to download zip to and extract
 			}
@@ -964,7 +964,7 @@ Function ValidationAndSetup {
 		Catch {
 			Write-Host " Handle.zip couldn't be downloaded." -foregroundcolor red
 			FormatFunction -text "It's possible the download link changed. Try checking the Microsoft page or SysInternals.com site for a download link and ensure that handle64.exe is placed in the .\Handle\ folder." -IsError
-			Write-Host "`n $X[38;2;69;155;245;4mhttps://learn.microsoft.com/sysinternals/downloads/handle$X[0m"
+			Write-Host;Write-Host " $X[38;2;69;155;245;4mhttps://learn.microsoft.com/sysinternals/downloads/handle$X[0m"
 			Write-Host " $X[38;2;69;155;245;4mhttps://download.sysinternals.com/files/Handle.zip$X[0m`n"
 			PressTheAnyKeyToExit
 		}
@@ -1019,7 +1019,7 @@ Function ImportCSV { #Import Account CSV
 		if ($Null -ne $Script:AccountOptionsCSV){
 			#check Accounts.csv has been updated and doesn't contain the example account.
 			if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
-				Write-Host "`n You haven't setup accounts.csv with your accounts." -foregroundcolor red
+				Write-Host;Write-Host " You haven't setup accounts.csv with your accounts." -foregroundcolor red
 				Write-Host " Add your account details to the CSV file and run the script again :)`n" -foregroundcolor red
 				PressTheAnyKeyToExit
 			}
@@ -1035,7 +1035,7 @@ Function ImportCSV { #Import Account CSV
 			$DuplicateIDs = $AccountOptionsCSV | Where-Object {$_.id -ne ""} | Group-Object -Property ID | Where-Object { $_.Count -gt 1 }
 			if ($duplicateIDs.Count -gt 0){
 				$duplicateIDs = ($DuplicateIDs.name | out-string).replace("`r`n",", ").trim(", ") #outputs more meaningful error.
-				Write-Host "`n Accounts.csv has duplicate IDs: $duplicateIDs" -foregroundcolor red
+				Write-Host;Write-Host " Accounts.csv has duplicate IDs: $duplicateIDs" -foregroundcolor red
 				FormatFunction -Text "Please adjust Accounts.csv so that the ID numbers against each account are unique.`n" -IsError
 				PressTheAnyKeyToExit
 			}
@@ -1192,9 +1192,9 @@ Function ImportCSV { #Import Account CSV
 					Start-Sleep -milliseconds 3000
 				}
 				Catch {
-					Write-Host "`n Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
+					Write-Host;Write-Host " Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
 					Write-Host " Please close accounts.csv and run the script again!" -foregroundcolor red
-					Write-Host "`n If Accounts.csv isn't open, then there must be a permission issue." -foregroundcolor red
+					Write-Host;Write-Host " If Accounts.csv isn't open, then there must be a permission issue." -foregroundcolor red
 					Write-Host " Try moving your install folder to a different location." -foregroundcolor red
 					PressTheAnyKeyToExit
 				}
@@ -1218,7 +1218,7 @@ Function ImportCSV { #Import Account CSV
 				$AccountCSVRecoveryAttempt = 2
 			}
 			if ($AccountCSVImportSuccess -eq $False -or $AccountCSVRecoveryAttempt -eq 2){
-				Write-Host "`n There's an issue with accounts.csv." -foregroundcolor red
+				Write-Host;Write-Host " There's an issue with accounts.csv." -foregroundcolor red
 				Write-Host " Please ensure that this is filled out correctly and rerun the script." -foregroundcolor red
 				Write-Host " Alternatively, rebuild CSV from scratch or restore from accounts.backup.csv`n" -foregroundcolor red
 				PressTheAnyKeyToExit
@@ -1281,7 +1281,7 @@ Function SetQualityRolls {
 	}
 }
 Function CowKingKilled {
-	Write-Host "`n                          You Killed the Cow King!" -foregroundcolor green
+	Write-Host;Write-Host "                          You Killed the Cow King!" -foregroundcolor green
 	Write-Host "                                $X[38;2;165;146;99;22mMoo.$X[0m"
 	Write-Host "                                    $X[38;2;165;146;99;22mMoooooooo!$X[0m"
 	$voice = New-Object -ComObject Sapi.spvoice
@@ -1389,7 +1389,7 @@ Function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 }
 Function Inventory {#Info screen
 	Clear-Host
-	Write-Host "`n          Stay a while and listen! Here's your D2r Loader info.`n`n" -foregroundcolor yellow
+	Write-Host;Write-Host "          Stay a while and listen! Here's your D2r Loader info.`n`n" -foregroundcolor yellow
 	Write-Host "  $X[38;2;255;255;255;4mNote:$X[0m D2r Playtime is based on the time the script has been running"
 	Write-Host "  whilst D2r is running. In other words, if you use this script when you're"
 	Write-Host "  playing the game, it will give you a reasonable idea of the total time"
@@ -1465,10 +1465,10 @@ Function Inventory {#Info screen
 		}
 	}
 	if ($Null -ne $Script:LatestVersion -and $Script:LatestVersion -gt $Script:CurrentVersion){
-		Write-Host "`n  $X[4mLatest Script Version:$X[0m v$LatestVersion" -foregroundcolor yellow
+		Write-Host;Write-Host "  $X[4mLatest Script Version:$X[0m v$LatestVersion" -foregroundcolor yellow
 		Write-Host "  $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
 	}
-	Write-Host "`n  $X[38;2;0;225;0;22mConsider donating as a way to say thanks via an option below:$X[0m"
+	Write-Host;Write-Host "  $X[38;2;0;225;0;22mConsider donating as a way to say thanks via an option below:$X[0m"
 	Write-Host "    - $X[38;2;69;155;245;4mhttps://www.buymeacoffee.com/shupershuff$X[0m"
 	Write-Host "    - $X[38;2;69;155;245;4mhttps://paypal.me/Shupershuff$X[0m"
 	Write-Host "    - $X[38;2;69;155;245;4mhttps://github.com/sponsors/shupershuff?frequency=one-time&amount=5$X[0m`n"
@@ -1539,7 +1539,7 @@ Function SaveWindowLocations {# Get Window Location coordinates and save to Acco
 		}
 	}
 	$NewCSV | Export-CSV "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-	Write-Host "`n   Updated CSV with window positions." -foregroundcolor green
+	Write-Host;Write-Host "   Updated CSV with window positions." -foregroundcolor green
 	start-sleep -milliseconds 2500
 }
 Function SetWindowLocations {#
@@ -1558,7 +1558,7 @@ Function SetWindowLocations {#
 Function Options {
 	ImportXML
 	Clear-Host
-	Write-Host "`n This screen allows you to change script config options."
+	Write-Host;Write-Host " This screen allows you to change script config options."
 	Write-Host " Note that you can also change these settings (and more) in config.xml."
 	Write-Host " Options you can change/toggle below:`n"
 	$OptionList = "1","2","3","4","5","6","7","8"
@@ -1573,10 +1573,10 @@ Function Options {
 		$CurrentDefaultRegion = "Asia"
 	}
 	Write-Host "  $X[38;2;255;165;000;22m1$X[0m - $X[4mDefaultRegion$X[0m (Currently $X[38;2;255;165;000;22m$CurrentDefaultRegion$X[0m)"
-	Write-Host "`n  $X[38;2;255;165;000;22m2$X[0m - $X[4mSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.SettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)" 
+	Write-Host;Write-Host "  $X[38;2;255;165;000;22m2$X[0m - $X[4mSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.SettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)" 
 	Write-Host "  $X[38;2;255;165;000;22m3$X[0m - $X[4mManualSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.ManualSettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
 	Write-Host "  $X[38;2;255;165;000;22m4$X[0m - $X[4mRememberWindowLocations$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.RememberWindowLocations -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
-	Write-Host "`n  $X[38;2;255;165;000;22m5$X[0m - $X[4mDCloneTrackerSource$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneTrackerSource)$X[0m)"
+	Write-Host;Write-Host "  $X[38;2;255;165;000;22m5$X[0m - $X[4mDCloneTrackerSource$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneTrackerSource)$X[0m)"
 	FormatFunction -indents 1 -SubsequentLineIndents 4 -text ("$X[38;2;255;166;000;22m6$X[0m - $X[4mDCloneAlarmList$X[0m (Currently $X[38;2;255;165;000;22m" + $(if ($Script:Config.DCloneAlarmList -eq ""){"Alarms are disabled"}Else{$Script:Config.DCloneAlarmList}) + "$X[0m)")
 	if ($Script:Config.DCloneAlarmList -ne ""){
 		Write-Host "  $X[38;2;255;165;000;22m7$X[0m - $X[4mDCloneAlarmLevel$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneAlarmLevel)$X[0m)"
@@ -1589,7 +1589,7 @@ Function Options {
 		}
 		if ($ParametersUsed -eq $True){
 			$OptionList += "t"
-			Write-Host "`n  $X[38;2;255;165;000;22mt$X[0m - Temporarily force token authentication (for configured accounts ONLY)."
+			Write-Host;Write-Host "  $X[38;2;255;165;000;22mt$X[0m - Temporarily force token authentication (for configured accounts ONLY)."
 			if ($Script:ForceAuthToken -eq $True){
 				Write-Host "      $X[4mForceAuthToken$X[0m (Currently $X[38;2;5;250;5;22mEnabled$X[0m)."
 			}
@@ -1598,7 +1598,7 @@ Function Options {
 			}
 		}
 	}
-	Write-Host "`n Enter one of the above options to change the setting."
+	Write-Host;Write-Host " Enter one of the above options to change the setting."
 	Write-Host " Otherwise, press any other key to return to main menu... " -nonewline
 	$Option = readkey
 	Write-Host;Write-Host
@@ -1642,7 +1642,7 @@ Function Options {
 					return $True
 				}
 				Catch {
-					Write-Host "`n  Was unable to update config :(" -foregroundcolor red
+					Write-Host;Write-Host "  Was unable to update config :(" -foregroundcolor red
 					start-sleep -milliseconds 2500
 					return $False
 				}
@@ -2462,7 +2462,7 @@ Function DClone {# Display DClone Status.
 			if ($Count -eq 6){
 				Write-Host " #                                  |                                     #"
 				Write-Host " ##########################################################################"
-				Write-Host "`n   DClone Status provided by $DCloneTrackerSource`n"
+				Write-Host;Write-Host "   DClone Status provided by $DCloneTrackerSource`n"
 			}
 		}
 		Until ($Count -eq 6)
@@ -2585,9 +2585,9 @@ Function TerrorZone {
 		}
 	}
 	$NextTZ = $NextTZ -replace '..$', ''
-	Write-Host "`n   Current TZ is:  " -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
+	Write-Host;Write-Host "   Current TZ is:  " -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
 	Write-Host "   Next TZ is:     " -nonewline;Write-Host ($NextTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
-	Write-Host "`n  Information Retrieved at: " $TimeDataObtained
+	Write-Host;Write-Host "  Information Retrieved at: " $TimeDataObtained
 	Write-Host "  TZ info courtesy of:       $TZProvider`n"
 	PressTheAnyKey
 }
@@ -2767,7 +2767,7 @@ Function Menu {
 				$Script:BatchToOpen = $Batch
 				$Batch = $Null
 				DisplayActiveAccounts
-				Write-Host "`n Batch specified in Parameter is either incorrect or all accounts in that" -foregroundcolor Yellow
+				Write-Host;Write-Host " Batch specified in Parameter is either incorrect or all accounts in that" -foregroundcolor Yellow
 				Write-Host " batch are already open. Adjust your parameter or manually specify below.`n" -foregroundcolor Yellow
 				start-sleep -milliseconds 5000
 				exit
@@ -2831,14 +2831,14 @@ Function Menu {
 	}
 	$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv" #Import accounts.csv again in case someone has updated Auth Method without closing the script.
 	if ($Script:OpenAllAccounts -eq $True){
-		Write-Host "`n Opening all accounts..."
+		Write-Host;Write-Host " Opening all accounts..."
 		ForEach ($ID in $Script:AcceptableValues){
 			$Script:AccountChoice = $Script:AccountOptionsCSV | where-object {$_.id -eq $ID}
 			$Script:AccountID = $ID
 			if ($id -eq $Script:AcceptableValues[-1]){
 				$Script:LastAccount = $true
 			}
-			Write-Host "`n Opening Account: $ID"
+			Write-Host;Write-Host " Opening Account: $ID"
 			Processing
 		}
 		$Script:LastAccount = $False
@@ -2852,7 +2852,7 @@ Function Menu {
 			if ($Script:BatchedAccountIDsToOpen.count -gt 1){
 				$BatchPlural = "s"
 			}
-			Write-Host "`n Opening account$BatchPlural " -nonewline 
+			Write-Host;Write-Host " Opening account$BatchPlural " -nonewline 
 			CommaSeparatedList $Script:BatchedAccountIDsToOpen -AndText
 			Write-Host " from batch $BatchToOpen..."
 			ForEach ($ID in $Script:BatchedAccountIDsToOpen){
@@ -2861,7 +2861,7 @@ Function Menu {
 				if ($id -eq $Script:BatchedAccountIDsToOpen[-1]){
 					$Script:LastAccount = $true
 				}
-				Write-Host "`n Opening Account: $ID..."
+				Write-Host;Write-Host " Opening Account: $ID..."
 				Processing
 			}
 			$Script:LastAccount = $False
@@ -2931,7 +2931,7 @@ Function ChooseAccount {
 					$GibberingGemstone = get-random -minimum 0 -maximum  4095
 					if ($GibberingGemstone -eq 69 -or $GibberingGemstone -eq 420){#nice
 						Write-Host "  Perfect Gem Activated" -ForegroundColor magenta
-						Write-Host "`n     OMG!" -foregroundcolor green
+						Write-Host;Write-Host "     OMG!" -foregroundcolor green
 						$Script:PGemActivated = $True
 						([int]$Script:CurrentStats.PerfectGems) ++
 						SetQualityRolls
@@ -3009,7 +3009,7 @@ Function ChooseAccount {
 					}
 					$Script:SessionTimer = $Script:SessionTimer + $AdditionalTimeSpan #track current session time but only if a game is running
 					if ($WriteAcctCSVError -eq $true){
-						Write-Host "`n  Couldn't update accounts.csv with playtime info." -ForegroundColor Red
+						Write-Host;Write-Host "  Couldn't update accounts.csv with playtime info." -ForegroundColor Red
 						Write-Host "  It's likely locked for editing, please ensure you close this file." -ForegroundColor Red
 						start-sleep -milliseconds 1500
 						$WriteAcctCSVError = $False
@@ -3027,7 +3027,7 @@ Function ChooseAccount {
 						$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv with Total Time played.
 					}
 					Catch {
-						Write-Host "`n  Couldn't update Stats.csv with playtime info." -ForegroundColor Red
+						Write-Host;Write-Host "  Couldn't update Stats.csv with playtime info." -ForegroundColor Red
 						Write-Host "  It's likely locked for editing, please ensure you close this file." -ForegroundColor Red
 						start-sleep -milliseconds 1500
 					}
@@ -3075,7 +3075,7 @@ Function ChooseAccount {
 					} #check for dclone status
 				}
 				catch {
-					Write-Host "`n Unable to check for DClone status via $($Script:Config.DCloneTrackerSource)." -Foregroundcolor Red
+					Write-Host;Write-Host " Unable to check for DClone status via $($Script:Config.DCloneTrackerSource)." -Foregroundcolor Red
 					Write-Host " Try restarting script or changing the source in config.xml." -Foregroundcolor Red
 				}
 			}
@@ -3175,7 +3175,7 @@ Function ChooseAccount {
 			} until ($Null -ne $Script:AccountID)
 			if ($Null -ne $Script:AccountID){
 				if ($Script:AccountID -eq "x"){
-					Write-Host "`n Good day to you partner :)" -foregroundcolor yellow
+					Write-Host;Write-Host " Good day to you partner :)" -foregroundcolor yellow
 					Start-Sleep -milliseconds 486
 					Exit
 				}
@@ -3210,7 +3210,7 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 		Write-Host ("    " + $Server.option + "      " + $Regiontablespacing + $Server.region + $Regiontablespacing + "   " + $Server.region_server) -foregroundcolor green
 	}
 	do {
-		Write-Host "`n Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
+		Write-Host;Write-Host " Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
 		Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + "): ") -nonewline
 		$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13,27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 		if ("" -eq $Script:RegionOption){
@@ -3400,7 +3400,7 @@ Function Processing {
 					Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
 				}
 				catch {
-					Write-Host "`n Couldn't find settings.json in $SettingsProfilePath" -foregroundcolor red
+					Write-Host;Write-Host " Couldn't find settings.json in $SettingsProfilePath" -foregroundcolor red
 					Write-Host " Please start the game normally (via Bnet client) & this file will be rebuilt." -foregroundcolor red
 					PressTheAnyKeyToExit
 				}
@@ -3467,7 +3467,7 @@ Function Processing {
 				}
 			}
 			Else {# if no custom settings files are found, IE user hasn't set them up yet.
-				Write-Host "`n  No Custom Settings files have been saved yet. Loading default settings." -foregroundcolor Yellow
+				Write-Host;Write-Host "  No Custom Settings files have been saved yet. Loading default settings." -foregroundcolor Yellow
 				Write-Host "  See README for setup instructions.`n" -foregroundcolor Yellow
 				PressTheAnyKey
 			}
@@ -3558,7 +3558,7 @@ Function Processing {
 					FormatFunction -IsSuccess -text "Moved game window$plural to preferred location$plural."
 					Start-Sleep -milliseconds 750
 				}
-				Write-Host "`nGood luck hero..." -foregroundcolor magenta
+				Write-Host;Write-Host "Good luck hero..." -foregroundcolor magenta
 			}
 			Start-Sleep -milliseconds 1000
 			$Script:ScriptHasBeenRun = $true
