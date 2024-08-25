@@ -1483,8 +1483,8 @@ Function Inventory {#Info screen
 	PressTheAnyKey
 }
 Function WindowMover { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
-    if ($Script:WindowClassLoaded -ne $True){
-        $Script:WindowClassLoaded = $True
+    if ($Script:WindowMoverGoodToGo -ne $True){
+        $Script:WindowMoverGoodToGo = $True
 		. "$Script:WorkingDirectory\WindowMover.ps1"
 	}
 }
