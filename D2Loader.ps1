@@ -1485,19 +1485,7 @@ Function WindowMover { #Used to get window locations and place them in the same 
 		using System;
 		using System.Runtime.InteropServices;
 		public class WindowAPI {
-			[DllImport("$user$num.dll")] //we have to import this Dynamic link library as this contains methods for getting and setting window locations.
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool GetWindowRect( //Used to get Window coordinates
-				IntPtr hWnd, out RECT lpRect);
-				
-			[DllImport("$user$num.dll")]
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public extern static bool MoveWindow( //Used to move windows
-				IntPtr handle, int x, int y, int width, int height, bool redraw);
-				
-			[DllImport("$user$num.dll")]
-			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool SetForegroundWindow(IntPtr hWnd); //Used to bring window to foreground :)
+
 		}
 		public struct RECT {
 			public int Left;        // x position of upper-left corner
