@@ -708,7 +708,7 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Script:Config.RememberWindowLocations -eq $True){
-		if ((Test-Path -Path ($workingdirectory + 'WindowMover.ps1')) -ne $True){
+		if ((Test-Path -Path ($Script:WorkingDirectory + '\WindowMover.ps1')) -ne $True){
 			$WindowMoverUrl = "https://raw.githubusercontent.com/shupershuff/Diablo2RLoader/main/WindowMover.ps1"
 			Invoke-WebRequest -Uri $WindowMoverUrl -OutFile "$WorkingDirectory\WindowMover.ps1"
 		}
@@ -1483,8 +1483,8 @@ Function Inventory {#Info screen
 	PressTheAnyKey
 }
 Function WindowMover { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
-    if ($Script:WindowMoverGoodToGo -ne $True){
-        $Script:WindowMoverGoodToGo = $True
+    if ($Script:WindowClassLoaded -ne $True){
+        $Script:WindowClassLoaded = $True
 		. "$Script:WorkingDirectory\WindowMover.ps1"
 	}
 }
@@ -3395,7 +3395,7 @@ Function Processing {
 			$SettingsJSON = ($SettingsProfilePath + "Settings.json")
 			$files = Get-ChildItem -Path $SettingsProfilePath -Filter "settings.*.json"
 			$Counter = 1
-			if ((Test-Path -Path ($SettingsProfilePath+ "Settings" + $id.id +".json")) -ne $true){#if somehow settings<ID>.json doesn't exist yet make one from the current settings.json file.
+			if ((Test-Path -Path ($SettingsProfilePath + "Settings" + $id.id +".json")) -ne $true){#if somehow settings<ID>.json doesn't exist yet make one from the current settings.json file.
 				try {
 					Copy-Item $SettingsJSON ($SettingsProfilePath + "Settings"+ $id.id + ".json") -ErrorAction Stop
 				}
