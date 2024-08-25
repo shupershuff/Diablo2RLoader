@@ -1,3 +1,5 @@
+$Script:WindowMoverVersion = "1.0.0"
+$WindowMoverVersion = "1.0.0"
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
