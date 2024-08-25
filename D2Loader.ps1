@@ -119,6 +119,14 @@ $Script:AllowedKeyList += @(96,97,98,99,100,101,102,103,104,105) #0 to 9 on nump
 $Script:AllowedKeyList += @(65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90) # A to Z
 $Script:MenuOptions = @(65,66,67,68,71,73,74,79,82,83,84,88) #a, b, c, d, g, i, j, o, r, s, t and x. Used to detect singular valid entries where script can have two characters entered.
 $EnterKey = 13
+$ANSIFormatHighRunes = "$X[38;2;255;165;000;22m"
+$ANSIFormatUnique = "$X[38;2;165;146;99;22m"
+$ANSIFormatSet = "$X[38;2;0;225;0;22m"
+$ANSIFormatRare = "$X[38;2;255;255;0;22m"
+$ANSIFormatMagic = "$X[38;2;65;105;225;22m"
+$ANSIFormatNormal = "$X[38;2;255;255;255;22m"
+$ANSIFormatPurple = "$X[38;2;255;0;255;22m"
+$ANSIFormatHyperlink = "$X[38;2;69;155;245;4m"
 Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys){#used to receive user input
 	$key = $Null
 	$Host.UI.RawUI.FlushInputBuffer()
@@ -145,7 +153,7 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys){#us
 		}
 	}
 	if ($key_.VirtualKeyCode -ne $EnterKey -and -not ($Null -eq $key) -and [bool]$NoOutput -ne $true){
-		Write-Host ("$X[38;2;255;165;000;22m" + "$($key.Character)" + "$X[0m") -NoNewLine
+		Write-Host ("$($ANSIFormatHighRunes)" + "$($key.Character)" + "$X[0m") -NoNewLine
 	}
 	if (![string]::IsNullOrEmpty($message)){
 		Write-Host "" # newline
@@ -200,7 +208,7 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
 						break
 					}
 					$inputString += $key_.Character
-					Write-Host ("$X[38;2;255;165;000;22m" + $key_.Character + "$X[0m") -nonewline
+					Write-Host ("$($ANSIFormatHighRunes)" + $key_.Character + "$X[0m") -nonewline
 					if ($inputString.length -eq 2){#if 2 characters have been entered
 						break
 					}
@@ -221,7 +229,7 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
 		}
 	}
 	if ($TwoDigitAcctSelection -eq $False -or ($TwoDigitAcctSelection -eq $True -and $key_.VirtualKeyCode -in $Script:MenuOptions)){
-		Write-Host ("$X[38;2;255;165;000;22m" + "$inputString" + "$X[0m")
+		Write-Host ("$($ANSIFormatHighRunes)" + "$inputString" + "$X[0m")
 	}
 	if (![string]::IsNullOrEmpty($message) -or $TwoDigitAcctSelection -eq $True){
 		Write-Host "" # newline
@@ -309,16 +317,16 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$SecondLineDeltaIndent = "   "
 		}
 		Function Formatter ([string]$line){
-			$pattern = "[\e]?[\[]?[`"-,`.!']?\b[\w\-,'`"]+(\S*)" # Regular expression pattern to find the last word including any trailing non-space characters. Also looks to include any preceding special characters or ANSI escape character.
-			$LastWordMatches = [regex]::Matches($Line, $pattern) # Find all matches of the pattern in the string
+			$LastWordPattern = "[\e]?[\[]?[`"-,`.!']?\b[\w\-,'`"]+(\S*)" # Regular expression pattern to find the last word including any trailing non-space characters. Also looks to include any preceding special characters or ANSI escape character.
+			$LastWordMatches = [regex]::Matches($Line, $LastWordPattern) # Find all matches of the pattern in the string
 			# Initialize variables to track the match with the highest index
 			$highestIndex = -1
 			$SelectedMatch = $Null
 			$PatternLengthCount = 0
-			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
+			$ANSIFormating = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m" #Possible ANSI patterns to look for for opening and closing ANSI formatting.
 			ForEach ($match in $LastWordMatches){# Iterate through each match (match being a block of characters, ie each word).
-				ForEach ($ANSIPattern in $ANSIPatterns){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
-					$ANSIMatches = $match.value | Select-String -Pattern $ANSIPattern -AllMatches
+				ForEach ($ANSIFormat in $ANSIFormating){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
+					$ANSIMatches = $match.value | Select-String -Pattern $ANSIFormat -AllMatches
 					ForEach ($ANSIMatch in $ANSIMatches){
 						$Script:ANSIUsed = $True
 						$PatternLengthCount = $PatternLengthCount + (($ANSIMatch.matches | ForEach-Object {$_.Value}) -join "").length #Calculate how many characters in the text are ANSI formatting characters and thus won't be displayed on screen, to prevent skewing word count.
@@ -371,7 +379,7 @@ Function CommaSeparatedList {
 	)
 	ForEach ($Value in $Values){ #write out each account option, comma separated but show each option in orange writing. Essentially output overly complicated fancy display options :)
 		if ($Value -ne $Values[-1]){
-			Write-Host "$X[38;2;255;165;000;22m$Value$X[0m" -nonewline
+			Write-Host "$($ANSIFormatHighRunes)$Value$X[0m" -nonewline
 			if ($Value -ne $Values[-2]){Write-Host ", " -nonewline}
 		}
 		else {
@@ -387,7 +395,7 @@ Function CommaSeparatedList {
 					Write-Host ", " -nonewline
 				}
 			}
-			Write-Host "$X[38;2;255;165;000;22m$Value$X[0m" -nonewline
+			Write-Host "$($ANSIFormatHighRunes)$Value$X[0m" -nonewline
 		}
 	}
 }
@@ -463,22 +471,22 @@ Function CheckForUpdates {
 				if ([version]$CurrentVersion -in (($Releases.name.Trim('v') | ForEach-Object { [version]$_ } | Sort-Object -desc)[2..$releases.count])){
 					Write-Host ".`n There have been several releases since your version." -foregroundcolor Yellow
 					Write-Host " Checkout Github releases for fixes/features added. " -foregroundcolor Yellow
-					Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/$X[0m`n"
+					Write-Host " $($ANSIFormatHyperlink)https://github.com/shupershuff/Diablo2RLoader/releases/$X[0m`n"
 				}
 				Else {
-					Write-Host ":`n $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m`n"
+					Write-Host ":`n $($ANSIFormatHyperlink)https://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m`n"
 				}
 				FormatFunction -Text $ReleaseInfo.body #Output the latest release notes in an easy to read format.
 				Write-Host; Write-Host
 				Do {
 					Write-Host " Your Current Version is v$CurrentVersion."
-					Write-Host (" Would you like to update to v"+ $Script:LatestVersion + "? $X[38;2;255;165;000;22mY$X[0m/$X[38;2;255;165;000;22mN$X[0m: ") -nonewline
+					Write-Host (" Would you like to update to v"+ $Script:LatestVersion + "? $($ANSIFormatHighRunes)Y$X[0m/$($ANSIFormatHighRunes)N$X[0m: ") -nonewline
 					$ShouldUpdate = ReadKey
 					if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes" -or $ShouldUpdate -eq "n" -or $ShouldUpdate -eq "no"){
 						$UpdateResponseValid = $True
 					}
 					Else {
-						Write-Host;Write-Host " Invalid response. Choose $X[38;2;255;165;000;22mY$X[0m $X[38;2;231;072;086;22mor$X[0m $X[38;2;255;165;000;22mN$X[0m.`n" -ForegroundColor red
+						Write-Host;Write-Host " Invalid response. Choose $($ANSIFormatHighRunes)Y$X[0m $X[38;2;231;072;086;22mor$X[0m $($ANSIFormatHighRunes)N$X[0m.`n" -ForegroundColor red
 					}
 				} Until ($UpdateResponseValid -eq $True)
 				if ($ShouldUpdate -eq "y" -or $ShouldUpdate -eq "yes"){#if user wants to update script, download .zip of latest release, extract to temporary folder and replace old D2Loader.ps1 with new D2Loader.ps1
@@ -565,7 +573,7 @@ Function SetDCloneAlarmLevels {
 	}
 	else {#if user has typo'd the config file or left it blank.
 		$DCloneErrorMessage = ("  Error: DClone Alarm Levels have been misconfigured in config.xml. ###  Check that the value for DCloneAlarmLevel is entered correctly.").Replace("###", "`n")
-		Write-Host ("`n" + $DCloneErrorMessage + "`n") -Foregroundcolor red
+		Write-Host;Write-Host ("" + $DCloneErrorMessage + "`n") -Foregroundcolor red
 		PressTheAnyKeyToExit
 	}
 }
@@ -770,9 +778,9 @@ Function ValidationAndSetup {
 		PressTheAnyKey
 	}
 	if ($Null -ne $Script:Config.DCloneAlarmList -and $Script:Config.DCloneAlarmList -ne ""){#validate data to prevent errors from typos
-		$pattern = "^(HC|SC)(L?)-(NA|EU|KR)$" #set pattern: must start with HC or SC, optionally has L after it, must end in -NA -EU or -KR
+		$RegionPattern = "^(HC|SC)(L?)-(NA|EU|KR)$" #set pattern: must start with HC or SC, optionally has L after it, must end in -NA -EU or -KR
 		ForEach ($Alarm in $Script:Config.DCloneAlarmList.split(",").trim()){
-			if ($Alarm -notmatch $pattern){
+			if ($Alarm -notmatch $RegionPattern){
 				Write-Host;Write-Host " $Alarm is not a valid Alarm entry."  -foregroundcolor Red
 				Write-Host " See valid options in Config.xml`n"  -foregroundcolor Red
 				PressTheAnyKeyToExit
@@ -876,7 +884,7 @@ Function ValidationAndSetup {
 	}
 	if ($Option -notin $ConfigXMLlist){
 		Write-Host;Write-Host " Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
-		Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m`n"
+		Write-Host " $($ANSIFormatHyperlink)https://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m`n"
 		PressTheAnyKey
 	}
 	if ($Config.GamePath -match "`""){#Remove any quotes from path in case someone ballses this up.
@@ -964,8 +972,8 @@ Function ValidationAndSetup {
 		Catch {
 			Write-Host " Handle.zip couldn't be downloaded." -foregroundcolor red
 			FormatFunction -text "It's possible the download link changed. Try checking the Microsoft page or SysInternals.com site for a download link and ensure that handle64.exe is placed in the .\Handle\ folder." -IsError
-			Write-Host;Write-Host " $X[38;2;69;155;245;4mhttps://learn.microsoft.com/sysinternals/downloads/handle$X[0m"
-			Write-Host " $X[38;2;69;155;245;4mhttps://download.sysinternals.com/files/Handle.zip$X[0m`n"
+			Write-Host;Write-Host " $($ANSIFormatHyperlink)https://learn.microsoft.com/sysinternals/downloads/handle$X[0m"
+			Write-Host " $($ANSIFormatHyperlink)https://download.sysinternals.com/files/Handle.zip$X[0m`n"
 			PressTheAnyKeyToExit
 		}
 	}
@@ -983,14 +991,14 @@ Function ValidateTokenInput {
 		[string] $AccountLabel
 	)
 	do {
-		$extractedInfo = $null
+		$ExtractedInfo = $null
 		if ($ManuallyEntered){
 			$TokenInput = Read-host (" Enter your token URL or enter the token for account '" + $AccountLabel + "'")			
 		}
-		$pattern = "(?<=\?ST=|&ST=|^|http://localhost:0/\?ST=)([^&]+)"
-		if ($tokeninput -match $pattern){
-			$extractedInfo = ($matches[1]).replace("http://localhost:0/?ST=","")
-			return $extractedInfo
+		$TokenPattern = "(?<=\?ST=|&ST=|^|http://localhost:0/\?ST=)([^&]+)" # Any text after "ST="
+		if ($TokenInput -match $TokenPattern){
+			$ExtractedInfo = ($matches[1]).replace("http://localhost:0/?ST=","") #return the matching string and replace any preamble.
+			return $ExtractedInfo
 		}
 		Else {
 			Write-Host " Token details are incorrect." -foregroundcolor red
@@ -1107,7 +1115,7 @@ Function ImportCSV { #Import Account CSV
 					$UpdateAccountsCSV = $True
 				}
 				if ($Entry.AuthenticationMethod -ne "Token" -and $Entry.AuthenticationMethod -ne "Parameter"){
-					Write-Host ("`n Error: AuthenticationMethod in accounts.csv for " + $Entry.AccountLabel + " is invalid.") -Foregroundcolor red
+					Write-Host;Write-Host (" Error: AuthenticationMethod in accounts.csv for " + $Entry.AccountLabel + " is invalid.") -Foregroundcolor red
 					Write-Host " Open accounts.csv and set this to either 'Parameter' or 'Token'.`n" -Foregroundcolor red
 					PressTheAnyKeyToExit
 				}
@@ -1124,7 +1132,7 @@ Function ImportCSV { #Import Account CSV
 					$TokensUpdated = $true
 				}
 				if ($Entry.Token.length -eq 0 -and $Entry.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
-					Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a Token defined.") -foregroundcolor yellow
+					Write-Host;Write-Host (" The account " + $Entry.AccountLabel + " doesn't yet have a Token defined.") -foregroundcolor yellow
 					Write-Host " See the readme on Github for how to obtain Auth token.`n" -foregroundcolor yellow
 					Write-Host " https://github.com/shupershuff/Diablo2RLoader/#3-setup-your-accounts`n" -foregroundcolor cyan
 					while ($Entry.Token.length -eq 0){#prevent empty entries as this will cause errors.
@@ -1160,7 +1168,7 @@ Function ImportCSV { #Import Account CSV
 					$PWsUpdated = $true
 				}
 				if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
-					Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a password defined.`n") -foregroundcolor yellow
+					Write-Host;Write-Host (" The account " + $Entry.AccountLabel + " doesn't yet have a password defined.`n") -foregroundcolor yellow
 					if ($Config.ConvertPlainTextSecrets -eq $True){
 						while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
 							$Entry.PW = read-host -AsSecureString " Enter the Battle.net password for"$Entry.AccountLabel
@@ -1282,8 +1290,8 @@ Function SetQualityRolls {
 }
 Function CowKingKilled {
 	Write-Host;Write-Host "                          You Killed the Cow King!" -foregroundcolor green
-	Write-Host "                                $X[38;2;165;146;99;22mMoo.$X[0m"
-	Write-Host "                                    $X[38;2;165;146;99;22mMoooooooo!$X[0m"
+	Write-Host "                                $($ANSIFormatUnique)Moo.$X[0m"
+	Write-Host "                                    $($ANSIFormatUnique)Moooooooo!$X[0m"
 	$voice = New-Object -ComObject Sapi.spvoice
 	$voice.rate = -4 #How quickly the voice message should be
 	$voice.volume = $Config.DCloneAlarmVolume
@@ -1401,20 +1409,20 @@ Function Inventory {#Info screen
 	$NormalProbability = ($QualityArray | where-object {$_.type -eq "Normal"} | Select-Object Probability).probability
 	$Script:CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"
 	$Line1 =   "                    ----------------------------------"
-	$Line2 =  ("                   |  $X[38;2;255;255;255;22mD2r Playtime (Hours):$X[0m " +  ((($time =([TimeSpan]::Parse($CurrentStats.TotalGameTime))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
-	$Line3 =  ("                   |  $X[38;2;255;255;255;22mCurrent Session (Hours):$X[0m" + ((($time =([TimeSpan]::Parse($Script:SessionTimer))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
-	$Line4 =  ("                   |  $X[38;2;255;255;255;22mScript Launch Counter:$X[0m " + $CurrentStats.TimesLaunched)
+	$Line2 =  ("                   |  $($ANSIFormatNormal)D2r Playtime (Hours):$X[0m " +  ((($time =([TimeSpan]::Parse($CurrentStats.TotalGameTime))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
+	$Line3 =  ("                   |  $($ANSIFormatNormal)Current Session (Hours):$X[0m" + ((($time =([TimeSpan]::Parse($Script:SessionTimer))).hours + ($time.days * 24)).tostring() + ":" + ("{0:D2}" -f $time.minutes)))
+	$Line4 =  ("                   |  $($ANSIFormatNormal)Script Launch Counter:$X[0m " + $CurrentStats.TimesLaunched)
 	$Line5 =   "                    ----------------------------------"
-	$Line6 =  ("                   |  $X[38;2;255;165;000;22mHigh Runes$X[0m Found: " + $(if ($CurrentStats.HighRunesFound -eq ""){"0"} else {$CurrentStats.HighRunesFound}))
-	$Line7 =  ("                   |  $X[38;2;165;146;99;22mUnique$X[0m Quotes Found: " + $(if ($CurrentStats.UniquesFound -eq ""){"0"} else {$CurrentStats.UniquesFound}))
-	$Line8 =  ("                   |  $X[38;2;0;225;0;22mSet$X[0m Quotes Found: " + $(if ($CurrentStats.SetItemsFound -eq ""){"0"} else {$CurrentStats.SetItemsFound}))
-	$Line9 =  ("                   |  $X[38;2;255;255;0;22mRare$X[0m Quotes Found: " + $(if ($CurrentStats.RaresFound -eq ""){"0"} else {$CurrentStats.RaresFound}))
-	$Line10 = ("                   |  $X[38;2;65;105;225;22mMagic$X[0m Quotes Found: " + $(if ($CurrentStats.MagicItemsFound -eq ""){"0"} else {$CurrentStats.MagicItemsFound}))
-	$Line11 = ("                   |  $X[38;2;255;255;255;22mNormal$X[0m Quotes Found: " + $(if ($CurrentStats.NormalItemsFound -eq ""){"0"} else {$CurrentStats.NormalItemsFound}))
+	$Line6 =  ("                   |  $($ANSIFormatHighRunes)High Runes$X[0m Found: " + $(if ($CurrentStats.HighRunesFound -eq ""){"0"} else {$CurrentStats.HighRunesFound}))
+	$Line7 =  ("                   |  $($ANSIFormatUnique)Unique$X[0m Quotes Found: " + $(if ($CurrentStats.UniquesFound -eq ""){"0"} else {$CurrentStats.UniquesFound}))
+	$Line8 =  ("                   |  $($ANSIFormatSet)Set$X[0m Quotes Found: " + $(if ($CurrentStats.SetItemsFound -eq ""){"0"} else {$CurrentStats.SetItemsFound}))
+	$Line9 =  ("                   |  $($ANSIFormatRare)Rare$X[0m Quotes Found: " + $(if ($CurrentStats.RaresFound -eq ""){"0"} else {$CurrentStats.RaresFound}))
+	$Line10 = ("                   |  $($ANSIFormatMagic)Magic$X[0m Quotes Found: " + $(if ($CurrentStats.MagicItemsFound -eq ""){"0"} else {$CurrentStats.MagicItemsFound}))
+	$Line11 = ("                   |  $($ANSIFormatNormal)Normal$X[0m Quotes Found: " + $(if ($CurrentStats.NormalItemsFound -eq ""){"0"} else {$CurrentStats.NormalItemsFound}))
 	$Line12 =  "                    ----------------------------------"
-	$Line13 = ("                   |  $X[38;2;165;146;99;22mCow King Killed:$X[0m " + $(if ($CurrentStats.CowKingKilled -eq ""){"0"} else {$CurrentStats.CowKingKilled}))
-	$Line14 = ("                   |  $X[38;2;255;0;255;22mGems Activated:$X[0m  " + $(if ($CurrentStats.Gems -eq ""){"0"} else {$CurrentStats.Gems}))
-	$Line15 = ("                   |  $X[38;2;255;0;255;22mPerfect Gem Activated:$X[0m " + $(if ($CurrentStats.PerfectGems -eq ""){"0"} else {$CurrentStats.PerfectGems}))
+	$Line13 = ("                   |  $($ANSIFormatUnique)Cow King Killed:$X[0m " + $(if ($CurrentStats.CowKingKilled -eq ""){"0"} else {$CurrentStats.CowKingKilled}))
+	$Line14 = ("                   |  $($ANSIFormatPurple)Gems Activated:$X[0m  " + $(if ($CurrentStats.Gems -eq ""){"0"} else {$CurrentStats.Gems}))
+	$Line15 = ("                   |  $($ANSIFormatPurple)Perfect Gem Activated:$X[0m " + $(if ($CurrentStats.PerfectGems -eq ""){"0"} else {$CurrentStats.PerfectGems}))
 	$Line16 =  "                    ----------------------------------"
 	$Lines = @($Line1,$Line2,$Line3,$Line4,$Line5,$Line6,$Line7,$Line8,$Line9,$Line10,$Line11,$Line12,$Line13,$Line14,$Line15,$Line16)
 	# Loop through each object in the array to find longest line (for formatting)
@@ -1447,12 +1455,12 @@ Function Inventory {#Info screen
 			Write-Host " |"
 		}
 	}
-	Write-Host ("`n  Chance to find $X[38;2;65;105;225;22mMagic$X[0m quality quote or better: " + [math]::Round((($QualityArraySum - $NormalProbability + 1) * (1/$QualityArraySum) * 100),2) + "%" )
-	Write-Host ("`n  $X[4mD2r Game Version:$X[0m    " + (Get-Command "$GamePath\D2R.exe").FileVersionInfo.FileVersion)
+	Write-Host;Write-Host ("  Chance to find $($ANSIFormatMagic)Magic$X[0m quality quote or better: " + [math]::Round((($QualityArraySum - $NormalProbability + 1) * (1/$QualityArraySum) * 100),2) + "%" )
+	Write-Host;Write-Host ("  $X[4mD2r Game Version:$X[0m    " + (Get-Command "$GamePath\D2R.exe").FileVersionInfo.FileVersion)
 	Write-Host "  $X[4mScript Install Path:$X[0m " -nonewline
 	Write-Host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.
 	Write-Host "  $X[4mYour Script Version:$X[0m v$CurrentVersion"
-	Write-Host "  $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion$X[0m"
+	Write-Host "  $($ANSIFormatHyperlink)https://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion$X[0m"
 	if ($null -eq $Script:LatestVersionCheck -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
 		try {
 			$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
@@ -1466,12 +1474,12 @@ Function Inventory {#Info screen
 	}
 	if ($Null -ne $Script:LatestVersion -and $Script:LatestVersion -gt $Script:CurrentVersion){
 		Write-Host;Write-Host "  $X[4mLatest Script Version:$X[0m v$LatestVersion" -foregroundcolor yellow
-		Write-Host "  $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
+		Write-Host "  $($ANSIFormatHyperlink)https://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m"
 	}
-	Write-Host;Write-Host "  $X[38;2;0;225;0;22mConsider donating as a way to say thanks via an option below:$X[0m"
-	Write-Host "    - $X[38;2;69;155;245;4mhttps://www.buymeacoffee.com/shupershuff$X[0m"
-	Write-Host "    - $X[38;2;69;155;245;4mhttps://paypal.me/Shupershuff$X[0m"
-	Write-Host "    - $X[38;2;69;155;245;4mhttps://github.com/sponsors/shupershuff?frequency=one-time&amount=5$X[0m`n"
+	Write-Host;Write-Host "  $($ANSIFormatSet)Consider donating as a way to say thanks via an option below:$X[0m"
+	Write-Host "    - $($ANSIFormatHyperlink)https://www.buymeacoffee.com/shupershuff$X[0m"
+	Write-Host "    - $($ANSIFormatHyperlink)https://paypal.me/Shupershuff$X[0m"
+	Write-Host "    - $($ANSIFormatHyperlink)https://github.com/sponsors/shupershuff?frequency=one-time&amount=5$X[0m`n"
 	if ($Script:NotificationsAvailable -eq $True){
 		Write-Host "  -------------------------------------------------------------------------"
 		Write-Host "  $X[38;2;255;165;000;48;2;1;1;1;4mNotification:$X[0m" -nonewline
@@ -1483,8 +1491,8 @@ Function Inventory {#Info screen
 	PressTheAnyKey
 }
 Function WindowMover { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
-    if ($Script:WindowClassLoaded -ne $True){
-        $Script:WindowClassLoaded = $True
+	if ($Script:WindowClassLoaded -ne $True){
+		$Script:WindowClassLoaded = $True
 		. "$Script:WorkingDirectory\WindowMover.ps1"
 	}
 }
@@ -1572,16 +1580,16 @@ Function Options {
 	ElseIf ($Script:Config.DefaultRegion -eq 3){
 		$CurrentDefaultRegion = "Asia"
 	}
-	Write-Host "  $X[38;2;255;165;000;22m1$X[0m - $X[4mDefaultRegion$X[0m (Currently $X[38;2;255;165;000;22m$CurrentDefaultRegion$X[0m)"
-	Write-Host;Write-Host "  $X[38;2;255;165;000;22m2$X[0m - $X[4mSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.SettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)" 
-	Write-Host "  $X[38;2;255;165;000;22m3$X[0m - $X[4mManualSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.ManualSettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
-	Write-Host "  $X[38;2;255;165;000;22m4$X[0m - $X[4mRememberWindowLocations$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.RememberWindowLocations -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
-	Write-Host;Write-Host "  $X[38;2;255;165;000;22m5$X[0m - $X[4mDCloneTrackerSource$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneTrackerSource)$X[0m)"
-	FormatFunction -indents 1 -SubsequentLineIndents 4 -text ("$X[38;2;255;166;000;22m6$X[0m - $X[4mDCloneAlarmList$X[0m (Currently $X[38;2;255;165;000;22m" + $(if ($Script:Config.DCloneAlarmList -eq ""){"Alarms are disabled"}Else{$Script:Config.DCloneAlarmList}) + "$X[0m)")
+	Write-Host "  $($ANSIFormatHighRunes)1$X[0m - $X[4mDefaultRegion$X[0m (Currently $($ANSIFormatHighRunes)$CurrentDefaultRegion$X[0m)"
+	Write-Host;Write-Host "  $($ANSIFormatHighRunes)2$X[0m - $X[4mSettingSwitcherEnabled$X[0m (Currently $($ANSIFormatHighRunes)$(if($Script:Config.SettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)" 
+	Write-Host "  $($ANSIFormatHighRunes)3$X[0m - $X[4mManualSettingSwitcherEnabled$X[0m (Currently $($ANSIFormatHighRunes)$(if($Script:Config.ManualSettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
+	Write-Host "  $($ANSIFormatHighRunes)4$X[0m - $X[4mRememberWindowLocations$X[0m (Currently $($ANSIFormatHighRunes)$(if($Script:Config.RememberWindowLocations -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
+	Write-Host;Write-Host "  $($ANSIFormatHighRunes)5$X[0m - $X[4mDCloneTrackerSource$X[0m (Currently $($ANSIFormatHighRunes)$($Script:Config.DCloneTrackerSource)$X[0m)"
+	FormatFunction -indents 1 -SubsequentLineIndents 4 -text ("$X[38;2;255;166;000;22m6$X[0m - $X[4mDCloneAlarmList$X[0m (Currently $($ANSIFormatHighRunes)" + $(if ($Script:Config.DCloneAlarmList -eq ""){"Alarms are disabled"}Else{$Script:Config.DCloneAlarmList}) + "$X[0m)")
 	if ($Script:Config.DCloneAlarmList -ne ""){
-		Write-Host "  $X[38;2;255;165;000;22m7$X[0m - $X[4mDCloneAlarmLevel$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneAlarmLevel)$X[0m)"
-		Write-Host "  $X[38;2;255;165;000;22m8$X[0m - $X[4mDCloneAlarmVoice$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneAlarmVoice)$X[0m)"
-		Write-Host "  $X[38;2;255;165;000;22m9$X[0m - $X[4mDCloneAlarmVolume$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneAlarmVolume)$X[0m)"
+		Write-Host "  $($ANSIFormatHighRunes)7$X[0m - $X[4mDCloneAlarmLevel$X[0m (Currently $($ANSIFormatHighRunes)$($Script:Config.DCloneAlarmLevel)$X[0m)"
+		Write-Host "  $($ANSIFormatHighRunes)8$X[0m - $X[4mDCloneAlarmVoice$X[0m (Currently $($ANSIFormatHighRunes)$($Script:Config.DCloneAlarmVoice)$X[0m)"
+		Write-Host "  $($ANSIFormatHighRunes)9$X[0m - $X[4mDCloneAlarmVolume$X[0m (Currently $($ANSIFormatHighRunes)$($Script:Config.DCloneAlarmVolume)$X[0m)"
 	}
 	if ($Script:TokensConfigured -eq $True){
 		foreach ($row in $Script:AccountOptionsCSV){
@@ -1589,12 +1597,12 @@ Function Options {
 		}
 		if ($ParametersUsed -eq $True){
 			$OptionList += "t"
-			Write-Host;Write-Host "  $X[38;2;255;165;000;22mt$X[0m - Temporarily force token authentication (for configured accounts ONLY)."
+			Write-Host;Write-Host "  $($ANSIFormatHighRunes)t$X[0m - Temporarily force token authentication (for configured accounts ONLY)."
 			if ($Script:ForceAuthToken -eq $True){
 				Write-Host "      $X[4mForceAuthToken$X[0m (Currently $X[38;2;5;250;5;22mEnabled$X[0m)."
 			}
 			else {
-				Write-Host "      $X[4mForceAuthToken$X[0m (Currently $X[38;2;255;165;000;22mDisabled$X[0m)."
+				Write-Host "      $X[4mForceAuthToken$X[0m (Currently $($ANSIFormatHighRunes)Disabled$X[0m)."
 			}
 		}
 	}
@@ -1612,18 +1620,18 @@ Function Options {
 			[switch]$OptionInteger
 		)
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml" -Raw
-		FormatFunction -indents 1 -text "Changing setting for $X[4m$($ConfigName)$X[0m (Currently $X[38;2;255;165;000;22m$($Current)$X[0m).`n" 
+		FormatFunction -indents 1 -text "Changing setting for $X[4m$($ConfigName)$X[0m (Currently $($ANSIFormatHighRunes)$($Current)$X[0m).`n" 
 		FormatFunction -text $Description -indents 1
 		Write-Host;Write-Host $OptionsText
 		do {
 			if ($OptionInteger -eq $True){
-				Write-Host "   Enter a number between $X[38;2;255;165;000;22m1$X[0m and $X[38;2;255;165;000;22m99$X[0m or '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
+				Write-Host "   Enter a number between $($ANSIFormatHighRunes)1$X[0m and $($ANSIFormatHighRunes)99$X[0m or '$($ANSIFormatHighRunes)c$X[0m' to cancel: " -nonewline
 				$AcceptableOptions = 1..99 # Allow user to enter 1 to 99
 				$NewOptionValue = (ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27 -TwoDigitAcctSelection $True).tostring()
 				$NewValue = $NewOptionValue
 			}
 			Else {
-				Write-Host "   Enter " -nonewline;CommaSeparatedList -NoOr ($OptionsList.keys | sort-object); Write-Host " or '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
+				Write-Host "   Enter " -nonewline;CommaSeparatedList -NoOr ($OptionsList.keys | sort-object); Write-Host " or '$($ANSIFormatHighRunes)c$X[0m' to cancel: " -nonewline
 				$AcceptableOptions = $OptionsList.keys
 				$NewOptionValue = (ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27).tostring()
 				$NewValue = $($OptionsList[$NewOptionValue])
@@ -1635,9 +1643,9 @@ Function Options {
 		if ($NewOptionValue -in $AcceptableOptions){
 			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r"){
 				try {
-					$Pattern = "(<$ConfigName>)([^<]*)(</$ConfigName>)"
+					$ConfigValuePattern = "(<$ConfigName>)([^<]*)(</$ConfigName>)" #Pattern to find the value within config.xml so we can change it.
 					$ReplaceString = '{0}{1}{2}' -f '${1}', $NewValue, '${3}'
-					$NewXML = [regex]::Replace($Xml, $Pattern, $ReplaceString)
+					$NewXML = [regex]::Replace($Xml, $ConfigValuePattern, $ReplaceString)
 					$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 					return $True
 				}
@@ -1685,7 +1693,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "DefaultRegion" -OptionsList $Options -Current $CurrentDefaultRegion `
 		-Description "This option is used so you can press enter instead of manually entering region on region select screen." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for NA (Americas)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for EU (Europe)`n    Choose '$X[38;2;255;165;000;22m3$X[0m' for Asia (Also known as KR)`n"
+		-OptionsText "    Choose '$($ANSIFormatHighRunes)1$X[0m' for NA (Americas)`n    Choose '$($ANSIFormatHighRunes)2$X[0m' for EU (Europe)`n    Choose '$($ANSIFormatHighRunes)3$X[0m' for Asia (Also known as KR)`n"
 	}
 	ElseIf ($Option -eq "2"){ #SettingSwitcherEnabled
 		If ($Script:Config.SettingSwitcherEnabled -eq "False"){
@@ -1700,7 +1708,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "SettingSwitcherEnabled" -OptionsList $Options -Current $CurrentState `
 		-Description "This enables the script to automatically switch which settings file to use when launching the game based on the account you're launching.`nA very cool feature!`nPlease see GitHub for instructions on setting this up/editing settings." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n"
+		-OptionsText "    Choose '$($ANSIFormatHighRunes)1$X[0m' to $OptionsSubText`n"
 	}
 	ElseIf ($Option -eq "3"){ #ManualSettingSwitcherEnabled
 		If ($Script:Config.ManualSettingSwitcherEnabled -eq "False"){
@@ -1716,28 +1724,28 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "ManualSettingSwitcherEnabled" -OptionsList $Options -Current $CurrentState `
 		-Description "This enables you to manually choose which settings file the game should use launching another game instance.`nFor example if you want to choose to launch with potato graphics or good graphics.`nPlease see GitHub for instructions on how to set this up and how to edit settings." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n"
+		-OptionsText "    Choose '$($ANSIFormatHighRunes)1$X[0m' to $OptionsSubText`n"
 	}
 	ElseIf ($Option -eq "4"){ #RememberWindowLocations
 		If ($Script:Config.RememberWindowLocations -eq "False"){
 			$Options = @{"1" = "True"}
 			$OptionsSubText = "enable"
-			$DescriptionSubText = "`nOnce enabled, return to this menu and choose the '$X[38;2;255;165;000;22ms$X[0m' option to save coordinates of any open game instances."
+			$DescriptionSubText = "`nOnce enabled, return to this menu and choose the '$($ANSIFormatHighRunes)s$X[0m' option to save coordinates of any open game instances."
 			$CurrentState = "Disabled"
 		}
 		Else {
 			$Options = @{"1" = "False";"S" = "PlaceholderValue Only :)";"R" = "PlaceholderValue Only :)"} # SaveWindowLocations function used if user chooses "S"
 			$OptionsSubText = "disable"
-			$OptionsSubTextAgain = "    Choose '$X[38;2;255;165;000;22ms$X[0m' to save current window locations and sizes.`n"
+			$OptionsSubTextAgain = "    Choose '$($ANSIFormatHighRunes)s$X[0m' to save current window locations and sizes.`n"
 			if ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue){
-				$OptionsSubTextAgain += "    Choose '$X[38;2;255;165;000;22mr$X[0m' to reset window locations and sizes.`n"
+				$OptionsSubTextAgain += "    Choose '$($ANSIFormatHighRunes)r$X[0m' to reset window locations and sizes.`n"
 			}
-			$DescriptionSubText = "`nChoosing the '$X[38;2;255;165;000;22ms$X[0m' option will save coordinates (and window sizes) of any open game instances.`nChoosing the '$X[38;2;255;165;000;22mr$X[0m' option will move your windows back to their default placements."
+			$DescriptionSubText = "`nChoosing the '$($ANSIFormatHighRunes)s$X[0m' option will save coordinates (and window sizes) of any open game instances.`nChoosing the '$($ANSIFormatHighRunes)r$X[0m' option will move your windows back to their default placements."
 			$CurrentState = "Enabled"
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "RememberWindowLocations" -OptionsList $Options -Current $CurrentState `
 		-Description "For those that have configured the game to launch in windowed mode, this setting is used to make the script move the window locations at launch, so that you never have to rearrange your windows when launching accounts.$DescriptionSubText" `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n$OptionsSubTextAgain"
+		-OptionsText "    Choose '$($ANSIFormatHighRunes)1$X[0m' to $OptionsSubText`n$OptionsSubTextAgain"
 	}
 	ElseIf ($Option -eq "5"){ #DCloneTrackerSource
 		$Options = @{
@@ -1747,7 +1755,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "DCloneTrackerSource" -OptionsList $Options -Current $Script:Config.DCloneTrackerSource `
 		-Description "Choose the API source for DClone Data.`nRecommend D2Emu.com as it pulls data directly from the game." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for D2Emu.com (Recommended)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for D2runewizard.com`n    Choose '$X[38;2;255;165;000;22m3$X[0m' for diablo2.io`n"
+		-OptionsText "    Choose '$($ANSIFormatHighRunes)1$X[0m' for D2Emu.com (Recommended)`n    Choose '$($ANSIFormatHighRunes)2$X[0m' for D2runewizard.com`n    Choose '$($ANSIFormatHighRunes)3$X[0m' for diablo2.io`n"
 	}
 	ElseIf ($Option -eq "6"){ #DCloneAlarmList
 		$Options = @{ # SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR
@@ -1760,7 +1768,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmList" -OptionsList $Options -Current $(if ($Script:Config.DCloneAlarmList -eq ""){"Alarms are disabled"}Else{$Script:Config.DCloneAlarmList}) `
 		-Description "Use this to change what game modes you'd like to have DClone alarms on.`nThis will select all regions for a given game mode. To make fine tuned adjustments (eg multiple game modes), edit config.xml directly." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to enable alarms for Softcore Ladder`n    Choose '$X[38;2;255;165;000;22m2$X[0m' to enable alarms for Softcore Non-Ladder`n    Choose '$X[38;2;255;165;000;22m3$X[0m' to enable alarms for Hardcore Ladder`n    Choose '$X[38;2;255;165;000;22m4$X[0m' to enable alarms for Hardcore Non-Ladder`n    Choose '$X[38;2;255;165;000;22m5$X[0m' to enable alarms for all game modes`n    Choose '$X[38;2;255;165;000;22m6$X[0m' to disable all Alarms`n"
+		-OptionsText "    Choose '$($ANSIFormatHighRunes)1$X[0m' to enable alarms for Softcore Ladder`n    Choose '$($ANSIFormatHighRunes)2$X[0m' to enable alarms for Softcore Non-Ladder`n    Choose '$($ANSIFormatHighRunes)3$X[0m' to enable alarms for Hardcore Ladder`n    Choose '$($ANSIFormatHighRunes)4$X[0m' to enable alarms for Hardcore Non-Ladder`n    Choose '$($ANSIFormatHighRunes)5$X[0m' to enable alarms for all game modes`n    Choose '$($ANSIFormatHighRunes)6$X[0m' to disable all Alarms`n"
 		$Script:DCloneChangesCSV = $Null #Reset DClone tracking to remove old notifications appearing that may no longer be applicable.
 		SetDCloneAlarmLevels
 	}
@@ -1772,7 +1780,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmLevel" -OptionsList $Options -Current $Script:Config.DCloneAlarmLevel `
 		-Description "This allows you to customise what DClone status changes you want to be alarmed for if you only want specific alerts.`nBe aware that if you set it to immminent, you will likely miss DClone walks due to fast status changes (SOJ's are often sold in bulk all at once)." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to alarm on all status changes`n    Choose '$X[38;2;255;165;000;22m2$X[0m' to alarm on Close status changes (4/6, 5/6)`n    Choose '$X[38;2;255;165;000;22m3$X[0m' to alarm on imminent walks only (5/6)`n"
+		-OptionsText "    Choose '$($ANSIFormatHighRunes)1$X[0m' to alarm on all status changes`n    Choose '$($ANSIFormatHighRunes)2$X[0m' to alarm on Close status changes (4/6, 5/6)`n    Choose '$($ANSIFormatHighRunes)3$X[0m' to alarm on imminent walks only (5/6)`n"
 		$Script:DCloneChangesCSV = $Null #Reset DClone tracking to remove old notifications appearing that may no longer be applicable.
 		SetDCloneAlarmLevels
 	}
@@ -1783,7 +1791,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmVoice" -OptionsList $Options -Current $Script:Config.DCloneAlarmVoice `
 		-Description "This option allows you to change the voice for the Text to Speech DClone Alarms." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for Amazon (Female Voice)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for EU (Europe)`n    Choose '$X[38;2;255;165;000;22m3$X[0m' for Paladin (Male Voice)`n"
+		-OptionsText "    Choose '$($ANSIFormatHighRunes)1$X[0m' for Amazon (Female Voice)`n    Choose '$($ANSIFormatHighRunes)2$X[0m' for EU (Europe)`n    Choose '$($ANSIFormatHighRunes)3$X[0m' for Paladin (Male Voice)`n"
 	}
 	ElseIf ($Option -eq "9" -and $Script:Config.DCloneAlarmList -ne ""){ #DCloneAlarmVolume
 		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmVolume" -OptionInteger -Current $Script:Config.DCloneAlarmVolume `
@@ -1798,7 +1806,7 @@ Function Options {
 		}
 		else {
 			$Script:ForceAuthToken = $False
-			Write-Host "  ForceAuthToken now $X[38;2;255;165;000;22mdisabled$X[0m." -foregroundcolor yellow
+			Write-Host "  ForceAuthToken now $($ANSIFormatHighRunes)disabled$X[0m." -foregroundcolor yellow
 			Write-Host "  For authentication, script will now use what's configured in the " -foregroundcolor green
 			Write-Host "  AuthenticationMethod column in accounts.csv" -foregroundcolor green
 		}
@@ -1858,7 +1866,7 @@ if ($Check -eq $True -and $Script:LastNotificationCheck -lt (Get-Date).addminute
 	}
 	if ($Check -eq $True -and $Script:NotificationHasBeenChecked -eq $False -and $Script:NotificationsAvailable -eq $True){#only show message if user hasn't seen notification yet.
 		Write-Host "     $X[38;2;255;165;000;48;2;1;1;1;4mNotification available. Press 'i' to go to info screen for details.$X[0m"
-	}#%%%%%%%%%%%%%%%%%%%%
+	}
 }
 Function D2rLevels {
 	$Script:D2rLevels = @(
@@ -2171,12 +2179,12 @@ Function JokeMaster ([int]$JokeProviderRoll=""){
 					if ($Joke.Type -eq "twopart"){#some jokes are come through as two parters with two variables
 						$JokeSetup = ($Joke.setup -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
 						$JokeDelivery = ($Joke.delivery -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
-						Write-Host "   $X[38;2;255;165;000;22m$JokeSetup$X[0m"
-						Write-Host "   $X[38;2;255;165;000;22m$JokeDelivery$X[0m"
+						Write-Host "   $($ANSIFormatHighRunes)$JokeSetup$X[0m"
+						Write-Host "   $($ANSIFormatHighRunes)$JokeDelivery$X[0m"
 					}
 					else {#else if single liner joke.
 						$SingleJoke =  ($joke.joke -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
-						Write-Host "   $X[38;2;255;165;000;22m$SingleJoke$X[0m"
+						Write-Host "   $($ANSIFormatHighRunes)$SingleJoke$X[0m"
 					}
 					$JokeProvider = "v2.jokeapi.dev"
 				}
@@ -2187,8 +2195,8 @@ Function JokeMaster ([int]$JokeProviderRoll=""){
 					$JokeObtained = $true
 					$JokeSetup = ($Joke.setup -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
 					$JokeDelivery = ($Joke.punchline -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
-					Write-Host "   $X[38;2;255;165;000;22m$JokeSetup$X[0m"
-					Write-Host "   $X[38;2;255;165;000;22m$JokeDelivery$X[0m"
+					Write-Host "   $($ANSIFormatHighRunes)$JokeSetup$X[0m"
+					Write-Host "   $($ANSIFormatHighRunes)$JokeDelivery$X[0m"
 					$JokeProvider = "official-joke-api.appspot.com"
 				}
 				catch {
@@ -2205,7 +2213,7 @@ Function JokeMaster ([int]$JokeProviderRoll=""){
 					$Joke = (Invoke-RestMethod -uri https://icanhazdadjoke.com -Method GET -header $headers -ErrorAction Stop).joke
 					$JokeObtained = $true
 					$SingleJoke =  ($joke -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
-					Write-Host "   $X[38;2;255;165;000;22m$SingleJoke$X[0m"
+					Write-Host "   $($ANSIFormatHighRunes)$SingleJoke$X[0m"
 					$JokeProvider = "icanhazdadjoke.com"
 				}
 				catch {
@@ -2218,7 +2226,7 @@ Function JokeMaster ([int]$JokeProviderRoll=""){
 					$Joke = (Invoke-RestMethod -uri https://api.chucknorris.io/jokes/random -ErrorAction Stop).value
 					$JokeObtained = $true
 					$SingleJoke =  ($joke -replace "(.{1,73})(?:\s|$)", "`n   `$1").trim() #add two spaces before any line breaks for indenting. Add line break for lines that are longer than 73 characters.
-					Write-Host "   $X[38;2;255;165;000;22m$SingleJoke$X[0m"
+					Write-Host "   $($ANSIFormatHighRunes)$SingleJoke$X[0m"
 					$JokeProvider = "api.chucknorris.io"
 					$JokeType = "Fact"
 				}
@@ -2232,7 +2240,7 @@ Function JokeMaster ([int]$JokeProviderRoll=""){
 		if ($Null -ne $Joke){
 			Write-Host "  $JokeType courtesy of $JokeProvider`n`n"
 		}
-		Write-Host "  Press '$X[38;2;255;165;000;22mj$X[0m' for more, '$X[38;2;255;165;000;22md$X[0m' for a Dad joke or '$X[38;2;255;165;000;22mc$X[0m' for a Chuck Norris fact."
+		Write-Host "  Press '$($ANSIFormatHighRunes)j$X[0m' for more, '$($ANSIFormatHighRunes)d$X[0m' for a Dad joke or '$($ANSIFormatHighRunes)c$X[0m' for a Chuck Norris fact."
 		Write-Host "  Otherwise, press any other key to return to main menu... " -nonewline
 		$JokeOption = readkey
 		Write-Host;Write-Host
@@ -2539,7 +2547,7 @@ Function WebRequestWithTimeOut {#Used to timeout web requests that take too long
 		Stop-Job -Job $TimedJob
 		if ($InitiatingFunction -eq "DClone"){
 			$Script:DCloneErrorMessage = "   Error: Couldn't connect to $DCloneTrackerSource to check for DClone Status."
-			Write-Host ("`n   Timed out connecting to DClone Data Source.") -foregroundcolor red
+			Write-Host;Write-Host ("   Timed out connecting to DClone Data Source.") -foregroundcolor red
 			Throw "Timed Out :(" #force an exception to break out of the try statement.
 			Write-Host
 		}
@@ -2585,8 +2593,8 @@ Function TerrorZone {
 		}
 	}
 	$NextTZ = $NextTZ -replace '..$', ''
-	Write-Host;Write-Host "   Current TZ is:  " -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
-	Write-Host "   Next TZ is:     " -nonewline;Write-Host ($NextTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta
+	Write-Host;Write-Host "   Current TZ is:  " -nonewline;Write-Host ($CurrentTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta #formatting regex
+	Write-Host "   Next TZ is:     " -nonewline;Write-Host ($NextTZ -replace "(.{1,58})(\s+|$)", "`$1`n                   ").trim() -ForegroundColor magenta #formatting regex
 	Write-Host;Write-Host "  Information Retrieved at: " $TimeDataObtained
 	Write-Host "  TZ info courtesy of:       $TZProvider`n"
 	PressTheAnyKey
@@ -2594,7 +2602,7 @@ Function TerrorZone {
 Function KillHandle { #Thanks to sir-wilhelm for tidying this up.
 	$handle64 = "$PSScriptRoot\handle\handle64.exe"
 	$handle = & $handle64 -accepteula -a -p D2R.exe "Check For Other Instances" -nobanner | Out-String
-	if ($handle -match "pid:\s+(?<d2pid>\d+)\s+type:\s+Event\s+(?<eventHandle>\w+):"){
+	if ($handle -match "pid:\s+(?<d2pid>\d+)\s+type:\s+Event\s+(?<eventHandle>\w+):"){ #Handle of d2r instance
 		$d2pid = $matches["d2pid"]
 		$eventHandle = $matches["eventHandle"]
 		Write-Verbose "Closing handle: $eventHandle on pid: $d2pid"
@@ -2654,7 +2662,7 @@ Function DisplayActiveAccounts {
 	else {
 		Write-Host "  ID   Account Label"
 	}
-	$Pattern = "(?<=\()([a-z]+)(?=\.actual\.battle\.net\))" #Regex pattern to pull the region characters out of the window title.
+	$WindowTitlePattern = "(?<=\()([a-z]+)(?=\.actual\.battle\.net\))" #Regex pattern to pull the region characters out of the window title.
 	ForEach ($AccountOption in ($Script:AccountOptionsCSV | Sort-Object -Property @{ #Try sort by number first (needed for 2 digit ID's), then sort by character.
 		Expression = {	
 			$intValue = [int]::TryParse($_.ID, [ref]$null) # Try to convert the value to an integer
@@ -2704,7 +2712,7 @@ Function DisplayActiveAccounts {
 		}
 		if ($AccountOption.id -in $Script:ActiveAccountsList.id){ #if account is currently active
 			$Windowname = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -like ($AccountOption.id + "*Diablo II: Resurrected")} | Select-Object MainWindowTitle).mainwindowtitle #Check active game instances to see which accounts are active. As this is based on checking window titles, this will only work for accounts opened from the script
-			$CurrentRegion = [regex]::Match($WindowName, $Pattern).value #Check which region aka realm the active account is connected to.
+			$CurrentRegion = [regex]::Match($WindowName, $WindowTitlePattern).value #Check which region aka realm the active account is connected to.
 			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
 			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
 			if ($CurrentRegion -eq "EU"){$CurrentRegion = "EU"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
@@ -2776,7 +2784,7 @@ Function Menu {
 				$Script:BatchToOpen = $Batch
 			}
 			ElseIf ($AcceptableBatchValues.count -eq 1){
-				Write-Host " Opening Batch $X[38;2;255;165;000;22m$AcceptableBatchValues$X[0m.`n"
+				Write-Host " Opening Batch $($ANSIFormatHighRunes)$AcceptableBatchValues$X[0m.`n"
 				$Script:BatchToOpen = $AcceptableBatchValues[0]
 			}
 			Else {
@@ -2784,7 +2792,7 @@ Function Menu {
 				CommaSeparatedList $AcceptableBatchValues #write out each account option, comma separated but show each option in orange writing. Essentially output overly complicated fancy display options :)
 				Write-Host ")?"
 				if ($Null -eq $Batch){
-					Write-Host " Alternatively, press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
+					Write-Host " Alternatively, press '$($ANSIFormatHighRunes)c$X[0m' to cancel: " -nonewline
 				}
 				if ($Script:TwoDigitBatchesUsed -eq $True){
 					$Script:BatchToOpen = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27 -TwoDigitAcctSelection $True #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
@@ -3094,13 +3102,13 @@ Function ChooseAccount {
 					}
 					else {
 						$AllOption = "a"
-						$AllAccountMenuText = "'$X[38;2;255;165;000;22ma$X[0m' to open All accounts, "
-						$AllAccountMenuTextNoBatch = " or '$X[38;2;255;165;000;22ma$X[0m' for All."
+						$AllAccountMenuText = "'$($ANSIFormatHighRunes)a$X[0m' to open All accounts, "
+						$AllAccountMenuTextNoBatch = " or '$($ANSIFormatHighRunes)a$X[0m' for All."
 					}
 					if ($Script:EnableBatchFeature -ne $true){
 						$BatchMenuText = ""
 						if ($accountoptions.length -le 24){ #if so many accounts are available to be used that it's too long and impractical to display all the individual options.
-							Write-Host ("  Select which account to sign into: " + "$X[38;2;255;165;000;22m$accountoptions$X[0m" + $AllAccountMenuTextNoBatch)
+							Write-Host ("  Select which account to sign into: " + "$($ANSIFormatHighRunes)$accountoptions$X[0m" + $AllAccountMenuTextNoBatch)
 							Write-Host "  Alternatively choose from the following menu options:"
 						}
 						Else {
@@ -3111,7 +3119,7 @@ Function ChooseAccount {
 					}
 					else {
 						$Script:BatchToOpen = $Null
-						$BatchMenuText = "'$X[38;2;255;165;000;22mb$X[0m' to open a Batch of accounts,"
+						$BatchMenuText = "'$($ANSIFormatHighRunes)b$X[0m' to open a Batch of accounts,"
 						$Script:AcceptableBatchIDs = $Null #reset value
 						$AcceptableBatchValues = $Null
 						ForEach ($ID in $Script:AccountOptionsCSV){
@@ -3125,7 +3133,7 @@ Function ChooseAccount {
 							$BatchOption = ""
 							$BatchMenuText = ""
 							if ($accountoptions.length -le 24){ #if so many accounts are available to be used that it's too long and impractical to display all the individual options.
-								Write-Host ("  Select which account to sign into: " + "$X[38;2;255;165;000;22m$accountoptions$X[0m" + $AllAccountMenuTextNoBatch)
+								Write-Host ("  Select which account to sign into: " + "$($ANSIFormatHighRunes)$accountoptions$X[0m" + $AllAccountMenuTextNoBatch)
 								Write-Host "  Alternatively choose from the following menu options:"
 							}
 							Else {
@@ -3147,15 +3155,15 @@ Function ChooseAccount {
 					$BatchOption = $Null
 					Write-Host " All Accounts are currently open!" -foregroundcolor yellow
 				}
-				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, '$X[38;2;255;165;000;22mt$X[0m' for TZ info, '$X[38;2;255;165;000;22md$X[0m' for DClone status, '$X[38;2;255;165;000;22mj$X[0m' for jokes,"
+				Write-Host "  '$($ANSIFormatHighRunes)r$X[0m' to Refresh, '$($ANSIFormatHighRunes)t$X[0m' for TZ info, '$($ANSIFormatHighRunes)d$X[0m' for DClone status, '$($ANSIFormatHighRunes)j$X[0m' for jokes,"
 				if ($Script:Config.ManualSettingSwitcherEnabled -eq $true){
 					$ManualSettingSwitcherOption = "s"
-					Write-Host "  '$X[38;2;255;165;000;22mo$X[0m' for config options, '$X[38;2;255;165;000;22ms$X[0m' to toggle the Manual Setting Switcher, "
-					Write-Host "  '$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: "-nonewline
+					Write-Host "  '$($ANSIFormatHighRunes)o$X[0m' for config options, '$($ANSIFormatHighRunes)s$X[0m' to toggle the Manual Setting Switcher, "
+					Write-Host "  '$($ANSIFormatHighRunes)i$X[0m' for info or '$($ANSIFormatHighRunes)x$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: "-nonewline
 				}
 				Else {
 					$ManualSettingSwitcherOption = $null
-					Write-Host "  '$X[38;2;255;165;000;22mo$X[0m' for config options, '$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
+					Write-Host "  '$($ANSIFormatHighRunes)o$X[0m' for config options, '$($ANSIFormatHighRunes)i$X[0m' for info or '$($ANSIFormatHighRunes)x$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
 				}
 				if ($Script:TwoDigitIDsUsed -eq $True){
 					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -TwoDigitAcctSelection $True #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
@@ -3210,8 +3218,8 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 		Write-Host ("    " + $Server.option + "      " + $Regiontablespacing + $Server.region + $Regiontablespacing + "   " + $Server.region_server) -foregroundcolor green
 	}
 	do {
-		Write-Host;Write-Host " Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
-		Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + "): ") -nonewline
+		Write-Host;Write-Host " Please select a region: $($ANSIFormatHighRunes)1$X[0m, $($ANSIFormatHighRunes)2$X[0m or $($ANSIFormatHighRunes)3$X[0m"
+		Write-Host (" Alternatively select '$($ANSIFormatHighRunes)c$X[0m' to cancel or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + "): ") -nonewline
 		$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13,27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 		if ("" -eq $Script:RegionOption){
 			$Script:RegionOption = $Config.DefaultRegion #default to NA
@@ -3316,8 +3324,8 @@ Function Processing {
 		if ($Config.SettingSwitcherEnabled -eq $True -and $Script:AskForSettings -ne $True){#if user has enabled the auto settings switcher.
 			$SettingsProfilePath = ("C:\Users\" + $Env:UserName + "\Saved Games\Diablo II Resurrected\")
 			if ($Script:AccountChoice.CustomLaunchArguments -match "-mod"){
-				$pattern = "-mod\s+(\S+)" #pattern to find the first word after -mod
-				if ($Script:AccountChoice.CustomLaunchArguments -match $pattern){
+				$ModPattern = "-mod\s+(\S+)" #pattern to find the first word after -mod
+				if ($Script:AccountChoice.CustomLaunchArguments -match $ModPattern){
 					$ModName = $matches[1]
 					try {
 						Write-Verbose "Trying to get Mod Content..."
@@ -3431,15 +3439,15 @@ Function Processing {
 					Write-Host "  Choose the settings file you like to load from: " -nonewline
 					ForEach ($Value in $SettingsFileOptions.ID){ #write out each account option, comma separated but show each option in orange writing. Essentially output overly complicated fancy display options :)
 						if ($Value -ne $SettingsFileOptions.ID[-1]){
-							Write-Host "$X[38;2;255;165;000;22m$Value$X[0m" -nonewline
+							Write-Host "$($ANSIFormatHighRunes)$Value$X[0m" -nonewline
 							if ($Value -ne $SettingsFileOptions.ID[-2]){Write-Host ", " -nonewline}
 						}
 						else {
-							Write-Host " or $X[38;2;255;165;000;22m$Value$X[0m"
+							Write-Host " or $($ANSIFormatHighRunes)$Value$X[0m"
 						}
 					}
 					if ($Null -eq $ManualSettingSwitcher){#if not launched from parameters
-						Write-Host "  Or Press '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
+						Write-Host "  Or Press '$($ANSIFormatHighRunes)c$X[0m' to cancel: " -nonewline
 						$SettingsCancelOption = "c"
 					}
 					$SettingsChoice = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
