@@ -41,7 +41,7 @@ Other minor tidy ups.
 
 1.13.0+ to do list
 Look at adding SinglePlayer autobackup feature
-Add Capability for D2Emu Websocket connection as the current TZ/DClone API might be getting deprecated. 
+Add Capability for D2Emu Websocket connection as the current TZ/DClone API might be getting deprecated.
 In line with the above, if possible investigate the possibility of realtime DClone Alarms.
 In line with the above, perhaps investigate putting TZ details on main menu and using the TZ screen for recent TZ's only.
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script. Can't really be bothered though :)
@@ -300,7 +300,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 		}
 	}
 	$Text -split "`n" | ForEach-Object {
-		$Line = " " + $Indent + $_	
+		$Line = " " + $Indent + $_
 		$SecondLineDeltaIndent = ""
 		if ($Line -match '^[\s]*-'){ #For any line starting with any preceding spaces and a dash.
 			$SecondLineDeltaIndent = "  "
@@ -310,13 +310,13 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 		}
 		Function Formatter ([string]$line){
 			$pattern = "[\e]?[\[]?[`"-,`.!']?\b[\w\-,'`"]+(\S*)" # Regular expression pattern to find the last word including any trailing non-space characters. Also looks to include any preceding special characters or ANSI escape character.
-			$matches = [regex]::Matches($Line, $pattern) # Find all matches of the pattern in the string
+			$WordMatches = [regex]::Matches($Line, $pattern) # Find all matches of the pattern in the string
 			# Initialize variables to track the match with the highest index
 			$highestIndex = -1
 			$SelectedMatch = $Null
 			$PatternLengthCount = 0
 			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
-			ForEach ($match in $matches){# Iterate through each match (match being a block of characters, ie each word).
+			ForEach ($WordMatch in $WordMatches){# Iterate through each match (match being a block of characters, ie each word).
 				ForEach ($ANSIPattern in $ANSIPatterns){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
 					$ANSIMatches = $match.value | Select-String -Pattern $ANSIPattern -AllMatches
 					ForEach ($ANSIMatch in $ANSIMatches){
@@ -324,13 +324,13 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 						$PatternLengthCount = $PatternLengthCount + (($ANSIMatch.matches | ForEach-Object {$_.Value}) -join "").length #Calculate how many characters in the text are ANSI formatting characters and thus won't be displayed on screen, to prevent skewing word count.
 					}
 				}
-				$matchIndex = $match.Index
-				$matchLength = $match.Length
+				$matchIndex = $WordMatch.Index
+				$matchLength = $WordMatch.Length
 				$matchEndIndex = $matchIndex + $matchLength - 1
 				if ($matchEndIndex -lt ($MaxLineLength + $PatternLengthCount)){# Check if the match ends within the first $MaxLineLength characters
 					if ($matchIndex -gt $highestIndex){# Check if this match has a higher index than the current highest
 						$highestIndex = $matchIndex # This word has a higher index and is the winner thus far.
-						$SelectedMatch = $Match
+						$SelectedMatch = $WordMatch
 						$lastspaceindex = $SelectedMatch.Index + $SelectedMatch.Length - 1 #Find the index (the place in the string) where the last word can be used without overflowing the screen.
 					}
 				}
@@ -340,7 +340,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			}
 			catch {
 				$script:chunk = $Line.Substring(0, [Math]::Min(($MaxLineLength), ($Line.Length))) #If the above fails for whatever reason. Can't exactly remember why I put this in here but leaving it in to be safe LOL.
-			}	
+			}
 		}
 		Formatter $Line
 		if ($Script:ANSIUsed -eq $True){ #if fancy pants coloured text (ANSI) is used, write out the first line. Check if ANSI was used in any overflow lines.
@@ -953,7 +953,7 @@ Function ValidationAndSetup {
 			Copy-Item -Path ($ZipPath + "Handle64.exe") -Destination ($Script:WorkingDirectory + "\Handle\")
 			Remove-Item -Path ($Script:WorkingDirectory + "\Handle\ExtractTemp\") -Recurse -Force #delete update temporary folder
 			Write-Host " Successfully downloaded Handle64.exe :)" -ForeGroundcolor Green
-			Start-Sleep -milliseconds 2024	
+			Start-Sleep -milliseconds 2024
 		}
 		Catch {
 			Write-Host " Handle.zip couldn't be downloaded." -foregroundcolor red
@@ -979,7 +979,7 @@ Function ValidateTokenInput {
 	do {
 		$extractedInfo = $null
 		if ($ManuallyEntered){
-			$TokenInput = Read-host (" Enter your token URL or enter the token for account '" + $AccountLabel + "'")			
+			$TokenInput = Read-host (" Enter your token URL or enter the token for account '" + $AccountLabel + "'")
 		}
 		$pattern = "(?<=\?ST=|&ST=|^|http://localhost:0/\?ST=)([^&]+)"
 		if ($tokeninput -match $pattern){
@@ -1017,7 +1017,7 @@ Function ImportCSV { #Import Account CSV
 				Write-Host " Add your account details to the CSV file and run the script again :)`n" -foregroundcolor red
 				PressTheAnyKeyToExit
 			}
-			if ($Null -ne ($AccountOptionsCSV | Where-Object {$_.id -eq ""})){ 
+			if ($Null -ne ($AccountOptionsCSV | Where-Object {$_.id -eq ""})){
 				$Script:AccountOptionsCSV = $Script:AccountOptionsCSV | Where-Object {$_.id -ne ""} # To account for user error, remove any empty lines from accounts.csv
 			}
 			ForEach ($Account in $AccountOptionsCSV){
@@ -1044,10 +1044,7 @@ Function ImportCSV { #Import Account CSV
 			$BatchesInCSV = ($AccountOptionsCSV | group-object batches | where-object {$_.name -ne ""}).count
 			if ($BatchesInCSV -ge 1 -or $Null -ne $Batch){
 				$Script:EnableBatchFeature = $True
-				$BatchOption = "b" #specified here as well as in the ChooseAccounts section so that this works when being passed as a parameter
-			}
-			else {
-				$BatchOption = "$Null"
+				$Script:BatchOption = "b" #specified here as well as in the ChooseAccounts section so that this works when being passed as a parameter
 			}
 			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.10.0. If token columns don't exist, add them. As of 1.12.0 onwards, TokenSecureString is no longer used.
 				# Column does not exist, so add it to the CSV data
@@ -1223,7 +1220,7 @@ Function ImportCSV { #Import Account CSV
 	([int]$Script:CurrentStats.TimesLaunched) ++
 	if ($CurrentStats.TotalGameTime -eq ""){
 		$Script:CurrentStats.TotalGameTime = 0 #prevents errors from happening on first time run.
-	} 
+	}
 	try {
 		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv with Total Time played.
 	}
@@ -1339,19 +1336,19 @@ Function HighRune {
 	process { Write-Host "  $X[38;2;255;165;000;48;2;1;1;1;4m$_$X[0m"}
 }
 Function Unique {
-    process { Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4m$_$X[0m"}
+	process { Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4m$_$X[0m"}
 }
 Function SetItem {
-    process { Write-Host "  $X[38;2;0;225;0;48;2;1;1;1;4m$_$X[0m"}
+	process { Write-Host "  $X[38;2;0;225;0;48;2;1;1;1;4m$_$X[0m"}
 }
 Function Rare {
-    process { Write-Host "  $X[38;2;255;255;0;48;2;1;1;1;4m$_$X[0m"}
+	process { Write-Host "  $X[38;2;255;255;0;48;2;1;1;1;4m$_$X[0m"}
 }
 Function Magic {#ANSI text colour formatting for "magic" quotes. The variable $X (for the escape character) is defined earlier in the script.
-    process { Write-Host "  $X[38;2;65;105;225;48;2;1;1;1;4m$_$X[0m" }
+	process { Write-Host "  $X[38;2;65;105;225;48;2;1;1;1;4m$_$X[0m" }
 }
 Function Normal {
-    process { Write-Host "  $X[38;2;255;255;255;48;2;1;1;1;4m$_$X[0m"}
+	process { Write-Host "  $X[38;2;255;255;255;48;2;1;1;1;4m$_$X[0m"}
 }
 Function QuoteRoll {#stupid thing to draw a random quote but also draw a random quality.
 	$Quality = get-random $Script:ItemLookup #pick a random entry from ItemLookup hashtable.
@@ -1488,11 +1485,11 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool GetWindowRect(
-				IntPtr hWnd, out RECT lpRect);			
+				IntPtr hWnd, out RECT lpRect);
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public extern static bool MoveWindow(
-				IntPtr handle, int x, int y, int width, int height, bool redraw);	
+				IntPtr handle, int x, int y, int width, int height, bool redraw);
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool SetForegroundWindow(IntPtr hWnd);
@@ -1508,7 +1505,7 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 }
 Function SaveWindowLocations {# Get Window Location coordinates and save to Accounts.csv
 	LoadWindowClass
-	FormatFunction -indents 2 -text "Saving locations of each open account so that they the windows launch in the same place next time. Assumes you've configured the game to launch in windowed mode." 
+	FormatFunction -indents 2 -text "Saving locations of each open account so that they the windows launch in the same place next time. Assumes you've configured the game to launch in windowed mode."
 	CheckActiveAccounts
 	#If Feature is enabled, add 'WindowXCoordinates' and 'WindowYCoordinates' columns to accounts.csv with empty values.
 	if (-not ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowYCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowWidth" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowHeight" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
@@ -1548,7 +1545,7 @@ Function SaveWindowLocations {# Get Window Location coordinates and save to Acco
 			$Account.WindowXCoordinates = $rectangle.Left
 			$Account.WindowYCoordinates = $rectangle.Top
 			$Account.WindowWidth = $rectangle.Right - $rectangle.Left
-			$Account.WindowHeight = $rectangle.Bottom - $rectangle.Top	
+			$Account.WindowHeight = $rectangle.Bottom - $rectangle.Top
 			$Account
 		}
 		Else {#Leave as is.
@@ -1591,7 +1588,7 @@ Function Options {
 		$CurrentDefaultRegion = "Asia"
 	}
 	Write-Host "  $X[38;2;255;165;000;22m1$X[0m - $X[4mDefaultRegion$X[0m (Currently $X[38;2;255;165;000;22m$CurrentDefaultRegion$X[0m)"
-	Write-Host "`n  $X[38;2;255;165;000;22m2$X[0m - $X[4mSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.SettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)" 
+	Write-Host "`n  $X[38;2;255;165;000;22m2$X[0m - $X[4mSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.SettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
 	Write-Host "  $X[38;2;255;165;000;22m3$X[0m - $X[4mManualSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.ManualSettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
 	Write-Host "  $X[38;2;255;165;000;22m4$X[0m - $X[4mRememberWindowLocations$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.RememberWindowLocations -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
 	Write-Host "`n  $X[38;2;255;165;000;22m5$X[0m - $X[4mDCloneTrackerSource$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneTrackerSource)$X[0m)"
@@ -1630,7 +1627,7 @@ Function Options {
 			[switch]$OptionInteger
 		)
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml" -Raw
-		FormatFunction -indents 1 -text "Changing setting for $X[4m$($ConfigName)$X[0m (Currently $X[38;2;255;165;000;22m$($Current)$X[0m).`n" 
+		FormatFunction -indents 1 -text "Changing setting for $X[4m$($ConfigName)$X[0m (Currently $X[38;2;255;165;000;22m$($Current)$X[0m).`n"
 		FormatFunction -text $Description -indents 1
 		Write-Host;Write-Host $OptionsText
 		do {
@@ -2668,7 +2665,7 @@ Function DisplayActiveAccounts {
 	}
 	$Pattern = "(?<=\()([a-z]+)(?=\.actual\.battle\.net\))" #Regex pattern to pull the region characters out of the window title.
 	ForEach ($AccountOption in ($Script:AccountOptionsCSV | Sort-Object -Property @{ #Try sort by number first (needed for 2 digit ID's), then sort by character.
-		Expression = {	
+		Expression = {
 			$intValue = [int]::TryParse($_.ID, [ref]$null) # Try to convert the value to an integer
 			if ($intValue){# If it's not null then it's a number, so return it as an integer for sorting.
 				[int]$_.ID
@@ -2864,7 +2861,7 @@ Function Menu {
 			if ($Script:BatchedAccountIDsToOpen.count -gt 1){
 				$BatchPlural = "s"
 			}
-			Write-Host "`n Opening account$BatchPlural " -nonewline 
+			Write-Host "`n Opening account$BatchPlural " -nonewline
 			CommaSeparatedList $Script:BatchedAccountIDsToOpen -AndText
 			Write-Host " from batch $BatchToOpen..."
 			ForEach ($ID in $Script:BatchedAccountIDsToOpen){
@@ -3134,7 +3131,7 @@ Function ChooseAccount {
 						}
 						$AcceptableBatchValues = @($AcceptableBatchValues | where-object {$_ -ne ""} | Select-Object -Unique | Sort-Object) #Unique list of available batches that can be opened
 						if ($Null -eq $AcceptableBatchValues[0]){
-							$BatchOption = ""
+							$Script:BatchOption = ""
 							$BatchMenuText = ""
 							if ($accountoptions.length -le 24){ #if so many accounts are available to be used that it's too long and impractical to display all the individual options.
 								Write-Host ("  Select which account to sign into: " + "$X[38;2;255;165;000;22m$accountoptions$X[0m" + $AllAccountMenuTextNoBatch)
@@ -3334,7 +3331,7 @@ Function Processing {
 					try {
 						Write-Verbose "Trying to get Mod Content..."
 						try {
-							$Modinfo = ((Get-Content "$($Config.GamePath)\Mods\$ModName\$ModName.mpq\Modinfo.json" -ErrorAction silentlycontinue | ConvertFrom-Json).savepath).Trim("/") 
+							$Modinfo = ((Get-Content "$($Config.GamePath)\Mods\$ModName\$ModName.mpq\Modinfo.json" -ErrorAction silentlycontinue | ConvertFrom-Json).savepath).Trim("/")
 						}
 						catch {
 							try {
