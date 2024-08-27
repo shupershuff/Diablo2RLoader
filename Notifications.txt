@@ -1,7 +1,7 @@
 {
     "Notification":  "Help needed. This script will have parts broken by the 29th August.
 The API that this script primarily relies on for TZ and Dclone data is being removed in favour of a websocket that requires an API key.
-Obviously I can't put this API key in the script, so if you have knowledge in a free means of securely getting the script to connect to the websocket (eg via firebase), please reach out via GitHub discussions.",
+Obviously I can't put this API key in the script, so if you have knowledge of a free means of securely getting the script to connect to the websocket (eg via firebase), please reach out via GitHub discussions.",
     "PublishDate":  "2024.08.27 16:00:00",
     "ExpiryDate":  "2024.09.24 12:00:00"
 }
