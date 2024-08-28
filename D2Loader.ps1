@@ -50,7 +50,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.13.0"
+$CurrentVersion = "1.13.1"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -3535,7 +3535,9 @@ Function Processing {
 					FormatFunction -iswarning -indents 1 -SubsequentLineIndents 3 -text "1. Open all of your D2r account instances.`n2. Move the window for each game instance to your preferred layout."
 					FormatFunction -iswarning -indents 1 -SubsequentLineIndents 3 -text "3. Go to the options menu in the script and go into the 'RememberWindowLocations' setting.`n4. Once in this menu, choose the option 's' to save coordinates of any open game instances."
 					FormatFunction -iswarning -text  "`nNow when you open these accounts they will open in this screen location each time :)`n"
-					PressTheAnyKey
+					if ($Script:AccountChoice.AuthenticationMethod -ne "Token"){
+						PressTheAnyKey
+					}
 				}
 			}
 			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.Token.length -ge 200)){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
