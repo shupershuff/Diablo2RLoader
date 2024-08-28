@@ -38,6 +38,7 @@ Improved Formatting function.
 Fixed display issues for users with lots of accounts.
 Error handling improvements.
 Other minor tidy ups.
+1.13.1 Quick fix for script not detecting char select screen with new feature (Thanks Spawn)
 
 1.13.0+ to do list
 Look at adding SinglePlayer autobackup feature
@@ -3535,7 +3536,7 @@ Function Processing {
 					FormatFunction -iswarning -indents 1 -SubsequentLineIndents 3 -text "1. Open all of your D2r account instances.`n2. Move the window for each game instance to your preferred layout."
 					FormatFunction -iswarning -indents 1 -SubsequentLineIndents 3 -text "3. Go to the options menu in the script and go into the 'RememberWindowLocations' setting.`n4. Once in this menu, choose the option 's' to save coordinates of any open game instances."
 					FormatFunction -iswarning -text  "`nNow when you open these accounts they will open in this screen location each time :)`n"
-					if ($Script:AccountChoice.AuthenticationMethod -ne "Token"){
+					if ($Script:AccountChoice.AuthenticationMethod -ne "Token"){ #If a token is used we can't pause it as it the script will not detect when char select screen is reached. 1.13.1 hotfix
 						PressTheAnyKey
 					}
 				}
