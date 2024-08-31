@@ -18,32 +18,13 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 
-Changes since 1.12.0 (next version edits):
-New feature! You can now enable 'RememberWindowLocations' so that the script moves the game windows to your preferred locations at launch. To use, go to the options menu and choose to save coordinates (once enabled). Big thanks to Sir-Wilhelm for providing code to repurpose.
-Added Options menu to be able to edit some of the common config from within script.
-Fixed a typo when launching with Authtokens.
-Fixed region display not working properly for account labels with brackets.
-Minor change to notifications (it won't announce if todays date is less than publishdate).
-Made window size slightly taller.
-Script now checks accounts.csv to see if batches are used. EnableBatchFeature in config.xml is now redundant and will be removed.
-Removed CheckForNextTZ from config.xml as it's redundant.
-Removed AskForRegionOnceOnly from config.xml as it's not that useful.
-Change 'ConvertPlainTextPasswords' to 'ConvertPlainTextSecrets'. This now aligns to both Passwords and tokens for those that would prefer to store in plain text. Will not convert already secured secrets to plain text.
-Fixed up some error handling with the Joke screen.
-Fixed non-numeric account ID's not displaying (Thanks loodakrawa)
-Script now removes any empty rows accidentally left in accounts.csv to prevent issues.
-Script now specifies friendly name if none is entered into accounts.csv.
-Improvements to batch screen, now autopicks batch to open if there's only one available.
-Improved Formatting function.
-Fixed display issues for users with lots of accounts.
-Error handling improvements.
-Other minor tidy ups.
-1.13.1 Quick fix for script not detecting char select screen with new feature (Thanks Spawn)
+Changes since 1.13.1 (next version edits):
+Fixed D2Emu connection issues. Thanks Mysterio!
+Window positioner now restores minimized d2 instances to ensure they're repositioned.
 
-1.13.0+ to do list
-Look at adding SinglePlayer autobackup feature
-Add Capability for D2Emu Websocket connection as the current TZ/DClone API might be getting deprecated.
-In line with the above, if possible investigate the possibility of realtime DClone Alarms.
+1.13.1+ to do list
+Couldn't write :) in release notes without it adding a new line, some minor issue with formatfunction regex
+Investigate the possibility of realtime DClone Alarms (using websocket connection to d2emu instead).
 In line with the above, perhaps investigate putting TZ details on main menu and using the TZ screen for recent TZ's only.
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script. Can't really be bothered though :)
 Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windows. Investigate how this could be done. Would need an agent to detect key combos, Possibly via AutoIT or Autohotkey. Likely not possible within powershell and requires a separate project.
@@ -51,7 +32,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.13.1"
+$CurrentVersion = "1.13.2"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -390,6 +371,27 @@ Function CommaSeparatedList {
 			}
 			Write-Host "$X[38;2;255;165;000;22m$Value$X[0m" -nonewline
 		}
+	}
+}
+Function GetEmuToken { #For connecting to D2Emu for tz and/or dclone data
+	Try {
+		$AES = (invoke-webrequest https://d2emu.com/api/v1/shupertoken/aes).content | convertfrom-json
+		$Key = $AES.key
+		$IV = $AES.iv
+		$EncryptedToken = ((invoke-webrequest https://d2emu.com/api/v1/shupertoken/token).content | convertfrom-json).token
+		$bytes = [System.Convert]::FromBase64String($EncryptedToken);
+		$aes = [System.Security.Cryptography.Aes]::Create();
+		$utf8 = [System.Text.Encoding]::Utf8;
+		$aes.Key = $utf8.GetBytes($key);
+		$aes.IV  = $utf8.GetBytes($iv);
+		$decryptor = $aes.CreateDecryptor();
+		$unencryptedData = $decryptor.TransformFinalBlock($bytes, 0, $bytes.Length);
+		$aes.Dispose();
+		$Script:EmuToken = [System.Text.Encoding]::UTF8.GetString($unencryptedData); #Decrypted token
+	}
+	Catch {
+		write-output " Couldn't get D2Emu connection Token." | red
+		PressTheAnyKey
 	}
 }
 Function DisplayPreviousAccountOpened {
@@ -971,7 +973,7 @@ Function ValidationAndSetup {
 		[pscustomobject]@{Option='3';region='Asia';region_server='kr.actual.battle.net'} #Asia
 	)
 }
-Function ValidateTokenInput {
+Function ValidateTokenInput { #For Authentication
 	param (
 		[bool] $ManuallyEntered,
 		[string] $TokenInput,
@@ -1485,15 +1487,19 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 		public class Window {
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool GetWindowRect(
+			public static extern bool GetWindowRect( //get window coordinates
 				IntPtr hWnd, out RECT lpRect);
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
-			public extern static bool MoveWindow(
+			public extern static bool MoveWindow(  //set window coordinates
 				IntPtr handle, int x, int y, int width, int height, bool redraw);
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
-			public static extern bool SetForegroundWindow(IntPtr hWnd);
+			public static extern bool SetForegroundWindow(IntPtr hWnd); //Bring window to front
+            [DllImport("user32.dll")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool ShowWindow( //used in this script to restore minimized window (state 9)
+                IntPtr handle, int state);
 		}
 		public struct RECT {
 			public int Left;        // x position of upper-left corner
@@ -1568,8 +1574,9 @@ Function SetWindowLocations {#
 	)
 	LoadWindowClass
 	$handle = (Get-Process -Id $Id).MainWindowHandle
-	[Window]::MoveWindow($handle, $x, $y, $Width, $Height, $True)
-	[Window]::SetForegroundWindow($handle)
+	[Window]::ShowWindow($handle,9) #restore window
+	[Window]::MoveWindow($handle, $x, $y, $Width, $Height, $True) #reposition window
+	[Window]::SetForegroundWindow($handle) #bring window to front
 }
 Function Options {
 	ImportXML
@@ -2276,13 +2283,18 @@ Function DClone {# Display DClone Status.
 		[String] $DCloneTrackerSource,
 		[String] $Taglist,
 		[object] $DCloneChanges,
-		[String] $DCloneAlarmLevel
+		[String] $DCloneAlarmLevel,
+		[String] $EmuToken
 	)
 	if ($DCloneTrackerSource -eq "d2emu.com"){
+		$headers = @{
+			'x-emu-username' = 'shupershuff'
+			'x-emu-token' = $EmuToken
+		}
 		$URI = "https://d2emu.com/api/v1/dclone"
 		try {
 			$D2RDCloneResponse = WebRequestWithTimeOut -InitiatingFunction "DClone" -DCloneSource $DCloneTrackerSource -ScriptBlock {
-				Invoke-RestMethod -Uri $using:URI -Method GET
+				Invoke-RestMethod -Uri $using:URI -Method GET -Headers $using:Headers
 			} -TimeoutSeconds 3
 			$D2RDCloneResponse = $D2RDCloneResponse.PSObject.Properties | ForEach-Object {
 				[PSCustomObject]@{
@@ -2576,7 +2588,11 @@ Function TerrorZone {
 	$TimeDataObtained = (Get-Date -Format 'h:mmtt')
 	$TZProvider = "D2Emu.com"
 	$TZURI = "https://www.d2emu.com/api/v1/tz"
-	$D2TZResponse = Invoke-RestMethod -Uri $TZURI
+	$headers = @{
+		'x-emu-username' = 'shupershuff'
+		'x-emu-token' = $EmuToken
+	}
+	$D2TZResponse = Invoke-RestMethod -Uri $TZURI -headers $headers
 	ForEach ($Level in $D2TZResponse.current){
 		Write-Debug "Level ID is: $Level"
 		ForEach ($LevelID in $D2rLevels){
@@ -2908,7 +2924,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "d"){
-				DClone -DisableOutput $False -DCloneTrackerSource $Script:Config.DCloneTrackerSource -TagList $Script:Config.DCloneAlarmList
+				DClone -DisableOutput $False -DCloneTrackerSource $Script:Config.DCloneTrackerSource -TagList $Script:Config.DCloneAlarmList -EmuToken $Script:EmuToken
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "j"){
@@ -3081,7 +3097,7 @@ Function ChooseAccount {
 					$Script:DCloneJob = Start-Job -ScriptBlock {
 						Invoke-Expression "function Dclone {$using:GetDCloneFunc}"
 						Invoke-Expression "function WebRequestWithTimeOut {$Using:GetWebRequestFunc}"
-						Dclone -DisableOutput $True -DCloneTrackerSource $Using:Config.DCloneTrackerSource -TagList $Using:Config.DCloneAlarmList -DCloneChanges $using:DCloneChangesCSV -DCloneAlarmLevel $Using:DCloneAlarmLevel
+						Dclone -DisableOutput $True -DCloneTrackerSource $Using:Config.DCloneTrackerSource -TagList $Using:Config.DCloneAlarmList -DCloneChanges $using:DCloneChangesCSV -DCloneAlarmLevel $Using:DCloneAlarmLevel -EmuToken $Using:EmuToken
 					} #check for dclone status
 				}
 				catch {
@@ -3578,6 +3594,7 @@ Function Processing {
 InitialiseCurrentStats
 CheckForUpdates
 ImportXML
+GetEmuToken
 ValidationAndSetup
 ImportCSV
 Clear-Host
