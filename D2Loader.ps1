@@ -32,7 +32,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.13.2"
+$CurrentVersion = "1.13.1.1"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
