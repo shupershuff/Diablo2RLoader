@@ -19,8 +19,10 @@ Servers:
  Asia - kr.actual.battle.net
 
 Changes since 1.13.1 (next version edits):
-Fixed D2Emu connection issues. Thanks Mysterio!
+Fixed D2Emu connection issues. Thanks Mysterio! Note that script will take slightly longer to open.
 Window positioner now restores minimized d2 instances to ensure they're repositioned.
+Gave Launch Parameters some McLovin. If Account is specified and Password isn't it will try use settings from accounts.csv (good for accounts using token auth).
+Made the defaultregion config option optional
 
 1.13.1+ to do list
 Couldn't write :) in release notes without it adding a new line, some minor issue with formatfunction regex
@@ -32,7 +34,7 @@ Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.13.1.1"
+$CurrentVersion = "1.13.2"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -300,7 +302,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
 			ForEach ($WordMatch in $WordMatches){# Iterate through each match (match being a block of characters, ie each word).
 				ForEach ($ANSIPattern in $ANSIPatterns){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
-					$ANSIMatches = $match.value | Select-String -Pattern $ANSIPattern -AllMatches
+					$ANSIMatches = $WordMatch.value | Select-String -Pattern $ANSIPattern -AllMatches
 					ForEach ($ANSIMatch in $ANSIMatches){
 						$Script:ANSIUsed = $True
 						$PatternLengthCount = $PatternLengthCount + (($ANSIMatch.matches | ForEach-Object {$_.Value}) -join "").length #Calculate how many characters in the text are ANSI formatting characters and thus won't be displayed on screen, to prevent skewing word count.
@@ -1003,8 +1005,8 @@ Function ValidateTokenInput { #For Authentication
 	until ($null -ne $extractedInfo)
 }
 Function ImportCSV { #Import Account CSV
-	do {
-		if ($Null -eq $Script:AccountUsername){#If no parameters sent to script.
+	if (-not ($Script:ParamsUsed -eq $True -and $Null -ne $Script:AccountUsername -and $Null -ne $Script:PW)) {#Do this if no parameters are used or parameters that are used don't depend on info in accounts.csv
+		do {
 			try {
 				$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv" #import all accounts from csv
 			}
@@ -1012,228 +1014,232 @@ Function ImportCSV { #Import Account CSV
 				FormatFunction -text "`nAccounts.csv does not exist. Make sure you create this and populate with accounts first." -IsError
 				PressTheAnyKeyToExit
 			}
-		}
-		if ($Null -ne $Script:AccountOptionsCSV){
-			#check Accounts.csv has been updated and doesn't contain the example account.
-			if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
-				Write-Host "`n You haven't setup accounts.csv with your accounts." -foregroundcolor red
-				Write-Host " Add your account details to the CSV file and run the script again :)`n" -foregroundcolor red
-				PressTheAnyKeyToExit
-			}
-			if ($Null -ne ($AccountOptionsCSV | Where-Object {$_.id -eq ""})){
-				$Script:AccountOptionsCSV = $Script:AccountOptionsCSV | Where-Object {$_.id -ne ""} # To account for user error, remove any empty lines from accounts.csv
-			}
-			ForEach ($Account in $AccountOptionsCSV){
-				if ($Account.accountlabel -eq ""){ # if user doesn't specify a friendly name, use id. Prevents display issues later on.
-					$Account.accountlabel = ("Account " + $Account.id)
-					$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-				}
-			}
-			$DuplicateIDs = $AccountOptionsCSV | Where-Object {$_.id -ne ""} | Group-Object -Property ID | Where-Object { $_.Count -gt 1 }
-			if ($duplicateIDs.Count -gt 0){
-				$duplicateIDs = ($DuplicateIDs.name | out-string).replace("`r`n",", ").trim(", ") #outputs more meaningful error.
-				Write-Host "`n Accounts.csv has duplicate IDs: $duplicateIDs" -foregroundcolor red
-				FormatFunction -Text "Please adjust Accounts.csv so that the ID numbers against each account are unique.`n" -IsError
-				PressTheAnyKeyToExit
-			}
-			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.7.0. If batch column doesn't exist, add it
-				# Column does not exist, so add it to the CSV data
-				$Script:AccountOptionsCSV | ForEach-Object {
-					$_ | Add-Member -NotePropertyName "Batches" -NotePropertyValue $Null
-				}
-				# Export the updated CSV data back to the file
-				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-			}
-			$BatchesInCSV = ($AccountOptionsCSV | group-object batches | where-object {$_.name -ne ""}).count
-			if ($BatchesInCSV -ge 1 -or $Null -ne $Batch){
-				$Script:EnableBatchFeature = $True
-				$Script:BatchOption = "b" #specified here as well as in the ChooseAccounts section so that this works when being passed as a parameter
-			}
-			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.10.0. If token columns don't exist, add them. As of 1.12.0 onwards, TokenSecureString is no longer used.
-				# Column does not exist, so add it to the CSV data
-				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
-					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "Token" -NotePropertyValue $Null}
-				}
-				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
-					$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "AuthenticationMethod" -NotePropertyValue "Parameter"}
-				}
-				# Export the updated CSV data back to the file
-				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-			}
-			$OldColumnsToRemove = @("PWIsSecureString","TokenIsSecureString") #Old Account.csv columns that are now unused.
-			$ExistingColumns = $Script:AccountOptionsCSV | Select-Object -First 1 | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name
-			$ColumnsRemoved = $ExistingColumns | Where-Object { $OldColumnsToRemove -contains $_ }
-			$DesiredColumnOrder = @("ID","Acct","AccountLabel","Batches","TimeActive","CustomLaunchArguments","AuthenticationMethod","PW","Token") # Update with your desired column order
-			if ($ColumnsRemoved.Count -gt 0){
-				$Script:AccountOptionsCSV = $Script:AccountOptionsCSV | Select-Object -Property $DesiredColumnOrder
-				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #rewrite to accounts.csv to remove unused columns.
-				FormatFunction -text ("Unused Columns were removed from Accounts.csv: " + ($columnsRemoved -join ", ") + ".`n") -IsWarning
-				start-sleep -milliseconds 3000
-			}
-			else {
-				Write-Verbose "No columns were removed as they do not exist in the CSV."
-			}
-			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "CustomLaunchArguments" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.8.0. If CustomLaunchArguments column doesn't exist, add it
-				# Column does not exist, so add it to the CSV data
-				$Script:AccountOptionsCSV | ForEach-Object {
-					$_ | Add-Member -NotePropertyName "CustomLaunchArguments" -NotePropertyValue $Script:OriginalCommandLineArguments
-				}
-				# Export the updated CSV data back to the file
-				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-				Write-Host " Added CustomLaunchArguments column to accounts.csv.`n" -foregroundcolor green
-				Start-Sleep -milliseconds 1200
-				PressTheAnyKey
-			}
-			if (-not ($Script:AccountOptionsCSV | Get-Member -Name "TimeActive" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.8.0. If TimeActive column doesn't exist, add it
-				# Column does not exist, so add it to the CSV data
-				$Script:AccountOptionsCSV | ForEach-Object {
-					$_ | Add-Member -NotePropertyName "TimeActive" -NotePropertyValue $Null
-				}
-				# Export the updated CSV data back to the file
-				$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
-				Write-Host " Added TimeActive column to accounts.csv." -foregroundcolor Green
-				PressTheAnyKey
-			}
-			#Secure any plain text tokens. Ask for tokens on accounts that don't have any if Config is configured to use Token Authentication.
-			$NewCSV = ForEach ($Entry in $Script:AccountOptionsCSV){
-				if 	($Entry.AuthenticationMethod -eq ""){
-					$Entry.AuthenticationMethod = "Parameter"
-					$UpdateAccountsCSV = $True
-				}
-				if ($Entry.AuthenticationMethod -ne "Token" -and $Entry.AuthenticationMethod -ne "Parameter"){
-					Write-Host ("`n Error: AuthenticationMethod in accounts.csv for " + $Entry.AccountLabel + " is invalid.") -Foregroundcolor red
-					Write-Host " Open accounts.csv and set this to either 'Parameter' or 'Token'.`n" -Foregroundcolor red
+			if ($Null -ne $Script:AccountOptionsCSV){
+				#check Accounts.csv has been updated and doesn't contain the example account.
+				if ($Script:AccountOptionsCSV -match "yourbnetemailaddress"){
+					Write-Host "`n You haven't setup accounts.csv with your accounts." -foregroundcolor red
+					Write-Host " Add your account details to the CSV file and run the script again :)`n" -foregroundcolor red
 					PressTheAnyKeyToExit
 				}
-				if ($Entry.Token.length -ge 200){#if nothing needs converting, make sure existing entries still make it into the updated CSV
-					$Entry
+				if ($Null -ne ($AccountOptionsCSV | Where-Object {$_.id -eq ""})){
+					$Script:AccountOptionsCSV = $Script:AccountOptionsCSV | Where-Object {$_.id -ne ""} # To account for user error, remove any empty lines from accounts.csv
 				}
-				if ($Entry.Token.length -lt 200 -and $Entry.Token.length -ne 0 -and $Config.ConvertPlainTextSecrets -eq $True){#if accounts.csv has a Token and it's less than 200 chars long, it hasn't been secured yet.
-					$ValidatedToken = ValidateTokenInput -TokenInput $Entry.Token
-					$Entry.Token = ConvertTo-SecureString -String $ValidatedToken -AsPlainText -Force
-					$Entry.Token = $Entry.Token | ConvertFrom-SecureString
-					Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
-					Start-Sleep -milliseconds 100
-					$Entry
-					$TokensUpdated = $true
-				}
-				if ($Entry.Token.length -eq 0 -and $Entry.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
-					Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a Token defined.") -foregroundcolor yellow
-					Write-Host " See the readme on Github for how to obtain Auth token.`n" -foregroundcolor yellow
-					Write-Host " https://github.com/shupershuff/Diablo2RLoader/#3-setup-your-accounts`n" -foregroundcolor cyan
-					while ($Entry.Token.length -eq 0){#prevent empty entries as this will cause errors.
-						$Entry.Token = ValidateTokenInput -ManuallyEntered $True -AccountLabel $Entry.AccountLabel
+				ForEach ($Account in $AccountOptionsCSV){
+					if ($Account.accountlabel -eq ""){ # if user doesn't specify a friendly name, use id. Prevents display issues later on.
+						$Account.accountlabel = ("Account " + $Account.id)
+						$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
 					}
-					if ($Config.ConvertPlainTextSecrets -eq $True){
-						$Entry.Token = ConvertTo-SecureString -String $Entry.Token -AsPlainText -Force
+				}
+				$DuplicateIDs = $AccountOptionsCSV | Where-Object {$_.id -ne ""} | Group-Object -Property ID | Where-Object { $_.Count -gt 1 }
+				if ($duplicateIDs.Count -gt 0){
+					$duplicateIDs = ($DuplicateIDs.name | out-string).replace("`r`n",", ").trim(", ") #outputs more meaningful error.
+					Write-Host "`n Accounts.csv has duplicate IDs: $duplicateIDs" -foregroundcolor red
+					FormatFunction -Text "Please adjust Accounts.csv so that the ID numbers against each account are unique.`n" -IsError
+					PressTheAnyKeyToExit
+				}
+				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Batches" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.7.0. If batch column doesn't exist, add it
+					# Column does not exist, so add it to the CSV data
+					$Script:AccountOptionsCSV | ForEach-Object {
+						$_ | Add-Member -NotePropertyName "Batches" -NotePropertyValue $Null
+					}
+					# Export the updated CSV data back to the file
+					$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+				}
+				$BatchesInCSV = ($AccountOptionsCSV | group-object batches | where-object {$_.name -ne ""}).count
+				if ($BatchesInCSV -ge 1 -or $Null -ne $Batch){
+					$Script:EnableBatchFeature = $True
+					$Script:BatchOption = "b" #specified here as well as in the ChooseAccounts section so that this works when being passed as a parameter
+				}
+				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue) -or -not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.10.0. If token columns don't exist, add them. As of 1.12.0 onwards, TokenSecureString is no longer used.
+					# Column does not exist, so add it to the CSV data
+					if (-not ($Script:AccountOptionsCSV | Get-Member -Name "Token" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
+						$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "Token" -NotePropertyValue $Null}
+					}
+					if (-not ($Script:AccountOptionsCSV | Get-Member -Name "AuthenticationMethod" -MemberType NoteProperty -ErrorAction SilentlyContinue)){
+						$Script:AccountOptionsCSV | ForEach-Object {$_ | Add-Member -NotePropertyName "AuthenticationMethod" -NotePropertyValue "Parameter"}
+					}
+					# Export the updated CSV data back to the file
+					$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+				}
+				$OldColumnsToRemove = @("PWIsSecureString","TokenIsSecureString") #Old Account.csv columns that are now unused.
+				$ExistingColumns = $Script:AccountOptionsCSV | Select-Object -First 1 | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name
+				$ColumnsRemoved = $ExistingColumns | Where-Object { $OldColumnsToRemove -contains $_ }
+				$DesiredColumnOrder = @("ID","Acct","AccountLabel","Batches","TimeActive","CustomLaunchArguments","AuthenticationMethod","PW","Token") # Update with your desired column order
+				if ($ColumnsRemoved.Count -gt 0){
+					$Script:AccountOptionsCSV = $Script:AccountOptionsCSV | Select-Object -Property $DesiredColumnOrder
+					$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #rewrite to accounts.csv to remove unused columns.
+					FormatFunction -text ("Unused Columns were removed from Accounts.csv: " + ($columnsRemoved -join ", ") + ".`n") -IsWarning
+					start-sleep -milliseconds 3000
+				}
+				else {
+					Write-Verbose "No columns were removed as they do not exist in the CSV."
+				}
+				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "CustomLaunchArguments" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.8.0. If CustomLaunchArguments column doesn't exist, add it
+					# Column does not exist, so add it to the CSV data
+					$Script:AccountOptionsCSV | ForEach-Object {
+						$_ | Add-Member -NotePropertyName "CustomLaunchArguments" -NotePropertyValue $Script:OriginalCommandLineArguments
+					}
+					# Export the updated CSV data back to the file
+					$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+					Write-Host " Added CustomLaunchArguments column to accounts.csv.`n" -foregroundcolor green
+					Start-Sleep -milliseconds 1200
+					PressTheAnyKey
+				}
+				if (-not ($Script:AccountOptionsCSV | Get-Member -Name "TimeActive" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#For update 1.8.0. If TimeActive column doesn't exist, add it
+					# Column does not exist, so add it to the CSV data
+					$Script:AccountOptionsCSV | ForEach-Object {
+						$_ | Add-Member -NotePropertyName "TimeActive" -NotePropertyValue $Null
+					}
+					# Export the updated CSV data back to the file
+					$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
+					Write-Host " Added TimeActive column to accounts.csv." -foregroundcolor Green
+					PressTheAnyKey
+				}
+				#Secure any plain text tokens. Ask for tokens on accounts that don't have any if Config is configured to use Token Authentication.
+				$NewCSV = ForEach ($Entry in $Script:AccountOptionsCSV){
+					if 	($Entry.AuthenticationMethod -eq ""){
+						$Entry.AuthenticationMethod = "Parameter"
+						$UpdateAccountsCSV = $True
+					}
+					if ($Entry.AuthenticationMethod -ne "Token" -and $Entry.AuthenticationMethod -ne "Parameter"){
+						Write-Host ("`n Error: AuthenticationMethod in accounts.csv for " + $Entry.AccountLabel + " is invalid.") -Foregroundcolor red
+						Write-Host " Open accounts.csv and set this to either 'Parameter' or 'Token'.`n" -Foregroundcolor red
+						PressTheAnyKeyToExit
+					}
+					if ($Entry.Token.length -ge 200){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+						$Entry
+					}
+					if ($Entry.Token.length -lt 200 -and $Entry.Token.length -ne 0 -and $Config.ConvertPlainTextSecrets -eq $True){#if accounts.csv has a Token and it's less than 200 chars long, it hasn't been secured yet.
+						$ValidatedToken = ValidateTokenInput -TokenInput $Entry.Token
+						$Entry.Token = ConvertTo-SecureString -String $ValidatedToken -AsPlainText -Force
 						$Entry.Token = $Entry.Token | ConvertFrom-SecureString
 						Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
+						$Entry
+						$TokensUpdated = $true
 					}
-					$Entry
-					$TokensUpdated = $true
-				}
-				if ($Entry.Token.length -ge 200 -or ($Config.ConvertPlainTextSecrets -eq $False -and $Entry.Token.length -gt 10)){
-					$Script:TokensConfigured = $True
-				}
-			}
-			#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
-			$NewCSV = ForEach ($Entry in $Script:AccountOptionsCSV){
-				if ($Entry.PW.length -ge 300 -and $Config.ConvertPlainTextSecrets -eq $True){#if nothing needs converting, make sure existing entries still make it into the updated CSV
-					$Entry
-				}
-				ElseIf ($Entry.PW.length -ge 1 -and $Config.ConvertPlainTextSecrets -eq $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
-					$Entry
-				}
-				if ($Entry.PW.length -lt 300 -and $Entry.PW.length -ne 0 -and $Config.ConvertPlainTextSecrets -ne $False){#if accounts.csv has a password and it isn't over 300characters, this means it's not converted yet. As such, convert PW to secure string and update CSV.
-					$Entry.PW = ConvertTo-SecureString -String $Entry.PW -AsPlainText -Force
-					$Entry.PW = $Entry.PW | ConvertFrom-SecureString
-					Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
-					Start-Sleep -milliseconds 100
-					$Entry
-					$PWsUpdated = $true
-				}
-				if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
-					Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a password defined.`n") -foregroundcolor yellow
-					if ($Config.ConvertPlainTextSecrets -eq $True){
-						while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
-							$Entry.PW = read-host -AsSecureString " Enter the Battle.net password for"$Entry.AccountLabel
+					if ($Entry.Token.length -eq 0 -and $Entry.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
+						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a Token defined.") -foregroundcolor yellow
+						Write-Host " See the readme on Github for how to obtain Auth token.`n" -foregroundcolor yellow
+						Write-Host " https://github.com/shupershuff/Diablo2RLoader/#3-setup-your-accounts`n" -foregroundcolor cyan
+						while ($Entry.Token.length -eq 0){#prevent empty entries as this will cause errors.
+							$Entry.Token = ValidateTokenInput -ManuallyEntered $True -AccountLabel $Entry.AccountLabel
 						}
+						if ($Config.ConvertPlainTextSecrets -eq $True){
+							$Entry.Token = ConvertTo-SecureString -String $Entry.Token -AsPlainText -Force
+							$Entry.Token = $Entry.Token | ConvertFrom-SecureString
+							Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
+							Start-Sleep -milliseconds 100
+						}
+						$Entry
+						$TokensUpdated = $true
+					}
+					if ($Entry.Token.length -ge 200 -or ($Config.ConvertPlainTextSecrets -eq $False -and $Entry.Token.length -gt 10)){
+						$Script:TokensConfigured = $True
+					}
+				}
+				#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
+				$NewCSV = ForEach ($Entry in $Script:AccountOptionsCSV){
+					if ($Entry.PW.length -ge 300 -and $Config.ConvertPlainTextSecrets -eq $True){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+						$Entry
+					}
+					ElseIf ($Entry.PW.length -ge 1 -and $Config.ConvertPlainTextSecrets -eq $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+						$Entry
+					}
+					if ($Entry.PW.length -lt 300 -and $Entry.PW.length -ne 0 -and $Config.ConvertPlainTextSecrets -ne $False){#if accounts.csv has a password and it isn't over 300characters, this means it's not converted yet. As such, convert PW to secure string and update CSV.
+						$Entry.PW = ConvertTo-SecureString -String $Entry.PW -AsPlainText -Force
 						$Entry.PW = $Entry.PW | ConvertFrom-SecureString
 						Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
+						Start-Sleep -milliseconds 100
+						$Entry
+						$PWsUpdated = $true
 					}
-					Else { #if passwords aren't to be secured
-						while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
-							$Entry.PW = read-host " Enter the Battle.net password for"$Entry.AccountLabel
+					if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
+						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a password defined.`n") -foregroundcolor yellow
+						if ($Config.ConvertPlainTextSecrets -eq $True){
+							while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
+								$Entry.PW = read-host -AsSecureString " Enter the Battle.net password for"$Entry.AccountLabel
+							}
+							$Entry.PW = $Entry.PW | ConvertFrom-SecureString
+							Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
 						}
-						Write-Host (" Saved Password for " + $Entry.AccountLabel) -foregroundcolor green
+						Else { #if passwords aren't to be secured
+							while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
+								$Entry.PW = read-host " Enter the Battle.net password for"$Entry.AccountLabel
+							}
+							Write-Host (" Saved Password for " + $Entry.AccountLabel) -foregroundcolor green
+						}
+						Start-Sleep -milliseconds 100
+						$Entry
+						$PWsUpdated = $true
 					}
-					Start-Sleep -milliseconds 100
-					$Entry
-					$PWsUpdated = $true
 				}
+				if ($PWsUpdated -eq $true -or $TokensUpdated -eq $True -or $UpdateAccountsCSV -eq $True){#if CSV needs to be updated
+					Try {
+						$NewCSV | Export-CSV "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #update CSV file
+						if ($Config.ConvertPlainTextSecrets -eq $True){$SavedOrSecured = "Secured"}Else{$SavedOrSecured = "Saved"}
+						if ($TokensUpdated -eq $True){
+							Write-Host " Accounts.csv updated: Tokens have been $SavedOrSecured." -foregroundcolor green
+						}
+						if ($PWsUpdated -eq $True){
+							Write-Host " Accounts.csv updated: Passwords have been $SavedOrSecured." -foregroundcolor green
+						}
+						Start-Sleep -milliseconds 3000
+					}
+					Catch {
+						Write-Host "`n Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
+						Write-Host " Please close accounts.csv and run the script again!" -foregroundcolor red
+						Write-Host "`n If Accounts.csv isn't open, then there must be a permission issue." -foregroundcolor red
+						Write-Host " Try moving your install folder to a different location." -foregroundcolor red
+						PressTheAnyKeyToExit
+					}
+				}
+				$AccountCSVImportSuccess = $True
 			}
-			if ($PWsUpdated -eq $true -or $TokensUpdated -eq $True -or $UpdateAccountsCSV -eq $True){#if CSV needs to be updated
-				Try {
-					$NewCSV | Export-CSV "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation #update CSV file
-					if ($Config.ConvertPlainTextSecrets -eq $True){$SavedOrSecured = "Secured"}Else{$SavedOrSecured = "Saved"}
-					if ($TokensUpdated -eq $True){
-						Write-Host " Accounts.csv updated: Tokens have been $SavedOrSecured." -foregroundcolor green
+			elseif ($Null -ne $Script:AccountUsername){#Error out and exit if there's a problem with the csv.
+				if ($AccountCSVRecoveryAttempt -lt 1){
+					try {
+						Write-Host " Issue with accounts.csv. Attempting Autorecovery from backup..." -foregroundcolor red
+						Copy-Item -Path $Script:WorkingDirectory\Accounts.backup.csv -Destination $Script:WorkingDirectory\Accounts.csv
+						Write-Host " Autorecovery successful!" -foregroundcolor Green
+						$AccountCSVRecoveryAttempt ++
+						PressTheAnyKey
 					}
-					if ($PWsUpdated -eq $True){
-						Write-Host " Accounts.csv updated: Passwords have been $SavedOrSecured." -foregroundcolor green
+					Catch {
+						$AccountCSVImportSuccess = $False
 					}
-					Start-Sleep -milliseconds 3000
 				}
-				Catch {
-					Write-Host "`n Couldn't update Accounts.csv, probably because the file is open & locked." -foregroundcolor red
-					Write-Host " Please close accounts.csv and run the script again!" -foregroundcolor red
-					Write-Host "`n If Accounts.csv isn't open, then there must be a permission issue." -foregroundcolor red
-					Write-Host " Try moving your install folder to a different location." -foregroundcolor red
+				Else {
+					$AccountCSVRecoveryAttempt = 2
+				}
+				if ($AccountCSVImportSuccess -eq $False -or $AccountCSVRecoveryAttempt -eq 2){
+					Write-Host "`n There's an issue with accounts.csv." -foregroundcolor red
+					Write-Host " Please ensure that this is filled out correctly and rerun the script." -foregroundcolor red
+					Write-Host " Alternatively, rebuild CSV from scratch or restore from accounts.backup.csv`n" -foregroundcolor red
 					PressTheAnyKeyToExit
 				}
 			}
-			$AccountCSVImportSuccess = $True
+		} until ($AccountCSVImportSuccess -eq $True)
+		$Script:CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"
+		([int]$Script:CurrentStats.TimesLaunched) ++
+		if ($CurrentStats.TotalGameTime -eq ""){
+			$Script:CurrentStats.TotalGameTime = 0 #prevents errors from happening on first time run.
 		}
-		else {#Error out and exit if there's a problem with the csv.
-			if ($AccountCSVRecoveryAttempt -lt 1){
-				try {
-					Write-Host " Issue with accounts.csv. Attempting Autorecovery from backup..." -foregroundcolor red
-					Copy-Item -Path $Script:WorkingDirectory\Accounts.backup.csv -Destination $Script:WorkingDirectory\Accounts.csv
-					Write-Host " Autorecovery successful!" -foregroundcolor Green
-					$AccountCSVRecoveryAttempt ++
-					PressTheAnyKey
-				}
-				Catch {
-					$AccountCSVImportSuccess = $False
-				}
-			}
-			Else {
-				$AccountCSVRecoveryAttempt = 2
-			}
-			if ($AccountCSVImportSuccess -eq $False -or $AccountCSVRecoveryAttempt -eq 2){
-				Write-Host "`n There's an issue with accounts.csv." -foregroundcolor red
-				Write-Host " Please ensure that this is filled out correctly and rerun the script." -foregroundcolor red
-				Write-Host " Alternatively, rebuild CSV from scratch or restore from accounts.backup.csv`n" -foregroundcolor red
-				PressTheAnyKeyToExit
-			}
+		try {
+			$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv with Total Time played.
 		}
-	} until ($AccountCSVImportSuccess -eq $True)
-	$Script:CurrentStats = import-csv "$Script:WorkingDirectory\Stats.csv"
-	([int]$Script:CurrentStats.TimesLaunched) ++
-	if ($CurrentStats.TotalGameTime -eq ""){
-		$Script:CurrentStats.TotalGameTime = 0 #prevents errors from happening on first time run.
+		Catch {
+			Write-Host "  Couldn't update stats.csv" -foregroundcolor yellow
+		}
+		#Make Backup of CSV.
+		 # Added this in as I had BSOD on my PC and noticed that this caused the files to get corrupted.
+		Copy-Item -Path ($Script:WorkingDirectory + "\stats.csv") -Destination ($Script:WorkingDirectory + "\stats.backup.csv")
+		Copy-Item -Path ($Script:WorkingDirectory + "\accounts.csv") -Destination ($Script:WorkingDirectory + "\accounts.backup.csv")
 	}
-	try {
-		$CurrentStats | Export-Csv -Path "$Script:WorkingDirectory\Stats.csv" -NoTypeInformation #update Stats.csv with Total Time played.
+	else {
+		$Script:ParamLaunchAndAccountNotInAccountsCSV = $True
+		write-verbose "Parameters used with account and PW specified. Accounts.csv not imported."
 	}
-	Catch {
-		Write-Host "  Couldn't update stats.csv" -foregroundcolor yellow
-	}
-	#Make Backup of CSV.
-	 # Added this in as I had BSOD on my PC and noticed that this caused the files to get corrupted.
-	Copy-Item -Path ($Script:WorkingDirectory + "\stats.csv") -Destination ($Script:WorkingDirectory + "\stats.backup.csv")
-	Copy-Item -Path ($Script:WorkingDirectory + "\accounts.csv") -Destination ($Script:WorkingDirectory + "\accounts.backup.csv")
 }
 Function SetQualityRolls {
 	#Set item quality array for randomizing quote colours. A stupid addition to script but meh.
@@ -1497,9 +1503,9 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool SetForegroundWindow(IntPtr hWnd); //Bring window to front
             [DllImport("user32.dll")]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool ShowWindow( //used in this script to restore minimized window (state 9)
-                IntPtr handle, int state);
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool ShowWindow( //used in this script to restore minimized window (state 9)
+				IntPtr handle, int state);
 		}
 		public struct RECT {
 			public int Left;        // x position of upper-left corner
@@ -1507,8 +1513,7 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			public int Right;       // x position of lower-right corner
 			public int Bottom;      // y position of lower-right corner
 		}
-"@
-	}
+"@	}
 }
 Function SaveWindowLocations {# Get Window Location coordinates and save to Accounts.csv
 	LoadWindowClass
@@ -1594,6 +1599,9 @@ Function Options {
 	}
 	ElseIf ($Script:Config.DefaultRegion -eq 3){
 		$CurrentDefaultRegion = "Asia"
+	}
+	ElseIf ($Script:Config.DefaultRegion -eq ""){
+		$CurrentDefaultRegion = "None Specified"
 	}
 	Write-Host "  $X[38;2;255;165;000;22m1$X[0m - $X[4mDefaultRegion$X[0m (Currently $X[38;2;255;165;000;22m$CurrentDefaultRegion$X[0m)"
 	Write-Host "`n  $X[38;2;255;165;000;22m2$X[0m - $X[4mSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.SettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
@@ -1705,10 +1713,11 @@ Function Options {
 			"1" = 1
 			"2" = 2
 			"3" = 3
+			"4" = ""
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "DefaultRegion" -OptionsList $Options -Current $CurrentDefaultRegion `
 		-Description "This option is used so you can press enter instead of manually entering region on region select screen." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for NA (Americas)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for EU (Europe)`n    Choose '$X[38;2;255;165;000;22m3$X[0m' for Asia (Also known as KR)`n"
+		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for NA (Americas)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for EU (Europe)`n    Choose '$X[38;2;255;165;000;22m3$X[0m' for Asia (Also known as KR)`n    Choose '$X[38;2;255;165;000;22m4$X[0m' for None`n"
 	}
 	ElseIf ($Option -eq "2"){ #SettingSwitcherEnabled
 		If ($Script:Config.SettingSwitcherEnabled -eq "False"){
@@ -2850,7 +2859,7 @@ Function Menu {
 			if ($Script:region -eq "EU" -or $Script:region -eq 2){$Script:region = "eu.actual.battle.net"}
 			if ($Script:region -eq "Asia" -or $Script:region -eq "As" -or $Script:region -eq "KR" -or $Script:region -eq 3){$Script:region = "kr.actual.battle.net"}
 			if ($Script:region -ne "us.actual.battle.net" -and $Script:region -ne "eu.actual.battle.net" -and $Script:region -ne "kr.actual.battle.net"){
-				Write-Host " Region not valid. Please choose region" -foregroundcolor red
+				Write-Host " Region $region not valid. Please choose region" -foregroundcolor red
 				ChooseRegion
 			}
 		}
@@ -2912,12 +2921,7 @@ Function Menu {
 	}
 }
 Function ChooseAccount {
-	if ($Null -ne $Script:AccountUsername){ #if parameters have already been set.
-		$Script:AccountOptionsCSV = @(
-			[pscustomobject]@{PW=$Script:PW;acct=$Script:AccountUsername}
-		)
-	}
-	Else {#if no account parameters have been set already
+	if ($Null -eq $Script:AccountUsername){#if no account parameters have been set already
 		do {
 			if ($Script:AccountID -eq "t"){
 				TerrorZone
@@ -3217,9 +3221,27 @@ Function ChooseAccount {
 		}
 	}
 	if (($Null -ne $Script:AccountUsername -and ($Null -eq $Script:PW -or "" -eq $Script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.PW.length -eq 0))){#This is called when params are used but the password wasn't entered. Not used for -all or -batch
+		if ($Null -ne $Script:AccountOptionsCSV){#compare parameter against account ID in case they specified ID instead of email.
+			$Script:AccountChoice = $Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountUsername}
+			if ($Null -eq $Script:AccountChoice){#if still null, compare against username in accounts.csv
+				$Script:AccountChoice = $Script:AccountOptionsCSV | where-object {$_.acct -eq $Script:AccountUsername}
+			}
+			if ($Null -ne $Script:AccountChoice){
+				$Script:AccountID = $Script:AccountChoice.id
+				$Script:PWmanualset = $False
+				$Script:ParamLaunchAndAccountNotInAccountsCSV = $False #used in processing to determine if some features should be skipped.
+				return
+			}
+			else {
+				$Script:ParamLaunchAndAccountNotInAccountsCSV = $True #Is this var name too long? No? Cool.
+			}
+		}
 		$SecuredPW = read-host -AsSecureString " Enter the Battle.net password for $Script:AccountUsername"
 		$Bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecuredPW)
 		$Script:PW = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($Bstr)
+		$Script:AccountOptionsCSV = @(
+			[pscustomobject]@{PW=$Script:PW;acct=$Script:AccountUsername}
+		)
 		$Script:PWmanualset = $true
 	}
 	else {
@@ -3237,7 +3259,10 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 	}
 	do {
 		Write-Host "`n Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
-		Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + "): ") -nonewline
+		if ($Script:Config.DefaultRegion -ne ""){
+			$DefaultRegionText = " or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + ")"
+		}
+		Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel" + $DefaultRegionText + ": ") -nonewline
 		$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13,27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
 		if ("" -eq $Script:RegionOption){
 			$Script:RegionOption = $Config.DefaultRegion #default to NA
@@ -3264,7 +3289,7 @@ Function Processing {
 		}
 		if ($Script:AccountChoice.AuthenticationMethod -ne "Token"){
 			try {
-				if ($Script:ParamsUsed -ne $true -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){ # If Params aren't used or if Params are used with either batches or open all accounts.
+				if ($Script:ParamLaunchAndAccountNotInAccountsCSV -eq $False -or $Script:ParamsUsed -ne $true -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){ # If Params aren't used or if Params are used with either batches or open all accounts.
 					$Script:acct = $Script:AccountChoice.acct.tostring()
 					if ($Config.ConvertPlainTextSecrets -eq $true -or $PW.Length -gt 200){ # if PW should be converted, update $Script:PW to the converted PW, otherwise leave the variable alone.
 						$EncryptedPassword = $PW | ConvertTo-SecureString -ErrorAction Stop -Errorvariable ErrorVar #Try converting password.
@@ -3297,7 +3322,7 @@ Function Processing {
 			$Script:RegionLabel = $Script:Region.substring(0,2)
 			if ($Script:RegionLabel -eq "US"){$Script:RegionLabel = "NA"}
 		}
-		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or ($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel)){
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:ParamLaunchAndAccountNotInAccountsCSV -ne $True)){
 			if ($Script:AccountChoice.Token.length -gt 200){
 				$Script:Token = $Script:AccountChoice.Token.tostring()
 				$EncryptedToken = $Script:Token | ConvertTo-SecureString
@@ -3326,8 +3351,10 @@ Function Processing {
 		}
 		#Open diablo with parameters
 			# IE, this is essentially just opening D2r like you would with a shortcut target of "C:\Program Files (x86)\Battle.net\Games\Diablo II Resurrected\D2R.exe" -username <yourusername -password <yourPW> -address <SERVERaddress>
-		$CustomLaunchArguments = ($Script:AccountChoice.CustomLaunchArguments).replace("`"","").replace("'","") #clean up arguments in case they contain quotes (for folks that have used excel to edit accounts.csv).
-		if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -and $Script:ForceAuthToken -ne $True -and $Script:Config.ForceAuthTokenForRegion -notmatch $RegionLabel){
+		if ($Script:ParamLaunchAndAccountNotInAccountsCSV -ne $True){
+			$CustomLaunchArguments = ($Script:AccountChoice.CustomLaunchArguments).replace("`"","").replace("'","") #clean up arguments in case they contain quotes (for folks that have used excel to edit accounts.csv).
+		}
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -and $Script:ForceAuthToken -ne $True -and $Script:Config.ForceAuthTokenForRegion -notmatch $RegionLabel -or $Script:ParamLaunchAndAccountNotInAccountsCSV -eq $True){
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		else {
@@ -3339,7 +3366,7 @@ Function Processing {
 		$Script:PW = $Null
 		$Script:Token = $Null
 		#Switch Settings file to load D2r from.
-		if ($Config.SettingSwitcherEnabled -eq $True -and $Script:AskForSettings -ne $True){#if user has enabled the auto settings switcher.
+		if ($Config.SettingSwitcherEnabled -eq $True -and $Script:AskForSettings -ne $True -and $Script:ParamLaunchAndAccountNotInAccountsCSV -ne $True){#if user has enabled the auto settings switcher.
 			$SettingsProfilePath = ("C:\Users\" + $Env:UserName + "\Saved Games\Diablo II Resurrected\")
 			if ($Script:AccountChoice.CustomLaunchArguments -match "-mod"){
 				$pattern = "-mod\s+(\S+)" #pattern to find the first word after -mod
@@ -3534,7 +3561,7 @@ Function Processing {
 				Write-Host " Couldn't rename window :(" -foregroundcolor red
 				PressTheAnyKey
 			}
-			If ($Script:Config.RememberWindowLocations -eq $True){ #If user has enabled the feature to automatically move game Windows to preferred screen locations.
+			If ($Script:Config.RememberWindowLocations -eq $True -and $Script:ParamLaunchAndAccountNotInAccountsCSV -ne $True){ #If user has enabled the feature to automatically move game Windows to preferred screen locations.
 				if ($Script:AccountChoice.WindowXCoordinates -ne "" -and $Script:AccountChoice.WindowYCoordinates -ne "" -and $Null -ne $Script:AccountChoice.WindowXCoordinates -and $Null -ne $Script:AccountChoice.WindowYCoordinates -and $Script:AccountChoice.WindowWidth -ne "" -and $Script:AccountChoice.WindowHeight -ne "" -and $Null -ne $Script:AccountChoice.WindowWidth -and $Null -ne $Script:AccountChoice.WindowHeight){ #Check if the account has had coordinates saved yet.
 					$GetLoadWindowClassFunc = $(Get-Command LoadWindowClass).Definition
 					$GetSetWindowLocationsFunc = $(Get-Command SetWindowLocations).Definition
