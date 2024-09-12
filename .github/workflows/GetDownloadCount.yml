@@ -23,8 +23,8 @@ jobs:
 
           # Debug: Print raw JSON to check the response
           echo "Raw releases data:" 
-          echo "$releases"
-          
+          echo "$releases" | tee releases.json  # Also output to a file for inspection
+
           # Validate JSON format and check for errors
           if ! echo "$releases" | jq empty > /dev/null 2>&1; then
             echo "Error: Invalid JSON response."
@@ -36,19 +36,18 @@ jobs:
           release_with_max_downloads=""
 
           # Iterate through each release using a for loop
-          echo "$releases" | jq -c '.[]' | while read -r release; do
-            release_data=$(echo "$release" | jq '.')
-            release_name=$(echo "$release_data" | jq -r '.tag_name')
-            download_count=$(echo "$release_data" | jq '[.assets[].download_count // 0] | add')
+          for release in $(echo "$releases" | jq -c '.[]'); do
+            release_name=$(echo "$release" | jq -r '.tag_name')
+            download_count=$(echo "$release" | jq '[.assets[].download_count // 0] | add')
 
             # Log the release name and download count for debugging
             echo "Release: $release_name, Download Count: $download_count"
 
-            # Check if this release has more downloads than the current max
+            # Update the max_download_count and release_with_max_downloads if applicable
             if [ "$download_count" -gt "$max_download_count" ]; then
-              echo "Release: $release_name, has the most downloads so far: $download_count"
               max_download_count=$download_count
               release_with_max_downloads=$release_name
+              echo "New max downloads: $max_download_count for release: $release_with_max_downloads"
             fi
           done
 
@@ -58,6 +57,8 @@ jobs:
           # Assign to GitHub output
           echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
           echo "release_with_max_downloads=$release_with_max_downloads" >> $GITHUB_OUTPUT
+
+
 
       - name: Update JSON File
         run: |
