@@ -28,21 +28,20 @@ jobs:
             echo "Error: No releases found or invalid JSON response."
             exit 1
           fi
-          echo "test1"
           # Initialize variables for max downloads
           max_download_count=0
           release_with_max_downloads=""
 
-          # Loop through all releases and find the one with the highest download count
-          for release in $(echo "$releases" | jq -c '.[]'); do
-            echo "test2"
+        # Iterate through each release
+          echo "test1"
+          echo "$releases" | jq -c '.[]' | while read -r release; do
+          echo "test2"
             release_data=$(echo "$release" | jq '.')
-             echo "test2.5"
+            echo "test3"
             download_count=$(echo "$release_data" | jq '[.assets[].download_count // 0] | add')
-             echo "test3"
+            echo "test4"
             # Check if this release has more downloads than the current max
             if [ "$download_count" -gt "$max_download_count" ]; then
-               echo "test4 is max so far"
               max_download_count=$download_count
               release_with_max_downloads=$(echo "$release_data" | jq -r '.tag_name')
             fi
