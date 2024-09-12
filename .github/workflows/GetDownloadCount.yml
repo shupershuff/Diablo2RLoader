@@ -22,8 +22,8 @@ jobs:
           releases=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases)
 
           # Debug: Print raw JSON to check the response
-          echo "Raw releases data:" 
-          echo "$releases" | tee releases.json  # Also output to a file for inspection
+          #echo "Raw releases data:" 
+          #echo "$releases" | tee releases.json  # Also output to a file for inspection
 
           # Validate JSON format and check for errors
           if ! echo "$releases" | jq empty > /dev/null 2>&1; then
