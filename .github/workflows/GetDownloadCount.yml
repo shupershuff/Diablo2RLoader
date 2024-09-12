@@ -33,13 +33,10 @@ jobs:
           release_with_max_downloads=""
 
         # Iterate through each release
-          echo "test1"
           echo "$releases" | jq -c '.[]' | while read -r release; do
-          echo "test2"
             release_data=$(echo "$release" | jq '.')
-            echo "test3"
             download_count=$(echo "$release_data" | jq '[.assets[].download_count // 0] | add')
-            echo "test4"
+
             # Check if this release has more downloads than the current max
             if [ "$download_count" -gt "$max_download_count" ]; then
               max_download_count=$download_count
