@@ -44,6 +44,7 @@ jobs:
 
             # Check if this release has more downloads than the current max
             if [ "$download_count" -gt "$max_download_count" ]; then
+              echo "Release: $release_name, has the most downloads so far: $download_count"
               max_download_count=$download_count
               release_with_max_downloads=$release_name
             fi
@@ -55,6 +56,7 @@ jobs:
           # Assign to GitHub output
           echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
           echo "release_with_max_downloads=$release_with_max_downloads" >> $GITHUB_OUTPUT
+
 
       - name: Update JSON File
         run: |
