@@ -20,6 +20,15 @@ jobs:
         run: |
           releases=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases)
           
+          # Debug: Print releases to check the response
+          echo "Releases data: $releases"
+          
+          # Check if releases is empty or not valid JSON
+          if [ -z "$releases" ] || ! echo "$releases" | jq empty; then
+            echo "Error: No releases found or invalid JSON response."
+            exit 1
+          fi
+          
           # Initialize variables for max downloads
           max_download_count=0
           release_with_max_downloads=""
@@ -27,7 +36,7 @@ jobs:
           # Loop through all releases and find the one with the highest download count
           for release in $(echo "$releases" | jq -c '.[]'); do
             release_data=$(echo "$release" | jq '.')
-            download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
+            download_count=$(echo "$release_data" | jq '[.assets[].download_count // 0] | add')
 
             # Check if this release has more downloads than the current max
             if [ "$download_count" -gt "$max_download_count" ]; then
@@ -38,6 +47,7 @@ jobs:
 
           echo "Max downloads: $max_download_count for release: $release_with_max_downloads"
           echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
+
 
       - name: Update JSON File
         run: |
