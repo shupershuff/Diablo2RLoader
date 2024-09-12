@@ -22,8 +22,7 @@ jobs:
           
           # Debug: Print releases to check the response
           echo "Releases data: $releases"
-          echo "test0"
-
+          
           # Check if releases is empty or not valid JSON
           if [ -z "$releases" ] || ! echo "$releases" | jq empty; then
             echo "Error: No releases found or invalid JSON response."
@@ -37,12 +36,16 @@ jobs:
           # Iterate through each release
           echo "$releases" | jq -c '.[]' | while read -r release; do
             release_data=$(echo "$release" | jq '.')
+            release_name=$(echo "$release_data" | jq -r '.tag_name')
             download_count=$(echo "$release_data" | jq '[.assets[].download_count // 0] | add')
+
+            # Log the release name and download count for debugging
+            echo "Release: $release_name, Download Count: $download_count"
 
             # Check if this release has more downloads than the current max
             if [ "$download_count" -gt "$max_download_count" ]; then
               max_download_count=$download_count
-              release_with_max_downloads=$(echo "$release_data" | jq -r '.tag_name')
+              release_with_max_downloads=$release_name
             fi
           done
 
