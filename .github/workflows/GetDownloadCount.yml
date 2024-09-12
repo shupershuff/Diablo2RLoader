@@ -77,7 +77,7 @@ jobs:
             "schemaVersion": 1,
             "label": "Downloads",
             "Version":"'${{ steps.fetch_downloads.outputs.release_with_max_downloads }}'",
-            "DownloadCount":'${{ steps.fetch_downloads.outputs.download_count }}',
+            "DownloadCount":"'${{ steps.fetch_downloads.outputs.download_count }}'",
             "color": "blue"
           }' > .github/max-release-download-count.json
 
