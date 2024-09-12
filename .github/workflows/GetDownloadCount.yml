@@ -22,7 +22,6 @@ jobs:
           
           # Debug: Print releases to check the response
           echo "Releases data: $releases"
-          echo "test0"
           # Check if releases is empty or not valid JSON
           if [ -z "$releases" ] || ! echo "$releases" | jq empty; then
             echo "Error: No releases found or invalid JSON response."
