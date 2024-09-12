@@ -50,7 +50,6 @@ jobs:
           echo "Max downloads: $max_download_count for release: $release_with_max_downloads"
           echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
 
-
       - name: Update JSON File
         run: |
           echo '{
