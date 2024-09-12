@@ -33,8 +33,8 @@ jobs:
           max_download_count=0
           release_with_max_downloads=""
 
-          # Iterate through each release
-          echo "$releases" | jq -c '.[]' | while read -r release; do
+          # Iterate through each release using a for loop to avoid subshell issues
+          for release in $(echo "$releases" | jq -c '.[]'); do
             release_data=$(echo "$release" | jq '.')
             release_name=$(echo "$release_data" | jq -r '.tag_name')
             download_count=$(echo "$release_data" | jq '[.assets[].download_count // 0] | add')
@@ -56,7 +56,6 @@ jobs:
           # Assign to GitHub output
           echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
           echo "release_with_max_downloads=$release_with_max_downloads" >> $GITHUB_OUTPUT
-
 
       - name: Update JSON File
         run: |
