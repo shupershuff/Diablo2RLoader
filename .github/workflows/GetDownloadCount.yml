@@ -19,10 +19,10 @@ jobs:
         id: fetch_downloads
         run: |
           releases=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases)
-          
+
           # Debug: Print releases to check the response
           echo "Releases data: $releases"
-          
+
           # Check if releases is empty or not valid JSON
           if [ -z "$releases" ] || ! echo "$releases" | jq empty; then
             echo "Error: No releases found or invalid JSON response."
@@ -49,8 +49,12 @@ jobs:
             fi
           done
 
-          echo "Max downloads: $max_download_count for release: $release_with_max_downloads"
+          # Log the final result for debugging
+          echo "Final Max downloads: $max_download_count for release: $release_with_max_downloads"
+
+          # Assign to GitHub output
           echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
+          echo "release_with_max_downloads=$release_with_max_downloads" >> $GITHUB_OUTPUT
 
       - name: Update JSON File
         run: |
