@@ -2,7 +2,6 @@ name: Update Download Count on Release
 
 on:
   schedule:
-  #  - cron: '0 * * * *'  # Runs every Day
     - cron: '0 0 * * 0'  # Runs once a week at midnight.
   workflow_dispatch:  # Allows manual triggering
   release:
@@ -19,12 +18,26 @@ jobs:
       - name: Fetch Download Count
         id: fetch_downloads
         run: |
-          #release_data=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases/latest) # Latest Release
-          releases=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases) 
-          release_data=$(echo "$releases" | jq '.[1]')  # Select the second release # Get Previous release details
-          download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
-          echo "$download_count"
-          echo "download_count=$download_count" >> $GITHUB_OUTPUT
+          releases=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases)
+          
+          # Initialize variables for max downloads
+          max_download_count=0
+          release_with_max_downloads=""
+
+          # Loop through all releases and find the one with the highest download count
+          for release in $(echo "$releases" | jq -c '.[]'); do
+            release_data=$(echo "$release" | jq '.')
+            download_count=$(echo "$release_data" | jq '[.assets[].download_count] | add')
+
+            # Check if this release has more downloads than the current max
+            if [ "$download_count" -gt "$max_download_count" ]; then
+              max_download_count=$download_count
+              release_with_max_downloads=$(echo "$release_data" | jq -r '.tag_name')
+            fi
+          done
+
+          echo "Max downloads: $max_download_count for release: $release_with_max_downloads"
+          echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
 
       - name: Update JSON File
         run: |
@@ -33,7 +46,7 @@ jobs:
             "label": "Downloads",
             "message": "'${{ steps.fetch_downloads.outputs.download_count }}'",
             "color": "blue"
-          }' > .github/previous-release-download-count.json
+          }' > .github/max-release-download-count.json
 
       - name: Commit and Push Changes
         env:
@@ -41,6 +54,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add .github/previous-release-download-count.json
+          git add .github/max-release-download-count.json
           git diff --cached --exit-code || git commit -m 'Update download count' || echo "No changes to commit"
           git push https://$TOKEN@github.com/shupershuff/Diablo2RLoader.git HEAD:main || echo "No changes to push"
