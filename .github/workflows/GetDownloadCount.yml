@@ -37,6 +37,7 @@ jobs:
           for release in $(echo "$releases" | jq -c '.[]'); do
             echo "test2"
             release_data=$(echo "$release" | jq '.')
+             echo "test2.5"
             download_count=$(echo "$release_data" | jq '[.assets[].download_count // 0] | add')
              echo "test3"
             # Check if this release has more downloads than the current max
