@@ -35,10 +35,16 @@ jobs:
           max_download_count=0
           release_with_max_downloads=""
 
-          # Iterate through each release and capture max downloads
-          echo "$releases" | jq -c '.[]' | while IFS= read -r release; do
-            release_name=$(echo "$release" | jq -r '.tag_name')
-            download_count=$(echo "$release" | jq '[.assets[].download_count // 0] | add')
+          # Convert JSON to a simpler format for iteration
+          releases_info=$(echo "$releases" | jq -r '.[] | "\(.tag_name) \(.assets[].download_count // 0)"')
+
+          # Iterate through each release information
+          while IFS= read -r line; do
+            release_name=$(echo "$line" | awk '{print $1}')
+            download_count=$(echo "$line" | awk '{print $2}')
+
+            # Convert download_count to integer
+            download_count=${download_count:-0}  # Default to 0 if empty
 
             # Log the release name and download count for debugging
             echo "Release: $release_name, Download Count: $download_count"
@@ -49,7 +55,7 @@ jobs:
               release_with_max_downloads=$release_name
               echo "New max downloads: $max_download_count for release: $release_with_max_downloads"
             fi
-          done
+          done <<< "$releases_info"
 
           # Log the final result for debugging
           echo "Final Max downloads: $max_download_count for release: $release_with_max_downloads"
@@ -57,7 +63,6 @@ jobs:
           # Assign to GitHub output
           echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
           echo "release_with_max_downloads=$release_with_max_downloads" >> $GITHUB_OUTPUT
-
 
       - name: Update JSON File
         run: |
