@@ -21,24 +21,17 @@ jobs:
           # Fetch the releases
           releases=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases)
 
-          # Debug: Print releases to check the response
-          echo "Releases data: $releases" > releases.json
-
-          # Validate JSON format and check for errors
-          if ! jq empty releases.json > /dev/null 2>&1; then
-            echo "Error: Invalid JSON response."
-            exit 1
-          fi
+          # Directly validate the JSON format
+          echo "$releases" | jq empty || { echo "Error: Invalid JSON response."; exit 1; }
 
           # Initialize variables for max downloads
           max_download_count=0
           release_with_max_downloads=""
 
           # Iterate through each release using a for loop
-          for release in $(echo "$releases" | jq -c '.[]'); do
-            release_data=$(echo "$release" | jq '.')
-            release_name=$(echo "$release_data" | jq -r '.tag_name')
-            download_count=$(echo "$release_data" | jq '[.assets[].download_count // 0] | add')
+          echo "$releases" | jq -c '.[]' | while IFS= read -r release; do
+            release_name=$(echo "$release" | jq -r '.tag_name')
+            download_count=$(echo "$release" | jq '[.assets[].download_count // 0] | add')
 
             # Log the release name and download count for debugging
             echo "Release: $release_name, Download Count: $download_count"
@@ -57,8 +50,6 @@ jobs:
           # Assign to GitHub output
           echo "download_count=$max_download_count" >> $GITHUB_OUTPUT
           echo "release_with_max_downloads=$release_with_max_downloads" >> $GITHUB_OUTPUT
-
-
 
       - name: Update JSON File
         run: |
