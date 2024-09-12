@@ -66,10 +66,17 @@ jobs:
 
       - name: Update JSON File
         run: |
+          # Ensure the release version and download count are available
+          if [ -z "${{ steps.fetch_downloads.outputs.release_with_max_downloads }}" ] || [ -z "${{ steps.fetch_downloads.outputs.download_count }}" ]; then
+            echo "Error: Missing release version or download count."
+            exit 1
+          fi
+
+          # Create the JSON content with version and download count
           echo '{
             "schemaVersion": 1,
             "label": "Downloads",
-            "message": "'${{ steps.fetch_downloads.outputs.download_count }}'",
+            "message": "v'${{ steps.fetch_downloads.outputs.release_with_max_downloads }}': '${{ steps.fetch_downloads.outputs.download_count }}'",
             "color": "blue"
           }' > .github/max-release-download-count.json
 
