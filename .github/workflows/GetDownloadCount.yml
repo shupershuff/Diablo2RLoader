@@ -21,7 +21,7 @@ jobs:
           releases=$(curl -s https://api.github.com/repos/shupershuff/diablo2rloader/releases)
 
           # Debug: Print releases to check the response
-          echo "Releases data: $releases"
+          #echo "Releases data: $releases"
 
           # Check if releases is empty or not valid JSON
           if [ -z "$releases" ] || ! echo "$releases" | jq empty; then
