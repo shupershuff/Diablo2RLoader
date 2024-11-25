@@ -207,7 +207,7 @@ All other config options below this are strictly optional:<br>
 Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
 
 ## 4. Run the script manually for the first time
-1. Browse to the folder, right click on D2Loader.ps1 and choose run.
+1. Browse to the folder, right click on D2Loader.ps1 and choose run (if you see an option for 'Run with PowerShell', use this).
 2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
    ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
    a) If the script opens up and immediately closes or you instead get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following steps:   
