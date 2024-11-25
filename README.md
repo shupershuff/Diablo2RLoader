@@ -140,9 +140,10 @@ TL;DR steps are:
 &#x1F534; If you have any issues, come back and fully read these instructions. I can almost guarantee any issue you see is covered in the detailed setup steps below and/or FAQ section.
 
 ## 1. Download
-1. Download the latest [release](https://github.com/shupershuff/Diablo2RLoader/releases) this and extract the zip file to a folder of your choosing.
-2. Right click on D2loader.ps1 and open properties.
-3. Check the "Unblock" box and click apply.<br>
+1. Download the latest [release here](https://github.com/shupershuff/Diablo2RLoader/releases). Click on Diablo2RLoader-<version>.zip (eg Diablo2RLoader-1.13.2.zip) to download.
+2. One downloaded, extract the zip file to a folder of your choosing.
+3. Right click on D2loader.ps1 and open properties.
+4. Check the "Unblock" box and click apply.<br>
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
 ## 2. Setup Your Accounts
