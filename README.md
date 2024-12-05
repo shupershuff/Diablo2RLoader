@@ -269,7 +269,15 @@ Perform these steps if you've enabled the feature for remembering window layout 
 4. Go to options menu and go into the 'RememberWindowLocations' setting.
 5. Once in this menu, choose the option 's' to save coordinates of any open game instances.
 
-Now whenever you launch the accounts they will open in the same positions with the same window sizes. Use the 'r' option within that menu to reset them if need be.
+Now whenever you launch the accounts they will open in the same positions with the same window sizes. Use the 'r' option within that menu to reset them if need be.<br>
+<br>
+**Setup Alternate Layout**<br>
+This feature allows you to have a layout B, but you need to manually set it up.<br>
+I doubt many people will want to do this so instructions will be brief.
+1. In the folder that the script sits in you'll need to make a file. If you've forgotten where you put the script, use 'i' on the script to see script location path.
+2. Create a file called AltLayout.csv.
+3. Open this file in a text editor and set the headers (first line) as: ID,WindowXCoordinates,WindowYCoordinates,WindowHeight,WindowWidth
+4. Add the ID for each account and the coordinates you want for them. Hint, it's probably easier to set these details using the script and copy the coords from accounts.csv. 
 
 # Notes #
 ## Graphics Performance Recommendations ##
