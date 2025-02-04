@@ -19,7 +19,7 @@
 	<ConvertPlainTextSecrets>True</ConvertPlainTextSecrets>
 	
 	<!--Make game launch each instance in the same screen location so you don't have to move your game windows around when starting the game.-->
-	<RememberWindowLocations>True</RememberWindowLocations>
+	<RememberWindowLocations>False</RememberWindowLocations>
 
 	<!--Make sure game always starts in Windowed mode rather than full screen. Note that this seems to cause issues remembering your last window size. Recommend leaving false-->
 	<ForceWindowedMode>False</ForceWindowedMode>
