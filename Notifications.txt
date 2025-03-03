@@ -1,7 +1,8 @@
 {
-    "Notification":  "Season 9 will start December 6, 5 p.m. PST. No meaningful patch notes unfortunately :(
+    "Notification":  "Season 10 will start March 7, 5 p.m. PST.
+D2r is also on sale right now if you want to grab another account.
 
-D2Emu has been busy with improved ladder statistics dashboard. Check out https://d2emu.com/ladder-events and https://d2emu.com/ladder",
-    "PublishDate":  "2024.11.23 13:00:00",
-    "ExpiryDate":  "2024.12.06 17:00:00"
+Make sure you check out https://d2emu.com/ladder-events and https://d2emu.com/ladder",
+    "PublishDate":  "2025.03.04 12:00:00",
+    "ExpiryDate":  "2025.03.08 17:00:00"
 }
