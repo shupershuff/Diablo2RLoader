@@ -1,29 +1,31 @@
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 <br>
-This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account, ideal if you want to play single player and switch between mods easily. 
+This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account.<br>
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
 This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
 Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?<br>
 <br>
-Using this script means you DON'T have to do any of this awful stuff to multibox:<br>
-- Use the worst (but somehow most popular) method of opening the game from the battlenet client each time with multiple game installs taking up heaps of disk space.
-- Set up shortcuts on your desktop for each account with parameters (including storing your password in plain text).
-- Manually use ProcExp to kill the "Check for other instances" handle, or manually running a script for handle.exe to do the same thing.
-- Use Virtual Machines, multiple computers or multiple user accounts (Windows account switching).
-- Run any dodgy executables where you don't know what's actually running.
+Using this script means you DON'T have to do any of this stuff to multibox:<br>
+- You don't need to juggle battlenet clients and have multiple game installs (taking up heaps of disk space).
+- You don't need to set up shortcuts on your desktop for each account with parameters (including storing your password in plain text).
+- You don't need to manually use ProcExp to kill the "Check for other instances" handle, or manually running a script for handle.exe to do the same thing.
+- You don't need to use Virtual Machines, multiple computers or multiple user accounts (Windows account switching).
+- You don't need to run any dodgy executables where you don't know what's actually running, this is all open source.
  	- Note that this script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool.
  	- Note that this script also builds an executable called SetTextv2.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
 	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
-Note that this script DOES NOT alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game.
+Note that this script DOES NOT (and will never) alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game.
 If you want to use additional scripts, programs or mods to achieve any of the above (which I would strongly discourage), then that's at your own risk.<br>
 
 This is a labour of love, for a game I love, for what I feel is a pretty good gaming community :)<br>
 This Readme is a bit wordy sorry, I've tried to capture all the information that anyone might ever ask for.<br>
 
 I've put several 100's of hours into making this, so if you like it, consider buying me a beer at https://www.buymeacoffee.com/shupershuff or here [https://github.com/sponsors/shupershuff](https://github.com/sponsors/shupershuff?frequency=one-time&sponsor=shupershuff&amount=5) or here https://paypal.me/Shupershuff.<br>
+
+Side note, If you're interested in an offline single player launcher, have a gander at [D2rSPLoader](https://github.com/shupershuff/D2rSPLoader), ideal if you want to play single player and keep track of time played per character.<br>
 Cheers!
 
 Script Screenshot:<br>
@@ -35,13 +37,16 @@ Not everyone wants to use a random script or an app and that's understandable.<b
 See guides for alternative multiboxing methods here: [https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script](https://github.com/shupershuff/D2r-Multiboxing-Without-A-Script)
 
 ## Exactly what does the script do?
-Script will allow opening multiple Diablo 2 resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
-It will achieve this by importing account details from a CSV that you populate and essentially launches the game the same way you would with a shortcut: by passing account, password and region parameters to D2r.exe.<br>
-	Note: Plain text passwords entered into the CSV will be converted into a secure string after running. If you don't want to enter plain text passwords EVER then you can leave the PW field in the CSV blank and manually type in when running the script.<br>
-Once the game has initialised, the window will be renamed so it's easier to tell which account and region each game is using.<br>
-This also helps the script know which games are open to prevent you accidentally opening a game with the same account twice.<br>
+Script will allow opening multiple Diablo 2 Resurrected instances and will automatically close the 'DiabloII Check For Other Instances' handle.<br>
+It will achieve this by importing account details from a CSV file that you fill out with your account details, then launches the game the essentially the same way you would with a shortcut: by passing account, password and region parameters to D2r.exe.<br>
+- Note: Plain text passwords entered into the CSV will be converted into a secure string after running.<br>
+
+Once the game has initialised, the window will be renamed so it's easier to tell which account and region each instance is using.<br>
+This also helps the script know which accounts are open to prevent you accidentally opening a game with the same account twice.<br>
 Optionally you can also have the game launch using custom settings.json for each account in case you want different graphics/audio/game settings for each account you have.<br>
 <br>
+For an overview of some of the basic features, have gander at [this youtube video](https://www.youtube.com/watch?v=OFwPccNUwaw).<br>
+
 **`* This script in no way enhances or changes gameplay. *`**
 
 ## Other Features
@@ -127,7 +132,8 @@ There are ways to improve your script MaGic Find...
 # Setup Steps
 Please see the detailed setup steps below, it's not as scary as it looks. I've included details for all of the features you may or may not want to use.
 A basic setup only takes 3-5 minutes.<br>
-For those allergic to reading, have a gander at [this youtube video tutorial here](https://www.youtube.com/watch?v=JYMs-soQr_c) that a great bloke made. I promise it's not a rick roll video :)<br>
+For those allergic to reading, have a gander at [this youtube video tutorial here](https://www.youtube.com/watch?v=JYMs-soQr_c) that a great bloke made. I promise it's not a rick roll video :)
+[Here is also another video](https://www.youtube.com/watch?v=OFwPccNUwaw) of an overview + setup steps tutorial that I made.<br>
 
 TL;DR steps are:
 1. Download the latest release, extract and unblock it within file properties. See [1. Download](#1-download).
@@ -147,7 +153,7 @@ TL;DR steps are:
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
 ## 2. Setup Your Accounts
-**NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This to work due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlinned below.**<br>
+**NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This is due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlined below.**<br>
 &#x1F536;&#x1F536; **Special Note - PLEASE READ THIS** &#x1F536;&#x1F536; Please pay attention to these instructions and particularly to step 8 around auth token setup. Almost all setup issues are due to missing or incorrectly performing one or more of these steps.  
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor. Can recommend [moderncsv](https://www.moderncsv.com/) as a csv editor.
 2. Add number for each account starting from 1.
@@ -158,17 +164,16 @@ TL;DR steps are:
 5. Add a 'friendly' name for each account, this will appear in your diablo window. You can put anything here, I just added my Bnet usernames. You could simply set these as "Barb", "Sorc" etc.
 6. [OPTIONAL] If you have several accounts and want to use the batch feature, ensure you add the number(s) into the batch column.
 	- Note if editing the CSV using a text editor, ensure that if you're adding multiple batch options for an account that these are surrounded by quotes eg "1,2,4".
- 	- Don't forget to enable the Batch feature in the config file.
 7. [OPTIONAL] If you have any custom launch (AKA Command Line) arguments you want to set, add these under the 'CustomLaunchArguments' column for each account you want these to apply too.
 	- EG If you're one of the people who have [Extracted game files with cascviewer to 'improve' game performance](https://www.reddit.com/r/Diablo/comments/qey05y/d2r_single_player_tips_to_improve_your_load_times/) and want to use the "-direct -txt" launch flags, this is where you put them.
 8. [OPTIONAL BUT RECOMMENDED] If you want or need to use Token based authentication (eg if you have MFA enabled on your account / Blizzards Auth servers are down / You get errors about account being "locked for suspicious activity" on certain regions), you will need to populate the 'Token' column.<br>
 &#x1F536;&#x1F536; **Special Note - PLEASE READ THIS** &#x1F536;&#x1F536;Due to some kind of Blizzard issue, it's becoming more common for username and password authentication (via Parameters) to not work for *some* accounts. There is no apparent pattern or reason for this. Whilst launching with Parameters offers the best experience, if you have issues you should try using the Auth Token method instead for any impacted accounts.<br>
 	a. Open your preferred internet browser in private mode (Ctrl + Shift + N) and browse to this website https://us.battle.net/login/en/?externalChallenge=login&app=OSI<br>
-	b. Log in with your credentials and approve MFA request (if enabled).<br>
+	b. Log in with your credentials (and if applicable, approve MFA request).<br>
 	c. You will be brought to an error page (this is expected). Copy the URL from the error page into the 'token' column of accounts.csv. <br>
  		**DO NOT SHARE THIS TOKEN INFORMATION ONLINE.<br>**
 		![image](https://github.com/shupershuff/Diablo2RLoader/assets/63577525/dfde17f7-a068-4060-9304-f92bee4bd067)<br>
-	d. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave as 'Parameter' and toggle in the script (from the info menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard haven't fixed authentication issues. Generally speaking you will have the best experience launching with parameters. You can toggle the script to temporarily use auth tokens instead of parameters from the info menu.<br>
+	d. If you want the account to launch with token based authentication by default, change 'Parameter' to 'token' in the 'AuthenticationMethod' column. You can alternatively leave this as 'Parameter' and toggle in the script (from the options menu) if you want to temporarily force Token based auth. This is good for when you generally want to use parameters for authentication but need to temporarily use AuthTokens to switch to another server such as Asia when the Blizzard are experiencing an authentication outage. Generally speaking, you will have the best experience launching with parameters.<br>
 	e. Close the browser, reopen in private mode, log into each of your other accounts and repeat the steps A to C above.<br>
 	f. The token will be converted to an encrypted string when script is next run.<br>
 	g. You will need to redo this step if you add/remove MFA to your account.<br>
@@ -186,7 +191,7 @@ Default settings within config.xml *should* be ok but can be optionally changed.
 Open the .xml file in a text editor such as notepad, Powershell ISE, Notepad++ etc.
 - **Most importantly**, if you have a game path that's not the default ("C:\Program Files (x86)\Diablo II Resurrected"), then you'll need to edit this to wherever you chose to install the game.<br>
 
-All other config options below this are strictly optional:<br>
+All other config options below this are optional:<br>
 - Set 'DefaultRegion' to your preferred default region if you just want to mash enter instead of choosing the region. Default is 1 for NA.
 - Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False. Disabled by default.
 - Set 'CreateDesktopShortcut' to False if you don't want a handy dandy shortcut on your desktop. Enabled by default.
@@ -204,7 +209,7 @@ All other config options below this are strictly optional:<br>
 - Set 'DCloneAlarmVolume' to a preferred volume (1-100) to prevent frights and save your ear drums. Default is 69. Nice.
 - Set 'ForceAuthTokenForRegion' to enforce AuthToken based authentication for one or more regions. Useful if an Auth server goes down preventing parameter based connections (remember when Asia stopped working for several weeks?) Valid options are NA, EU and KR. Multiple values should be comma separated. Recommend leaving blank unless there are auth issues.
 
-Done editing? What are your thoughts on saving the file? I've heard it helps. CTRL + S for the win :)
+Done editing? Make sure to save the file! CTRL + S for the win :)
 
 ## 4. Run the script manually for the first time
 1. Browse to the folder, right click on D2Loader.ps1 and choose run (if you see an option for 'Run with PowerShell', use this).
@@ -251,17 +256,17 @@ Don't forget to enable this feature in the [config](#3-script-config-mostly-opti
 You can optionally configure the script to advise when DClone walk status changes.<br>
 This is very handy for when you're playing on another region/game mode or playing another game entirely so you can be audibly warned on status changes without having to manually check a website.<br>
 This will display text warnings on screen for 5 minutes since last status change and will also perform a one off voice alarm advising you what region and game mode the status changed on.
-Checks are performed each time the script refreshes on the main menu (IE, every 30 seconds).<br>
+Checks are performed each time the script refreshes on the main menu (IE, every 30 seconds). As such any planned walks where SOJ's are sold very rapidly will not be captured in realtime.<br>
 Note that this check is run in a background job that takes 1-2 seconds to complete. As such manually refreshing the menu constantly (r) will prevent checks from occuring.<br>
 
 This feature is disabled by default.<br>
 If you want to enable it, simply add in the option(s) you want into DcloneAlarmList in config.xml.<br>
 You will only be alarmed for the game options you add into config. EG if you only want Hardcore Ladder notifications you would enter: <DCloneAlarmList>HCL-NA, HCL-EU, HCL-KR</DCloneAlarmList><br>
 You can also optionally change the other configs for DClone Tracking and DClone Alarms, however I recommend leaving the default values here.<br>
-You can also adjust the volume of the alarms if they are too quiet or if it's so loud it's making you jump off your chair.
+You can also adjust the volume of the alarms if they are too quiet or if it's so loud that it's making you jump off your chair.
 See the [Script Config](#3-script-config-mostly-optional) section for more info on each config.<br>
 
-## 7. Setup your preferred window layout (Optional)
+## 8. Setup your preferred window layout (Optional)
 Perform these steps if you've enabled the feature for remembering window layout and size.
 1. Enable the feature if not already enabled (you can do this from the options menu or by setting 'RememberWindowLocations' to 'true' config.xml).
 2. Open all of your D2r account instances.
@@ -272,7 +277,7 @@ Perform these steps if you've enabled the feature for remembering window layout 
 Now whenever you launch the accounts they will open in the same positions with the same window sizes. Use the 'r' option within that menu to reset them if need be.<br>
 <br>
 **Setup Alternate Layout**<br>
-This feature allows you to have a layout B, but you need to manually set it up.<br>
+This feature allows you to have a layout B (I use a alternate layout for socket rushing), but you need to manually set it up.<br>
 I doubt many people will want to do this so instructions will be brief.
 1. In the folder that the script sits in you'll need to make a file. If you've forgotten where you put the script, use 'i' on the script to see script location path.
 2. Create a file called AltLayout.csv.
@@ -281,17 +286,18 @@ I doubt many people will want to do this so instructions will be brief.
 
 # Notes #
 ## Graphics Performance Recommendations ##
-If you don't want your Diablo games to run like a slideshow, here are some tips. You'll of course need to adjust based on your hardware and setup.
-1. IMPORTANT. Set an Frame Rate (FPS) cap in the graphics options. Recommend 60 but adjust depending on your GPU power and instances you're running. This will prevent each instance from trying to fully utilise your GPU compute.
+If you don't want your Diablo games to run like a slideshow, here are some tips. You'll of course need to adjust based on your hardware and setup.<br>
+I will quickly note that RAM/VRAM is usually the limiting factor, if you're seeing crashes, it's probably due to not enough RAM (your GPU will borrow system RAM when VRAM is fully utilised).
+1. IMPORTANT. Set an Frame Rate (FPS) cap in the games graphics options. Recommend 60 but adjust depending on your GPU power and instances you're running. This will prevent each instance from trying to fully utilise your GPU compute. Additionally, you can set maximum frame limits for when the game is minimized, see the video [Set Background FPS for D2r or other games AMD & NVIDIA](https://www.youtube.com/watch?v=uy471s1m-B0) for more info.
 2. Reduce graphics settings in game to performance over quality.
 3. Run games in Windowed mode. Especially if you have more than one monitor. Not only will it save you performance, it's waaaay easier than alt tabbing.
 4. In addition to changing your settings to launch the game in windowed mode, you should also make your secondary account windows smaller (ie lower resolution) to save on GPU utilisation. You can adjust resolution from the in game menu or simply by shrinking the window. If need you can of course do the opposite and maximise one of the smaller windows if you are playing another character for a bit.
-5. If you are wanting different graphics settings for different accounts (eg different FPS cap, different audio settings, different resolution, nicer graphics settings etc etc), then I would highly recommend making use of the QOL features of this script. The automatic settings switcher can be used so that each account loads with it's own settings at launch. There is also the manual setting switcher feature if you want to define what settings file to load for a given account. See the relevant sections above for more info.
-6. Obviously if you run other graphic demanding things like wallpaper engine in the background, this will hurt your overall FPS. Some wallpapers will have neglible impact but some are  noticably impactful on performance.
+5. If you are wanting different graphics settings for different accounts (eg different FPS cap, different audio settings, different resolution, nicer graphics settings etc etc), then I would highly recommend making use of the QOL features of this script. The automatic settings switcher can be used so that each account loads with it's own settings at launch. There is also the manual setting switcher feature if you want to define what settings file to load for a given account. See the relevant sections ([5. Auto Settings Switcher](#5-auto-settings-switcher-optional-but-recommended) and [6. Manual Settings Switcher](#6-manual-settings-switcher-optional)) for more info.
+6. Obviously if you run other graphic demanding things like wallpaper engine in the background, this will hurt your overall FPS. Some wallpapers will have neglible impact but some are noticably impactful on performance.
 7. Make use of hardware monitoring software to see how much you are utilising RAM, CPU, GPU - Processor and GPU - VRAM. If you are under or overutilised you can adjust your settings accordingly for the best experience.
 
 **My setup**<br>
-Note that on my specs (5950x, RTX2080s (which has 8GB VRAM), 32GB RAM), I run my instances on the lowest graphics options possible. <br>
+Note that on my specs (5950x, RTX2080s (which has 8GB VRAM), 32GB RAM), I run my instances on the lowest graphics options possible.<br>
 DLSS is set to ultra performance. Framerate (FPS) caps for secondary accounts are around 50fps. For my primary account I set the FPS cap to 60fps.<br>
 <br>
 With 3 instances (2 windows at approx 1280x780 resolution, 1 window (primary account) at 2556x1373 resolution, The CPU is barely used, Memory is about 85% utilised, VRAM is 80% utilised and GPU is about 85-90% (6800MB).<br>
@@ -301,20 +307,26 @@ I've noted that with my hardware running 4 instances is generally not fun graphi
 
 ## FAQ / Common Issues
 
+**Q:** When I launch accounts using parameter authentication, I get a warning that my account is "locked for suspicious activity".
+**A:** In some circumstances, for no obvious reason, you might randomly have issues with one or more of your accounts connecting with warnings about "Account locked for suspicious activity" after temporarily switching regions. This only happens when using parameter based authentication. This isn't an issue with the loader but is an issue with using Parameters to authenticate. I suspect the underlying issue is with Blizzards infrastructure. I've not yet discovered a consistent pattern as to why this happens or how to resolve it for an impacted account. Workaround is to launch problematic accounts using Auth Tokens, see Auth Token steps in [Setup Your Accounts](#2-setup-your-accounts).
+
 **Q:** I would like to say "Thankyou". How do I do that?<br>
-**A:** Please pay my entire mortgage. Thanks in advance. Buy me a beer here https://www.buymeacoffee.com/shupershuff.<br>
+**A:** Please pay my entire mortgage. Thanks in advance. Alternatively, buy me a beer here https://www.buymeacoffee.com/shupershuff.<br>
 Or here [https://github.com/sponsors/shupershuff](https://github.com/sponsors/shupershuff?frequency=one-time&sponsor=shupershuff&amount=5).<br>
 Or [D2JSP funny money](https://forums.d2jsp.org/gold.php?i=1328510).<br>
 Or your [local animal charity](https://www.youtube.com/watch?v=dQw4w9WgXcQ).<br>
 Or even just a [message](https://github.com/shupershuff/Diablo2RLoader/discussions) to say thanks :)<br>
 
-**Q:** The script won't let me run it as it gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
+**Q:** I'm looking to buy another account. Do I have to setup a new email address for each one?<br>
+**A:** No. You can use plus addressing (email+\<anytext\>@domain.com). EG if your email address is 'Joe.Bloggs@gmail.com' you could create another Battlenet account with the email address of 'Joe.Bloggs+d2r@gmail.com', any emails sent to Joe.Bloggs+d2r@gmail.com would still arrive to your email. Additionally, if you're using outlook.com (and perhaps other email services), you can add email aliases so that emails sent to that alias also arrive to the same mailbox.
+
+**Q:** The script won't let me run it as it closes immediatately / gives me security prompts about scripts being disabled or the current script being untrusted :(<br>
 **A:** See instructions [above](#4-run-the-script-manually-for-the-first-time). The default script policy for Windows 10/11 devices is restricted. We can change this to remote signed. A full write up of the policies can be seen [here](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.3).
 
-**Q:** When Diablo opens it won't allow me to select an online character<br>
+**Q:** When Diablo opens it won't allow me to select an online character.<br>
 **A1:** This will be due to your password or username being entered in incorrectly. Please note that multiple failed authentication requests can cause a temporary lockout from that realm (seems to be around 15-30mins).<br>
 **A2:** In some circumstances, Battlenet can also require a capcha code to be entered to verificaton. If in doubt, try logging in via the battlenet client and see if it prompts for captcha. It might take several hours for this to resolve itself (6 hours observed in [issue #17](https://github.com/shupershuff/Diablo2RLoader/issues/17)).<br>
-**A3:** In some circumstances, for no real reason, you might randomly have issues with one or more of your accounts connecting with warnings about "Account locked for suspicious activity" after temporarily switching regions. This only happens when using parameter based authentication. Numerous people have seen this issue across different loaders and for people who launch the game from desktop shortcuts. I've discovered no pattern as to why this happens or how to resolve it. Workaround is to launch problematic accounts using Auth Tokens.
+**A3:** This could be due to the "Account Locked for suspicious activity" false positive that can occur when using Parameter authentication. See the first FAQ note above and see Auth Token steps in [Setup Your Accounts](#2-setup-your-accounts) for configuring Token based authentication on any impacted accounts.
 
 **Q:** I have reset one of my Battle.net account passwords, how do I update accounts.csv?<br>
 **A:** Open accounts.csv and clearout the password field. Either enter your new password into the csv file or leave it blank and the script will ask you next time you run it.
@@ -343,10 +355,10 @@ That said, it is possible to connect if you utilise the Auth Token method instea
 **A:** Yes, you read at least up to a Dr Seuss reading level. Well done you!
 
 **Q:** I get prompts to enter captcha's on my accounts randomly. Why is this?<br>
-**A:** I'm not sure exactly why this happens but it does appear to happen more with newer accounts. Ensure you have logged into the battlenet client AND into your webbrowser with the account and approve any verifications/captchas needed. Do not share the account with other people. Do NOT use a VPN when signing into the account (whether it be via this script, bnet client or website).
+**A:** I'm not sure exactly why this happens but it does appear to happen more with newer accounts. Ensure you have logged into the battlenet client AND into your web browser with the account and approve any verifications/captchas needed. Do not share the account with other people. Do NOT use a VPN when signing into the account (whether it be via this script, bnet client or website).
 
 **Q:** Will you implement a feature to skip intro videos when launching?<br>
-**A:** Could I? Yes. Will I? No as this requires modifying game files (video files really). Whilst the script can cater for mods you want to use, I don't want this script directly modifying any game files, even something as innocent as intro videos. If skipping intro is of interest to you, you can look at the [introskip mod](https://www.nexusmods.com/diablo2resurrected/mods/194).
+**A:** Could I? Yes, this is implemented in my [Single Player launcher](https://github.com/shupershuff/D2rSPLoader). Will I? No as this requires modifying game files (video files really). Whilst the script can cater for mods you want to use, I don't want this script directly modifying any game files, even something as innocent as intro videos. If skipping intro is of interest to you, you can look at the [introskip mod](https://www.nexusmods.com/diablo2resurrected/mods/194).
 
 **Q:** I'm getting an error says "You have not been online in the last 30 days. Please start the game while online to check for any login agreements".
 **A:** As the error suggests, try logging in from the battle.net client. If issues persist, use Google as there are dozens of threads where people have had this issue due to other reasons (eg firewall).
@@ -374,7 +386,7 @@ I have since made a new version of SetText so that it can rename Windows based o
 
 If you have a 3rd Party Anti-Virus product installed and it kicks up a fuss, you may need to manually add an exception to the .\SetText\ folder location.
 
-Optional: If you don't trust me and want to build the .exe yourself you can do the following.
+Optional: If you want to build the .exe yourself you can do the following.
 1. Browse to the SetText Folder.
 2. In the Address bar (the part that shows the path of the folder you're in), click in this, clear out anything that's in it, type in cmd and press enter.
 3. This will open the command prompt with it set in the path of where you've saved the script.
