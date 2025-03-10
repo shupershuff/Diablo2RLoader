@@ -47,7 +47,7 @@ Optionally you can also have the game launch using custom settings.json for each
 <br>
 For an overview of some of the basic features, have gander at [this youtube video](https://www.youtube.com/watch?v=OFwPccNUwaw).<br>
 
-**`* This script in no way enhances or changes gameplay. *`**
+**`* This script in no way enhances, automates or changes gameplay. *`**
 
 ## Other Features
 **Open All accounts at once**<br>
@@ -304,6 +304,10 @@ With 3 instances (2 windows at approx 1280x780 resolution, 1 window (primary acc
 With 4 instances (an additional window at approx 1280x780), CPU is still fine (15%), Memory is maxed out, VRAM is 92%+ (7600MB+) and GPU is 95-100%. Different parts of the game can run pretty poorly and as such sometimes I reduce the secondary accounts FPS Cap to around 44 instead.<br>
 <br>
 I've noted that with my hardware running 4 instances is generally not fun graphically due to performance stutters, FPS drops and increased chance of crashing. I'd argue that running 4 or more accounts is confusing and isn't fun logistically either but I digress.
+
+**Mods for Performance effiencies**<br>
+Whilst I can't endorse usage of any mod and especially any AHK script (I'm unsure if the mere presence of an AHK script, no matter how innocent may or may not elevate your risk), there are options available for increasing performance:<br>
+[Zoxjib's Tips for Performance and Window Switching](https://github.com/shupershuff/Diablo2RLoader/discussions/58)
 
 ## FAQ / Common Issues
 
