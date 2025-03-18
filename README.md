@@ -153,7 +153,7 @@ TL;DR steps are:
 ![image](https://user-images.githubusercontent.com/63577525/234503557-22b7b8d4-0389-48fa-8ff4-f8a7870ccd82.png)
 
 ## 2. Setup Your Accounts
-**NOTE: If you have MFA configured on one account it will not work with Parameter based authentication. This is due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlined below.**<br>
+**NOTE: If you have MFA (Multifactor Authentication aka Battle.net Authenticator) configured on one account, it will not work with Parameter based authentication. This is due to Blizzard not implementing MFA capability with this authentication method. If you want to keep MFA enabled, you can utilise the AuthToken method outlined below.**<br>
 &#x1F536;&#x1F536; **Special Note - PLEASE READ THIS** &#x1F536;&#x1F536; Please pay attention to these instructions and particularly to step 8 around auth token setup. Almost all setup issues are due to missing or incorrectly performing one or more of these steps.  
 1. Open Accounts.csv in a text editor (eg notepad), excel or your preferred editor. Can recommend [moderncsv](https://www.moderncsv.com/) as a csv editor.
 2. Add number for each account starting from 1.
