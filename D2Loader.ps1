@@ -2827,7 +2827,7 @@ Function TerrorZone {
 		return $TidiedImmunities
 	}
 	write-host "   $X[38;2;255;165;000;4mCurrent Terror Zone Details$X[0m"
-	FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level$(if($D2TZResponse.current.count -gt 1){'s'}):  $X[38;2;255;0;255;22m" + $CurrentTZ + "$X[0m")
+	FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level$(if($D2TZResponse.current.count -gt 1){'s:'}else{': '})  $X[38;2;255;0;255;22m" + $CurrentTZ + "$X[0m")
 	FormatFunction -SubsequentLineIndents 22 -text ("  Immunities:         $X[38;2;255;0;255;22m" + (GetImmunities "Current") + "$X[0m")
 	FormatFunction -SubsequentLineIndents 22 -text ("  Boss Packs:         Between $X[38;2;255;0;255;22m" + $D2TZResponse.current_num_boss_packs[0] + "$X[0m" + " and $X[38;2;255;0;255;22m" + $D2TZResponse.current_num_boss_packs[1] + "$X[0m boss packs across all TZ levels.")
 	if ($D2TZResponse.current_superuniques.count -ge 1){
@@ -2848,7 +2848,7 @@ Function TerrorZone {
 			}
 		}
 		$NextTZ = $NextTZ -replace '..$', ''
-		FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level$(if($D2TZResponse.next.count -gt 1){'s'}):  $X[38;2;255;0;255;22m" + $NextTZ + "$X[0m")
+		FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level$(if($D2TZResponse.next.count -gt 1){'s:'}else{': '})  $X[38;2;255;0;255;22m" + $NextTZ + "$X[0m")
 		FormatFunction -SubsequentLineIndents 22 -text ("  Immunities:         $X[38;2;255;0;255;22m" + (GetImmunities "Next") + "$X[0m")
 		FormatFunction -SubsequentLineIndents 22 -text ("  Boss Packs:         Between $X[38;2;255;0;255;22m" + $D2TZResponse.next_num_boss_packs[0] + "$X[0m" + " and $X[38;2;255;0;255;22m" + $D2TZResponse.next_num_boss_packs[1] + "$X[0m boss packs across all TZ levels.")
 		if ($D2TZResponse.next_superuniques.count -ge 1){
