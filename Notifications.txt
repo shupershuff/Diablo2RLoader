@@ -1,8 +1,7 @@
 {
-    "Notification":  "Season 10 will start March 7, 5 p.m. PST.
-D2r is also on sale right now if you want to grab another account.
+    "Notification":  "Season 11 will start June 20, 5 p.m. PDT.
 
 Make sure you check out https://d2emu.com/ladder-events and https://d2emu.com/ladder",
-    "PublishDate":  "2025.03.04 12:00:00",
-    "ExpiryDate":  "2025.03.08 17:00:00"
+    "PublishDate":  "2025.06.12 12:00:00",
+    "ExpiryDate":  "2025.06.20 17:00:00"
 }
