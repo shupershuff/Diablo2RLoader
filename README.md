@@ -196,12 +196,14 @@ All other config options below this are optional:<br>
 - Set 'DisableOpenAllAccountsOption' to True if you want to disable the ability of opening all accounts at once. Recommend leaving this to False. Disabled by default.
 - Set 'CreateDesktopShortcut' to False if you don't want a handy dandy shortcut on your desktop. Enabled by default.
 - Set 'ShortcutCustomIconPath' to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
+- Set 'DisableIconStacking' to True if you want to prevent your icons from stacking in the taskbar.
 - Set 'ConvertPlainTextSecrets' to False if you want your passwords and tokens to be ~~stolen~~ stored in plain text. This will not convert already encrypted passwords & tokens back to plain text if disabled.
 - Set 'RememberWindowLocations' to True if you want to each game instance to launch to a preferred window layout.
 - Set 'ForceWindowedMode' to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings. Disabled by default.
 - Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#5-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
 - Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#6-manual-settings-switcher-optional) section below for more info. Disabled by default.
 - Set 'TrackAccountUseTime' to False if you don't want accounts.csv or stats.csv to be autoupdated with playtime. Other Stats are still tracked in stats.csv. Mainly added this option in the unlikely case there are any issues with accounts.csv getting corrupted. Enabled by default.
+- Set 'IdleLimitForAccountUseTime' to the number of minutes that should pass before the script stops recording playtime. Blank by default (disabled).
 - Set 'DCloneTrackerSource' to one of the options noted in the config file. Default (and recommended) is d2emu.com as it provides realtime data (not crowdsourced).
 - Set 'DCloneAlarmList' to any number of the options noted in the config file to enable DClone Status alarms for your preferred GameModes and regions. See the [DClone Status Alarms](#7-dclone-status-alarms-optional) section below for more info. Blank by default.
 - Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
