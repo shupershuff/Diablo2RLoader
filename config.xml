@@ -15,6 +15,9 @@
 	<!--If you have a custom .ico you want to use, put the path of it here.-->
 	<ShortcutCustomIconPath></ShortcutCustomIconPath>
 	
+	<!--If enabled, this option prevents D2r icons from stacking in the taskbar. Set to True if you want to enable this feature.-->
+	<DisableIconStacking>False</DisableIconStacking>
+
 	<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->
 	<ConvertPlainTextSecrets>True</ConvertPlainTextSecrets>
 	
@@ -38,7 +41,10 @@
 	
 	<!--This allows you to roughly track how long you've used each account while using this script. Choose False if you want to disable this.-->
 	<TrackAccountUseTime>True</TrackAccountUseTime>
-
+	
+	<!--If set, this automatically pauses time tracking if you are idle for a certain amount of minutes. Set to a number (eg 5 for 5 minutes). Blank (disabled) by default.-->
+	<IdleLimitForAccountUseTime></IdleLimitForAccountUseTime>
+	
 	<!--Options are d2emu.com, D2runewizard.com and diablo2.io.
 	Default and recommended option is d2emu.com as this pulls live data from the game as opposed to crowdsourced data.-->
 	<DCloneTrackerSource>D2Emu.com</DCloneTrackerSource>
