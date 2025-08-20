@@ -18,31 +18,29 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 
-Changes since 1.14.0 (next version edits):
-Added ability to disable icon stacking. Enable via config.xml
-Added ability to be able to pause time tracking if PC is idle. Enable via config.xml.
-Script now gets 'Saved Games' folder path from registry rather than assuming it's in 'C:\Users\Username\Saved Games'
-Fixed Manual Settings Switcher not working for mods with different directory for settings.
-TZ screen reworked as API limitations now only allows TZ's to be identified 10min after the hour.
-TZ info now shows Monster and immunity information.
-Add parameter for closing an instance eg "-close 1" to close account 1 or "-close all" to close all d2r instances.
-Fixed accounts.csv autorecovery not working.
-Added better error handling for when accounts.csv doesn't have an ID assigned for an account.
-Adjusted killhandle so that it will retry if it fails the first time (more reliable for slower computers).
-Minor text edits.
+Changes since 1.15.0 (next version edits):
+DCloneVoiceAlarms now run asynchronously, meaning you can load up a game while the voice alarms are playing instead of having to wait.
+Fixed a friendly error message not working for when handle can't be killed.
+Fixed an issue with process matching when using more than 10 accounts (Big thanks to guillaume-luccioni).
+Fixed up a menu option that shouldn't have been there for DCloneAlarmVoice.
+Minor tweak to script input function to prevent typo's such as "2b" being considered valid account selection.
+Made the killhandle function even more potato PC friendly.
 
-1.14.0+ to do list
+1.15.0+ to do list:
+Remove diablo2.io dclone API as it's problematic and uses D2Emu now anyway.
+Fix whatever I broke or poorly implemented in the last update :)
+
+The "I can't be bothered" to do list:
 Investigate RAMDisk for faster loading https://sourceforge.net/projects/imdisk-toolkit/files/latest/download
 Couldn't write :) in release notes without it adding a new line, some minor issue with formatfunction regex
 If I can be bothered, investigate the possibility of realtime DClone Alarms (using websocket connection to d2emu instead).
 In line with the above, perhaps investigate putting TZ details on main menu and using the TZ screen for recent TZ's only.
 To reduce lines, Tidy up all the import/export csv bits for stat updates into a function rather than copy paste the same commands throughout the script. Can't really be bothered though :)
 Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windows. Investigate how this could be done. Would need an agent to detect key combos, Possibly via AutoIT or Autohotkey. Likely not possible within powershell and requires a separate project.
-Fix whatever I broke or poorly implemented in the last update :)
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.15.0"
+$CurrentVersion = "1.15.0.1"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -252,7 +250,7 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
 						}
 					}
 				}
-				ElseIf ($TwoDigitAcctSelection -eq $True -and $key_.VirtualKeyCode -notin $Script:MenuOptions + 27){
+				ElseIf ($TwoDigitAcctSelection -eq $True -and ($inputString -eq "" -and $key_.VirtualKeyCode -notin $Script:MenuOptions + 27) -or $inputString.length -gt 0){
 					$Counter = $timeOutSeconds * 1000 / 250 #reset counter
 					if ($key_.VirtualKeyCode -eq $EnterKey -or $key_.VirtualKeyCode -eq 27){
 						break
@@ -278,7 +276,7 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
 			$InputString = "" #remove last added character/number from variable
 		}
 	}
-	if ($TwoDigitAcctSelection -eq $False -or ($TwoDigitAcctSelection -eq $True -and $key_.VirtualKeyCode -in $Script:MenuOptions)){
+	if ($TwoDigitAcctSelection -eq $False -or ($TwoDigitAcctSelection -eq $True -and $inputString.length -eq 1 -and $key_.VirtualKeyCode -in $Script:MenuOptions)){
 		Write-Host ("$X[38;2;255;165;000;22m" + "$inputString" + "$X[0m")
 	}
 	if (![string]::IsNullOrEmpty($message) -or $TwoDigitAcctSelection -eq $True){
@@ -2030,7 +2028,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmVoice" -OptionsList $Options -Current $Script:Config.DCloneAlarmVoice `
 		-Description "This option allows you to change the voice for the Text to Speech DClone Alarms." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for Amazon (Female Voice)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for EU (Europe)`n    Choose '$X[38;2;255;165;000;22m3$X[0m' for Paladin (Male Voice)`n"
+		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for Amazon (Female Voice)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for Paladin (Male Voice)`n"
 	}
 	ElseIf ($Option -eq "9" -and $Script:Config.DCloneAlarmList -ne ""){ #DCloneAlarmVolume
 		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmVolume" -OptionInteger -Current $Script:Config.DCloneAlarmVolume `
@@ -2324,7 +2322,9 @@ $Script:QuoteList =
 "Cut them down, warrior. All of them!",
 "How can one kill what is already dead?",
 "The Ancients must be close...",
-"...That which does not kill you makes you stronger."
+"...That which does not kill you makes you stronger.",
+"Our Monastery is filled with voracious hellspawn. You'd best be careful, my friend.",
+"'I can't use that yet' - Emilio, 2025"
 }
 Function BannerLogo {
 	if ($Script:IdleLimitForAccountUseTime -ne "" -and $Script:IdleLimitForAccountUseTime -gt 0 -and $Script:ActiveAccountsList.id.length -ne 0){#If Idlelimitfeature is used and there are active accounts, calc idle time to check if we should add idle status to banner
@@ -2727,13 +2727,7 @@ Function DClone {# Display DClone Status.
 	}
 }
 Function DCloneVoiceAlarm {
-	$voice = New-Object -ComObject Sapi.spvoice
-	$voice.rate = -2 #How quickly the voice message should be
-	$voice.volume = $Config.DCloneAlarmVolume
 	Write-Host
-	if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man" -or $Script:Config.DCloneAlarmVoice -eq "Paladin"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}}
-	ElseIf ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman" -or $Script:Config.DCloneAlarmVoice -eq "Amazon"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
-	else {break}# If specified voice doesn't exist
 	ForEach ($Item in ($Script:DCloneChangesCSV | ConvertFrom-Csv) | where-object {$_.VoiceAlarmStatus -Match "True" -or $_.TextAlarmStatus -Match "True"}){
 		if ($item.tag -match "l"){#if mode contains "L"
 			$LadderText = "Ladder"
@@ -2769,8 +2763,34 @@ Function DCloneVoiceAlarm {
 			$Message = ("D Clone is now " + $Item.Status + " out of 6 in $DCloneRegion on " + $CoreText + " " + $LadderText)
 		}
 		if ($item.VoiceAlarmStatus -eq $True){
-			$voice.speak("$Message") | out-null
+			$VoiceMessages = $VoiceMessages + $Message + ". "
 		}
+	}
+	if ($Null -ne $VoiceMessages){#if there are voice messages to play
+		function Start-Speech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
+			param(
+			[string]$Text,
+			[int]$Volume = 100,
+			[int]$Rate = -2,
+			[String]$Voice
+			)
+			$ps = [powershell]::Create().AddScript({#Create a PS runspace that runs asynchronously
+				param($Message,$Vol,$Rate,$VoiceToUse)
+				$voice = New-Object -ComObject Sapi.SpVoice
+				$voice.Volume = $vol
+				$voice.Rate   = $rate
+				if ($VoiceToUse -eq "Man"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}}
+				elseif ($VoiceToUse -eq "Woman"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*Zira*"}}
+				else {break}# If specified voice doesn't exist
+				$voice.Speak($Message)
+			}).AddArgument($Text).AddArgument($Volume).AddArgument($Rate).AddArgument($Voice)
+			$null = $ps.BeginInvoke()
+		}
+		$voice = New-Object -ComObject Sapi.spvoice
+		if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man" -or $Script:Config.DCloneAlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
+		ElseIf ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman" -or $Script:Config.DCloneAlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
+		else {break}# If specified voice doesn't exist
+		Start-Speech $VoiceMessages -Volume $Config.DCloneAlarmVolume -Rate "-2" -Voice $VoiceToUse
 	}
 	if ($null -ne $Message){
 		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mDClone status provided by $($Script:Config.DCloneTrackerSource)$X[0m"
@@ -2961,7 +2981,7 @@ Function KillHandle { #Thanks to sir-wilhelm for tidying this up.
 			write-debug "Handle wasn't found, trying again in 500ms..."
 			start-sleep -milliseconds 500
 			$handle = & $handle64 -accepteula -a -p D2R.exe "Check For Other Instances" -nobanner | Out-String
-		} until ($attempt -eq 3 -or $Handle -notmatch "no matching handles found")
+		} until ($attempt -eq 5 -or $Handle -notmatch "no matching handles found")
 	}
 	if ($handle -match "pid:\s+(?<d2pid>\d+)\s+type:\s+Event\s+(?<eventHandle>\w+):"){
 		$d2pid = $matches["d2pid"]
@@ -3348,7 +3368,7 @@ Function ChooseAccount {
 				QuoteRoll
 			}
 			CheckActiveAccounts
-			if ($Close -ne $null){
+			if ($Null -ne $Close){
 				if ($Close -eq "all"){
 					stop-process -name d2r #Indescriminately KILL ALL D2r processes muahahaha.
 					Write-Host "All D2r instances closed."
@@ -3927,15 +3947,15 @@ Function Processing {
 				$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
 				Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
 				Start-Process -FilePath $ShortcutPath
-				Start-Sleep -milliseconds 1500 #give D2r a bit of a chance to start up before trying to kill handle
+				Start-Sleep -milliseconds 1000 #give D2r a bit of a chance to start up before trying to kill handle
 				Remove-Item -Path $ShortcutPath -Force
 			}
 			Else {
 				Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
-				Start-Sleep -milliseconds 1 #give D2r a bit of a chance to start up before trying to kill handle
+				Start-Sleep -milliseconds 1000 #give D2r a bit of a chance to start up before trying to kill handle
 			}
 			$process = Get-CimInstance -ClassName Win32_Process | Where-Object {
-				$_.Name -eq "D2R.exe" -and $_.CommandLine -match "--instance$($Script:AccountChoice.ID)"
+				$_.Name -eq "D2R.exe" -and $_.CommandLine -match "--instance$($Script:AccountChoice.ID)\b"
 			}
 			#Close the 'Check for other instances' handle
 			Write-Host " Attempting to close `"Check for other instances`" handle..."
@@ -3945,14 +3965,14 @@ Function Processing {
 				Write-Host " `"Check for Other Instances`" Handle closed." -foregroundcolor green
 			}
 			else {
-				$Output = KillHandle -TryAgain | out-string #Try again 3 more times with small delays in case game is taking a while to load.
+				$Output = KillHandle -TryAgain | out-string #Try again 5 more times with small delays in case game is taking a while to load.
 				if (($Output.contains("DiabloII Check For Other Instances")) -eq $true){
 					$handlekilled = $true
 					Write-Host " `"Check for Other Instances`" Handle closed." -foregroundcolor green
 				}
 			}
 			if ($handlekilled -ne $True){
-				FormatFunction -text -IsError -indent 1 "Wasn't able to Kill Handle 'Check for other instances' or couldn't find any handles to kill."
+				FormatFunction -text "Wasn't able to Kill Handle 'Check for other instances' or couldn't find any handles to kill." -IsError -indent 1
 				Write-Host " Game may not have launched as expected." -foregroundcolor red
 				PressTheAnyKey
 			}
@@ -3994,7 +4014,7 @@ Function Processing {
 			}
 			if ($Script:AccountChoice.AuthenticationMethod -eq "Token" -or (($Script:ForceAuthToken -eq $True -or $Script:Config.ForceAuthTokenForRegion -match $RegionLabel) -and $Script:AccountChoice.Token.length -ge 200)){#wait for web_token to change twice (once for launch, once for char select screen, before being able to launch additional accounts. Token will have already changed once by the time script reaches this stage
 				$CurrentTokenRegValue = (Get-ItemProperty -Path $Path -Name WEB_TOKEN).WEB_TOKEN
-				Write-Host " Launched Game using an $X[38;2;165;146;99;4mAuthentication Token$X[0m."
+				Write-Host " Launched game using an $X[38;2;165;146;99;4mAuthentication Token$X[0m."
 				Write-Host " Waiting for you to get to character select screen..." -foregroundcolor yellow
 				Write-Host " $X[38;2;255;255;0;4mDO NOT OPEN OR CLOSE ANOTHER GAME INSTANCE UNTIL YOU'VE DONE THIS.$X[0m"
 				do {
