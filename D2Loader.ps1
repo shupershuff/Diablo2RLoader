@@ -25,8 +25,10 @@ Fixed an issue with process matching when using more than 10 accounts (Big thank
 Fixed up a menu option that shouldn't have been there for DCloneAlarmVoice.
 Minor tweak to script input function to prevent typo's such as "2b" being considered valid account selection.
 Made the killhandle function even more potato PC friendly.
+Added Idletimechecker. You can optionally choose not to attribute time to "Time Played" if inactive for X amount of minutes. Handy if you want to more accurately track actual time played.
 
 1.15.0+ to do list:
+Fix D2Emu dclone stuff as it now has china in it
 Remove diablo2.io dclone API as it's problematic and uses D2Emu now anyway.
 Fix whatever I broke or poorly implemented in the last update :)
 
@@ -40,7 +42,7 @@ Unlikely - ISboxer has CTRL + Alt + number as a shortcut to switch between windo
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.15.0.1"
+$CurrentVersion = "1.15.0.2"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -739,7 +741,6 @@ Function ValidationAndSetup {
 		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 		Start-Sleep -milliseconds 1500
-		ImportXML
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.IdleLimitForAccountUseTime){
@@ -754,7 +755,6 @@ Function ValidationAndSetup {
 		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 		Start-Sleep -milliseconds 1500
-		ImportXML
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.DisableIconStacking){
@@ -769,7 +769,6 @@ Function ValidationAndSetup {
 		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 		Start-Sleep -milliseconds 1500
-		ImportXML
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.ConvertPlainTextSecrets){
@@ -784,7 +783,6 @@ Function ValidationAndSetup {
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 		Write-Host " Config.xml file updated :)`n" -foregroundcolor green
 		Start-Sleep -milliseconds 1500
-		ImportXML
 		PressTheAnyKey
 	}
 	if ($Null -ne $Script:Config.EnableBatchFeature){ # remove from config.xml. Not needed anymore as script checks accounts.csv to see if batches are used.
@@ -865,7 +863,6 @@ Function ValidationAndSetup {
 		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 		Start-Sleep -milliseconds 1500
-		ImportXML
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.DCloneAlarmLevel){
@@ -885,7 +882,6 @@ Function ValidationAndSetup {
 		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 		Start-Sleep -milliseconds 1500
-		ImportXML
 		PressTheAnyKey
 	}
 	if ($Null -eq $Script:Config.DCloneAlarmList){
@@ -904,7 +900,6 @@ Function ValidationAndSetup {
 		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
 		Start-Sleep -milliseconds 1500
-		ImportXML
 		PressTheAnyKey
 	}
 	if ($Null -ne $Script:Config.DCloneAlarmList -and $Script:Config.DCloneAlarmList -ne ""){#validate data to prevent errors from typos
@@ -972,6 +967,7 @@ Function ValidationAndSetup {
 		Start-Sleep -milliseconds 1500
 		PressTheAnyKey
 	}
+	ImportXML
 	if ($Script:Config.DCloneAlarmList -ne ""){
 		$ValidVoiceOptions =
 			"Amazon",
@@ -2536,6 +2532,7 @@ Function DClone {# Display DClone Status.
 				}
 			}
 			$CurrentStatus = $D2RDCloneResponse | Select-Object @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.Progress + 1)}} #| sort server #add +1 as this source counts status from 0
+			$CurrentStatus = $CurrentStatus | where-object {$_.Server -notmatch "cn"} #Remove chinese statuses.
 		}
 		Catch {#catch commands captured in WebRequestWithTimeOut function
 			Write-Debug "Problem connecting to $URI"
@@ -2614,6 +2611,7 @@ Function DClone {# Display DClone Status.
 		if ($Status.server -like "*us*" -or $Status.server -like "*americas*" -or $Status.Server -eq "1"){$Tag = "-NA";$ServerName = "Americas"}
 		ElseIf ($Status.server -like "*eu*" -or $Status.server -like "*europe*" -or $Status.Server -eq "2"){$Tag = "-EU";$ServerName = "Europe"}
 		ElseIf ($Status.server -like "*kr*" -or $Status.server -like "*asia*" -or $Status.Server -eq "3"){$Tag = "-KR";$ServerName = "Asia"}
+		#ElseIf ($Status.server -like "*cn*" -or $Status.server -like "*china*" -or $Status.Server -eq "4"){$Tag = "-KR";$ServerName = "China"} #Will be a bit of faffing around to add China in. Will only do so if someone actually asks for it.
 		if (($Status.server -notlike "*nonladder*" -and -not [int]::TryParse($Status.server,[ref]$null)) -or $Status.Ladder -eq "1"){
 			if ($Status.server -match "hardcore" -or $Status.Core -eq "1"){$Tag = ("HCL" + $Tag);$ServerName = ("HCL - " + $ServerName)}
 			else {$Tag = ("SCL" + $Tag);$ServerName = ("SCL - " + $ServerName)}
