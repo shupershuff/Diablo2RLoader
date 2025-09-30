@@ -120,7 +120,7 @@ Available launch parameters and values to use are as per the table below:<br>
 | -all                   | True                                        | Opens all accounts                    | Recommend using -region with this parameter. |
 | -batch                 | 1                                           | Opens a batch of accounts at once     | Recommend using -region with this parameter |
 | -manualsettingswitcher | True                                        | Use this if you want to manually choose which settings file to load with each account. | Recommend not using this but instead enabling SettingSwitcherEnabled in your config file so that it automatically loads from settings<_ID_>.json |
-| -close                 | ID of account or all eg "3" or "all"        | For closing one or more instances of D2r. |  |
+| -close                 | 2 <br> all                                  | For closing one or more instances of D2r. | Use ID of account to close or "all" to close all instances |
 
 To make a shortcut to open a set of accounts, copy the D2RLoader Shortcut, rename it to whatever suits, open the properties and add parameters to the target eg -batch 1 -region na<br>
 
@@ -444,4 +444,5 @@ All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
 Page views as of 21st April 2025:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader&label=Hits&icon=github&color=%23198754)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, alt, d2r multibox, chat Gem workinG as intended
+
 
