@@ -26,7 +26,6 @@ Fixed up a menu option that shouldn't have been there for DCloneAlarmVoice.
 Minor tweak to script input function to prevent typo's such as "2b" being considered valid account selection.
 Fixed how D2Emu DClone data is used (as it now has China info in it).
 Made the killhandle function even more potato PC friendly.
-Added Idletimechecker. You can optionally choose not to attribute time to "Time Played" if inactive for X amount of minutes. Handy if you want to more accurately track actual time played.
 
 1.16.0+ to do list:
 Look to implement CTRL + Shift + number as a shortcut to switch between D2r windows. Some basic investigations show that this is possible with PowerShell. Look to build a background powershell agent that runs while the loader runs to detect key combos.
