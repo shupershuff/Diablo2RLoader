@@ -406,6 +406,8 @@ See this site for more information on what this does, this contains the original
 
 # What's Next #
 You tell me. If there's something you want to see added or improved then let me know. Future updates may include:<br>
+* Terror Zone audio Alarms. Be notified (audibly) when your favourite Terror Zones are starting or coming next hour.
+* Hot Keys to switch windows.
 * ~~Possibly add the ability to mute minimised windows (as long as it can be done within windows without additional software)~~ - Would require an external script or software.
 * ~~Investigate Ability to skip intro~~ - Not possible without mods.
 * Fixing anything I broke in the last release.
@@ -444,6 +446,7 @@ All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
 Page views as of 21st April 2025:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader&label=Hits&icon=github&color=%23198754)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, alt, d2r multibox, chat Gem workinG as intended
+
 
 
 
