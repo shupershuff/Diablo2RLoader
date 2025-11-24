@@ -399,7 +399,7 @@ Optional: If you want to build the .exe yourself you can do the following.
 3. This will open the command prompt with it set in the path of where you've saved the script.
 4. Next copy and paste the following into CMD:
 	SET var=%cd%
-	"C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" /target:winexe /out:"%var%\SetText.exe" "%var%\SetTextv2.bas" /verbose
+	"C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" /target:winexe /out:"%var%\SetTextv2.exe" "%var%\SetTextv2.bas" /verbose
 5. This should compile SetText.exe. This is used to give the Diablo windows a unique name once it's initialized.
 
 See this site for more information on what this does, this contains the original version and the updated version that I've made: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
@@ -444,6 +444,7 @@ All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
 Page views as of 21st April 2025:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader&label=Hits&icon=github&color=%23198754)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, alt, d2r multibox, chat Gem workinG as intended
+
 
 
 
