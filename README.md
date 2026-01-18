@@ -291,13 +291,15 @@ I doubt many people will want to do this so instructions will be brief.
 ## Graphics Performance Recommendations ##
 If you don't want your Diablo games to run like a slideshow, here are some tips. You'll of course need to adjust based on your hardware and setup.<br>
 I will quickly note that RAM/VRAM is usually the limiting factor, if you're seeing crashes, it's probably due to not enough RAM (your GPU will borrow system RAM when VRAM is fully utilised).
-1. IMPORTANT. Set an Frame Rate (FPS) cap in the games graphics options. Recommend 60 but adjust depending on your GPU power and instances you're running. This will prevent each instance from trying to fully utilise your GPU compute. Additionally, you can set maximum frame limits for when the game is minimized, see the video [Set Background FPS for D2r or other games AMD & NVIDIA](https://www.youtube.com/watch?v=uy471s1m-B0) for more info.
-2. Reduce graphics settings in game to performance over quality.
-3. Run games in Windowed mode. Especially if you have more than one monitor. Not only will it save you performance, it's waaaay easier than alt tabbing.
-4. In addition to changing your settings to launch the game in windowed mode, you should also make your secondary account windows smaller (ie lower resolution) to save on GPU utilisation. You can adjust resolution from the in game menu or simply by shrinking the window. If need you can of course do the opposite and maximise one of the smaller windows if you are playing another character for a bit.
-5. If you are wanting different graphics settings for different accounts (eg different FPS cap, different audio settings, different resolution, nicer graphics settings etc etc), then I would highly recommend making use of the QOL features of this script. The automatic settings switcher can be used so that each account loads with it's own settings at launch. There is also the manual setting switcher feature if you want to define what settings file to load for a given account. See the relevant sections ([5. Auto Settings Switcher](#5-auto-settings-switcher-optional-but-recommended) and [6. Manual Settings Switcher](#6-manual-settings-switcher-optional)) for more info.
-6. Obviously if you run other graphic demanding things like wallpaper engine in the background, this will hurt your overall FPS. Some wallpapers will have neglible impact but some are noticably impactful on performance.
-7. Make use of hardware monitoring software to see how much you are utilising RAM, CPU, GPU - Processor and GPU - VRAM. If you are under or overutilised you can adjust your settings accordingly for the best experience.
+1. IMPORTANT. We don't want your instances fighting with each other for all of your GPU's utilisation. As such, firstly you should enable background application max Frame Rate (FPS) for D2R.<br>
+This means that instances that you're not currently using will have frame rate capped. See the video [Set Background FPS for D2r or other games AMD & NVIDIA](https://www.youtube.com/watch?v=uy471s1m-B0) for more info.
+2. Also important, in the games graphics options, set a maximum FPS limit. Recommend setting this as high as you can go without your GPU utilisation going over 90% (the higher the frame rate, the shorter your loading screens will be).
+3. Reduce graphics settings in game to performance over quality.
+4. Run games in Windowed mode. Especially if you have more than one monitor. Not only will it save you performance, it's waaaay easier than alt tabbing.
+5. In addition to changing your settings to launch the game in windowed mode, you should also make your secondary account windows smaller (ie lower resolution) to save on GPU utilisation. You can adjust resolution from the in game menu or simply by shrinking the window. If need you can of course do the opposite and maximise one of the smaller windows if you are playing another character for a bit.
+6. If you are wanting different graphics settings for different accounts (eg different FPS cap, different audio settings, different resolution, nicer graphics settings etc etc), then I would highly recommend making use of the QOL features of this script. The automatic settings switcher can be used so that each account loads with it's own settings at launch. There is also the manual setting switcher feature if you want to define what settings file to load for a given account. See the relevant sections ([5. Auto Settings Switcher](#5-auto-settings-switcher-optional-but-recommended) and [6. Manual Settings Switcher](#6-manual-settings-switcher-optional)) for more info.
+7. Obviously if you run other graphic demanding things like wallpaper engine in the background, this will hurt your overall FPS. Some wallpapers will have neglible impact but some are noticably impactful on performance.
+8. Make use of hardware monitoring software to see how much you are utilising RAM, CPU, GPU - Processor and GPU - VRAM. If you are under or overutilised you can adjust your settings accordingly for the best experience.
 
 **My setup**<br>
 Note that on my specs (5950x, RTX2080s (which has 8GB VRAM), 32GB RAM), I run my instances on the lowest graphics options possible.<br>
@@ -446,6 +448,7 @@ All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
 Page views as of 21st April 2025:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader&label=Hits&icon=github&color=%23198754)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, alt, d2r multibox, chat Gem workinG as intended
+
 
 
 
