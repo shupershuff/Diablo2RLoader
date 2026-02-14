@@ -5,6 +5,8 @@ This is a free script I made for loading multiple Diablo 2 Resurrected instances
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
 This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
+Please note that this is not supported for Steam accounts, only Battle Net accounts.
+
 Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?<br>
 <br>
 Using this script means you DON'T have to do any of this stuff to multibox:<br>
@@ -316,7 +318,10 @@ Whilst I can't endorse usage of any mod and especially any AHK script (I'm unsur
 
 ## FAQ / Common Issues
 
-**Q:** When I launch accounts using parameter authentication, I get a warning that my account is "locked for suspicious activity".
+**Q:**  Will this work for accounts I purchase through Steam?<br>
+**A:** No, please note that this is not supported for Steam accounts, only Battle Net accounts. I do not anticipate being able to figure out how Steam authentication works.<br>
+
+**Q:** When I launch accounts using parameter authentication, I get a warning that my account is "locked for suspicious activity".<br>
 **A:** In some circumstances, for no obvious reason, you might randomly have issues with one or more of your accounts connecting with warnings about "Account locked for suspicious activity" after temporarily switching regions. This only happens when using parameter based authentication. This isn't an issue with the loader but is an issue with using Parameters to authenticate. I suspect the underlying issue is with Blizzards infrastructure. I've not yet discovered a consistent pattern as to why this happens or how to resolve it for an impacted account. Workaround is to launch problematic accounts using Auth Tokens, see Auth Token steps in [Setup Your Accounts](#2-setup-your-accounts).
 
 **Q:** I would like to say "Thankyou". How do I do that?<br>
@@ -448,6 +453,7 @@ All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
 Page views as of 21st April 2025:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader&label=Hits&icon=github&color=%23198754)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, alt, d2r multibox, chat Gem workinG as intended
+
 
 
 
