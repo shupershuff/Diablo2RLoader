@@ -4110,7 +4110,12 @@ Function Processing {
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		else {
-			$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
+			if ($Script:Config.UseChinaRegion -ne $True){
+				$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
+			}
+			else {
+				$arguments = (" -uid osic " + $CustomLaunchArguments).tostring()
+			}
 		}
 		if ($Config.ForceWindowedMode -eq $true){#starting with forced window mode sucks, but someone asked for it.
 			$arguments = $arguments + " -w"
@@ -4408,3 +4413,4 @@ Menu #start script.
 #FFFF00		255 255 000	Rare items
 #00FF00		000 255 000	Set items
 #A59263		165 146 099	Unique items
+
