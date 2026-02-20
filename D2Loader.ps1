@@ -2570,7 +2570,9 @@ $Script:QuoteList =
 "...That which does not kill you makes you stronger.",
 "Our Monastery is filled with voracious hellspawn. You'd best be careful, my friend.",
 "'I can't use that yet' - Emilio, 2025",
-"This is what happens when half measures are taken with demons."
+"This is what happens when half measures are taken with demons.",
+"The shadows churn with the touch of Anguish",
+"These creatures of darkness shall yield to me or perish"
 }
 Function BannerLogo {
 	if ($Script:IdleLimitForAccountUseTime -ne "" -and $Script:IdleLimitForAccountUseTime -gt 0 -and $Script:ActiveAccountsList.id.length -ne 0){#If Idlelimitfeature is used and there are active accounts, calc idle time to check if we should add idle status to banner
@@ -4627,3 +4629,4 @@ Menu #start script.
 #FFFF00		255 255 000	Rare items
 #00FF00		000 255 000	Set items
 #A59263		165 146 099	Unique items
+
