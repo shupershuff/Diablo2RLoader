@@ -19,8 +19,6 @@ Servers:
  Asia - kr.actual.battle.net
 
 Changes since 1.16.0 (next version edits):
-TZ screen now show shows option to open D2Emu website if upcoming details aren't available via API yet.
-Removed Next TZ Super unique field from appearing when upcoming TZ isn't available as this data is now no longer immediately available.
 Make sure only numbers can be entered as batch in accounts.csv
 Fixed other apps from having maximise button disabled by accident.
 Improved validation for emails/tokens.
@@ -30,8 +28,13 @@ Added the abilty to announce upcoming Terrorzone alarms for your preferred TZ's.
 Add ability for another alternative layout. Name the file AltLayout2.csv
 Fixed DClone features with ROTW changes.
 Added in menu option to force close all open instances. Enable via config.xml. Use with care!
+Fixed how Invoke-Webrequest works in accordance with CVE-2025-54100
 
 1.17.0+ to do list:
+Consider having dclone check 5 seconds before refresh instead of afterwards
+Add config option to disable cow.
+if upcoming/active tz is cow, say moo
+Improve Closure options (Batch, by account).
 Look to implement CTRL + Shift + number as a shortcut to switch between D2r windows. Some basic investigations show that this is possible with PowerShell. Look to build a background powershell agent that runs while the loader runs to detect key combos.
 Remove diablo2.io dclone API as it's problematic and uses D2Emu data now anyway. Possibly replace with d2tz.info
 Investigate building a TZ overlay now that there's capability built to auto check TZs.
@@ -47,7 +50,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.0"
+$CurrentVersion = "1.17.1"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -511,9 +514,9 @@ Function GetEmuToken { #For connecting to D2Emu for TZ and/or DClone data
 	Try {
 		if ($PSVersionTable.psversion.major -ge 7){# Run a PowerShell 5.1 script from within PowerShell 7.x, for whatever reason no content is returned on PS 7.x. Identified in https://github.com/shupershuff/Diablo2RLoader/issues/51
 			write-host "  Getting D2Emu AES key..."
-			$AES = & "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -Command {(invoke-webrequest https://d2emu.com/api/v1/shupertoken/aes -TimeoutSec 5).content | convertfrom-json}
+			$AES = & "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -Command {(invoke-webrequest https://d2emu.com/api/v1/shupertoken/aes -TimeoutSec 5 -UseBasicParsing).content | convertfrom-json}
 			write-host "  Getting D2Emu token..."
-			$EncryptedToken = & "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -Command {((invoke-webrequest https://d2emu.com/api/v1/shupertoken/token -TimeoutSec 5).content | convertfrom-json).token}
+			$EncryptedToken = & "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -Command {((invoke-webrequest https://d2emu.com/api/v1/shupertoken/token -TimeoutSec 5 -UseBasicParsing).content | convertfrom-json).token}
 		}
 		Else {
 			write-host "  Getting D2Emu AES key..."
@@ -664,9 +667,9 @@ Function CheckForUpdates {
 					}
 					$ZipURL = $ReleaseInfo.zipball_url #get zip download URL
 					$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
-					Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
+					Invoke-WebRequest -Uri $ZipURL -UseBasicParsing -OutFile $ZipPath
 					if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.
-						Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -OutFile $null | out-null #identify the latest file only.
+						Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -UseBasicParsing -OutFile $null | out-null #identify the latest file only.
 					}
 					$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
 					Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
@@ -701,9 +704,9 @@ Function CheckForUpdates {
 		$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
 		$ZipURL = $ReleaseInfo.zipball_url #get zip download URL
 		$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
-		Invoke-WebRequest -Uri $ZipURL -OutFile $ZipPath
+		Invoke-WebRequest -Uri $ZipURL -UseBasicParsing -OutFile $ZipPath
 		if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.
-			Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -OutFile $null | out-null #identify the latest file only.
+			Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -UseBasicParsing -OutFile $null | out-null #identify the latest file only.
 		}
 		$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
 		Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
@@ -1236,7 +1239,7 @@ Function ValidationAndSetup {
 			}
 			$ZipURL = "https://download.sysinternals.com/files/Handle.zip" #get zip download URL
 			$ZipPath = ($WorkingDirectory + "\Handle\ExtractTemp\")
-			Invoke-WebRequest -Uri $ZipURL -OutFile ($ZipPath + "\Handle.zip")
+			Invoke-WebRequest -Uri $ZipURL -UseBasicParsing -OutFile ($ZipPath + "\Handle.zip")
 			Expand-Archive -Path ($ZipPath + "\Handle.zip") -DestinationPath $ZipPath -Force
 			Copy-Item -Path ($ZipPath + "Handle64.exe") -Destination ($Script:WorkingDirectory + "\Handle\")
 			Remove-Item -Path ($Script:WorkingDirectory + "\Handle\ExtractTemp\") -Recurse -Force #delete update temporary folder
@@ -1780,7 +1783,7 @@ Function Inventory {#Info screen
 	Write-Host ("`"$Script:WorkingDirectory`"" -replace "((.{1,52})(?:\\|\s|$)|(.{1,53}))", "`n                        `$1").trim() #add two spaces before any line breaks for indenting. Add line break for paths that are longer than 53 characters.
 	Write-Host "  $X[4mYour Script Version:$X[0m v$CurrentVersion"
 	Write-Host "  $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/v$CurrentVersion$X[0m"
-	if ($null -eq $Script:LatestVersionCheck -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-2).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the couple of hours.
+	if ($null -eq $Script:LatestVersionCheck -or $Script:LatestVersionCheck.tostring() -lt (Get-Date).addhours(-4).ToString('yyyy.MM.dd HH:mm:ss')){ #check for updates. Don't check if this has been checked in the last 4 hours.
 		try {
 			$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
 			$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
@@ -3017,22 +3020,22 @@ Function DCloneVoiceAlarm {
 			$DCloneRegion = "China"
 		}
 		if ($item.tag -match "ROTW"){
-			$ExpansionVoice = "R O T W"
-			$ExpansionText = "ROTW"
+			$ExpansionVoice = " R O T W"
+			$ExpansionText = " ROTW"
 		}
 		Else {#if mode contains "SC"
 			$ExpansionVoice = ""
 		}
 		if ($Item.Status -eq 5){
-			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone is about to walk in $DCloneRegion on $CoreText $LadderText $ExpansionText!$X[0m"
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone is about to walk in $DCloneRegion on $CoreText $LadderText$ExpansionText!$X[0m"
 			$Message = ("D Clone Imminent! DClone is about to walk in $DCloneRegion on " + $CoreText + " " + $LadderText + $ExpansionVoice)
 		}
 		ElseIf (($Item.Status -eq 1 -and $Item.PreviousStatus -ne 6) -or $Item.Status -eq 6){#check if status has just changed to 6 or it has changed to 1 from any number other than 6 (to prevent duplicate alarms.
-			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone has just walked in $DCloneRegion on $CoreText $LadderText $ExpansionText ($($item.tag)).$X[0m"
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone has just walked in $DCloneRegion on $CoreText $LadderText$ExpansionText ($($item.tag)).$X[0m"
 			$Message = ("D Clone has just walked in $DCloneRegion on " + $CoreText + " " + $LadderText + $ExpansionVoice)
 		}
 		ElseIf ($Script:DCloneAlarmLevel -match $Item.Status){
-			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone Update! DClone is now $($Item.Status)/6 in $DCloneRegion on $CoreText $LadderText $ExpansionText$X[0m"
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone Update! DClone is now $($Item.Status)/6 in $DCloneRegion on $CoreText $LadderText$ExpansionText$X[0m"
 			$Message = ("D Clone is now " + $Item.Status + " out of 6 in $DCloneRegion on " + $CoreText + " " + $LadderText + $ExpansionVoice)
 		}
 		if ($item.VoiceAlarmStatus -eq $True){
@@ -3934,8 +3937,6 @@ Function ChooseAccount {
 					$Script:LastUpcomingTZCheck = ([DateTimeOffset](Get-Date "2000-01-01").ToUniversalTime()).ToUnixTimeSeconds()
 					$Script:TZDataTimings = @($Null)
 				}
-				$timezone = [System.TimeZoneInfo]::Local
-				$UTC_Offset = $timezone.BaseUtcOffset.TotalMinutes
 				try {
 					$UpdateCurrent = $False
 					$TZAlarmTimeCheck = ([DateTimeOffset](Get-Date).ToUniversalTime()).ToUnixTimeSeconds()
@@ -4629,5 +4630,3 @@ Menu #start script.
 #FFFF00		255 255 000	Rare items
 #00FF00		000 255 000	Set items
 #A59263		165 146 099	Unique items
-
-
