@@ -5,29 +5,29 @@
 
 	<!--default region, 1 for NA, 2 for EU, 3 for Asia.-->
 	<DefaultRegion>1</DefaultRegion>
-	
+
 	<!--Disable the functionality of being able to open all accounts at once. This is for any crazy people who have a lot of accounts and want to prevent accidentally opening all at once.-->
 	<DisableOpenAllAccountsOption>False</DisableOpenAllAccountsOption>
 
 	<!--Script will recreate desktop shortcut each time it's run (updates the shortcut if you move the script location). If you don't want this, disable here by setting to false.-->
 	<CreateDesktopShortcut>True</CreateDesktopShortcut>
-	
+
 	<!--If you have a custom .ico you want to use, put the path of it here.-->
 	<ShortcutCustomIconPath></ShortcutCustomIconPath>
-	
+
 	<!--If enabled, this option prevents D2r icons from stacking in the taskbar. Set to True if you want to enable this feature.-->
 	<DisableIconStacking>False</DisableIconStacking>
 
 	<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->
 	<ConvertPlainTextSecrets>True</ConvertPlainTextSecrets>
-	
+
 	<!--Make game launch each instance in the same screen location so you don't have to move your game windows around when starting the game.-->
 	<RememberWindowLocations>False</RememberWindowLocations>
 
 	<!--Make sure game always starts in Windowed mode rather than full screen. Note that this seems to cause issues remembering your last window size. Recommend leaving false-->
 	<ForceWindowedMode>False</ForceWindowedMode>
-	
-	<!--This enables the script to match a config file (settings.json) to the account you are launching. 
+
+	<!--This enables the script to match a config file (settings.json) to the account you are launching.
 	Eg if using account 1, this is achieved by overwriting settings.json with settings1.json.
 	Due to this, if enabled, settings1.json,settins2.json etc will not be updated if you update your game settings.
 	As such	you will need to manually update your settings.json config file, See readme for more details. -->
@@ -38,13 +38,16 @@
 	Any setting file with a number after it will not be an available option (eg settings1.json will not be an option).
 	To make settings option, you can load from, call the file settings.<name>.json eg(settings.Awesome Graphics.json) which will appear as "Awesome Graphics" in the menu.-->
 	<ManualSettingSwitcherEnabled>False</ManualSettingSwitcherEnabled>
-	
+
+	<!--If enabled this will show a menu option to be able to force close all D2r instances. Enter True if you want to enable this. Blank (disabled) by default.-->
+	<ShowCloseOptionInMenu>False</ShowCloseOptionInMenu>
+
 	<!--This allows you to roughly track how long you've used each account while using this script. Choose False if you want to disable this.-->
 	<TrackAccountUseTime>True</TrackAccountUseTime>
-	
+
 	<!--If set, this automatically pauses time tracking if you are idle for a certain amount of minutes. Set to a number (eg 5 for 5 minutes). Blank (disabled) by default.-->
 	<IdleLimitForAccountUseTime></IdleLimitForAccountUseTime>
-	
+
 	<!--Options are d2emu.com, D2runewizard.com and diablo2.io.
 	Default and recommended option is d2emu.com as this pulls live data from the game as opposed to crowdsourced data.-->
 	<DCloneTrackerSource>D2Emu.com</DCloneTrackerSource>
@@ -61,14 +64,22 @@
 	Enter "Imminent" to be only alarmed when status is 5/6 or has just walked.
 	Recommend setting to "All"-->
 	<DCloneAlarmLevel>All</DCloneAlarmLevel>
+
+	<!--This allows you to be alerted for upcoming Terror Zones.
+	Alerting will occur when TZ data is available (10min after the hour) and when the TZ becomes active.
+	Set the level ID's separated by commas for levels you want to be alerted on.
+	Level ID's can be seen here: https://github.com/shupershuff/Diablo2RLoader/blob/main/levels.txt
+	For example, for Catacombs, Tombs, Chaos and WSK this would be: '34,66,108,131'.-->
+	<TerrorZoneAlertAreas></TerrorZoneAlertAreas>
+
 	<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->
-	<DCloneAlarmVoice>Amazon</DCloneAlarmVoice>
-	
+	<AlarmVoice>Amazon</AlarmVoice>
 	<!--Specify how loud notifications can be. Range from 1 and 100.-->
-	<DCloneAlarmVolume>69</DCloneAlarmVolume>
-	
+	<AlarmVolume>69</AlarmVolume>
+
 	<!--Select regions which should be forced to use Tokens over parameters (overrides config in accounts.csv).
 	Only use this if connecting via Parameters is down for a particular region and you don't want to have to manually toggle.
 	Valid options are NA, EU and KR. Default is blank.-->
 	<ForceAuthTokenForRegion></ForceAuthTokenForRegion>
 </D2loaderconfig>
+
