@@ -18,18 +18,24 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 
-Changes since 1.15.0 (next version edits):
-DCloneVoiceAlarms now run asynchronously, meaning you can load up a game while the voice alarms are playing instead of having to wait.
-Fixed a friendly error message not working for when handle can't be killed.
-Fixed an issue with process matching when using more than 10 accounts (Big thanks to guillaume-luccioni).
-Fixed up a menu option that shouldn't have been there for DCloneAlarmVoice.
-Minor tweak to script input function to prevent typo's such as "2b" being considered valid account selection.
-Fixed how D2Emu DClone data is used (as it now has China info in it).
-Made the killhandle function even more potato PC friendly.
+Changes since 1.16.0 (next version edits):
+TZ screen now show shows option to open D2Emu website if upcoming details aren't available via API yet.
+Removed Next TZ Super unique field from appearing when upcoming TZ isn't available as this data is now no longer immediately available.
+Make sure only numbers can be entered as batch in accounts.csv
+Fixed other apps from having maximise button disabled by accident.
+Improved validation for emails/tokens.
+Partially added China capability (except for TZ).
+Made it so if token is selected as the auth method, passwords aren't required in accounts.csv.
+Added the abilty to announce upcoming Terrorzone alarms for your preferred TZ's.
+Add ability for another alternative layout. Name the file AltLayout2.csv
+Fixed DClone features with ROTW changes.
+Added in menu option to force close all open instances. Enable via config.xml. Use with care!
 
-1.16.0+ to do list:
+1.17.0+ to do list:
 Look to implement CTRL + Shift + number as a shortcut to switch between D2r windows. Some basic investigations show that this is possible with PowerShell. Look to build a background powershell agent that runs while the loader runs to detect key combos.
-Remove diablo2.io dclone API as it's problematic and uses D2Emu data now anyway.
+Remove diablo2.io dclone API as it's problematic and uses D2Emu data now anyway. Possibly replace with d2tz.info
+Investigate building a TZ overlay now that there's capability built to auto check TZs.
+Potentially look at being able to launch a Single Steam instance.
 Fix whatever I broke or poorly implemented in the last update :)
 
 The "I can't be bothered" to do list:
@@ -41,7 +47,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.16.0"
+$CurrentVersion = "1.17.0"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -94,7 +100,7 @@ if ($DebugMode -eq $True){
 }
 #set window size
 [console]::WindowWidth=77; #script has been designed around this width. Adjust at your own peril.
-$WindowHeight=50 #Can be adjusted to preference, but not less than 42
+$WindowHeight=52 #Can be adjusted to preference, but not less than 42
 do {
 	Try{
 		[console]::WindowHeight = $WindowHeight;
@@ -128,7 +134,7 @@ try {
 Catch {
 	$Script:SettingsProfilePath = ("C:\Users\" + $Env:UserName + "\Saved Games\Diablo II Resurrected\")
 }
-Function RemoveMaximiseButton { # I'm removing the maximise button on the script as sometimes I misclick maximise instead of minimise and it annoys me. Copied this straight out of ChatGPT lol.
+Function RemoveMaximiseButton { # I'm removing the maximise button on the script as sometimes I misclick maximise instead of minimise and it annoys me. Get's process ID of the script to ensure we don't remove maximise button from another app by accident.
 	Add-Type @"
 		using System;
 		using System.Runtime.InteropServices;
@@ -136,16 +142,14 @@ Function RemoveMaximiseButton { # I'm removing the maximise button on the script
 			public const int GWL_STYLE = -16;
 			public const int WS_MAXIMIZEBOX = 0x10000;
 			public const int WS_THICKFRAME = 0x40000;  // Window has a sizing border
-			[DllImport("user32.dll")]
-			public static extern IntPtr GetForegroundWindow();
 			[DllImport("user32.dll", SetLastError = true)]
 			public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 			[DllImport("user32.dll", SetLastError = true)]
 			public static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 		}
 "@
-	# Get the handle for the current window (PowerShell window)
-	$hWnd = [WindowAPI]::GetForegroundWindow()
+	# Get the handle for the PowerShell window
+	$hWnd = (Get-Process -Id $PID).MainWindowHandle
 	# Get the current window style
 	$style = [WindowAPI]::GetWindowLong($hWnd, [WindowAPI]::GWL_STYLE)
 	# Disable the maximize button by removing the WS_MAXIMIZEBOX style. Also disable resizing the width.
@@ -182,7 +186,7 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys){#us
 	if (![string]::IsNullOrEmpty($message)){
 		Write-Host -NoNewLine $message
 	}
-	$AllowedKeyList = $Script:AllowedKeyList + @(13,27) #Add Enter & Escape to the allowedkeylist as acceptable inputs.
+	$AllowedKeyList = $Script:AllowedKeyList + @($EnterKey,27) #Add Enter & Escape to the allowedkeylist as acceptable inputs.
 	while ($Null -eq $key){
 	if ($Host.UI.RawUI.KeyAvailable){
 			$key_ = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,IncludeKeyUp")
@@ -219,7 +223,7 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys){#us
 		}
 	)
 }
-Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null, [bool]$TwoDigitAcctSelection = $False){
+Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null, [bool]$TwoDigitAcctSelection = $False,[bool]$AllowYesNoOnly){
 	$key = $Null
 	$inputString = ""
 	$Host.UI.RawUI.FlushInputBuffer()
@@ -228,6 +232,9 @@ Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]
 	}
 	$Counter = $timeOutSeconds * 1000 / 250
 	$AllowedKeyList = $Script:AllowedKeyList + $AdditionalAllowedKeys #Add any other specified allowed key inputs (eg Enter).
+	if ($AllowYesNoOnly){
+		$AllowedKeyList = @($EnterKey,78,89)
+	}
 	while ($Null -eq $key -and ($timeOutSeconds -eq 0 -or $Counter-- -gt 0)){
 		if ($TwoDigitAcctSelection -eq $True -and $inputString.length -ge 1){
 			$AllowedKeyList = $AllowedKeyList + 13 + 8 # Allow enter and backspace to be used if 1 character has been typed.
@@ -322,7 +329,7 @@ Function Green {
 Function NormalText {
 	process { Write-Host $_ }
 }
-Function FormatFunction { # Used to get long lines formatted nicely within the CLI. Possibly the most difficult thing I've created in this script. Hooray for Regex!
+Function FormatFunction { # Used to get long lines formatted nicely within the CLI. Can handle ANSI text. Possibly the most difficult thing I've created in this script. Hooray for Regex!
 	param (
 		[string] $Text,
 		[int] $Indents,
@@ -355,7 +362,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$SubsequentLineIndent += " "
 			$SubsequentLineIndents --
 		}
-	}
+	}	
 	$Text -split "`n" | ForEach-Object {
 		$Line = " " + $Indent + $_
 		$SecondLineDeltaIndent = ""
@@ -372,12 +379,29 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$highestIndex = -1
 			$SelectedMatch = $Null
 			$PatternLengthCount = 0
-			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
+			
+			
+			#$Script:X = [char]0x1b
+			#$X[38;2;165;146;99;48;2;1;1;1;4m   $X[0m#    .replace([char]0x1b,"F")
+			#$ANSITEXT -replace '\x1b\[[0-9;]*m',''
+							
+			                    #  38      2     165    146      99      48       2       1       1      1        2       4m
+			#$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
+			#$ANSIPatterns = "(?:\x1b|\$X)\[[0-9;]*m","\x1b\[0m","\x1b\[4m"
+			
+			# Need to adjust this function so one of 2 ways, whatevers easiest/fastest
+			# the easiest way would be to identify the previous opening ANSI statement, close off the ANSI at the end of the first line $X[0m then add spaces for indent and then readd the opening ANSI statement at the beginning of next line
+			
+
+			
+			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
 			ForEach ($WordMatch in $WordMatches){# Iterate through each match (match being a block of characters, ie each word).
 				ForEach ($ANSIPattern in $ANSIPatterns){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
 					$ANSIMatches = $WordMatch.value | Select-String -Pattern $ANSIPattern -AllMatches
 					ForEach ($ANSIMatch in $ANSIMatches){
-						$Script:ANSIUsed = $True
+						if ($line -ne "  $ContinueANSI"){
+							$Script:ANSIUsed = $True	
+						}
 						$PatternLengthCount = $PatternLengthCount + (($ANSIMatch.matches | ForEach-Object {$_.Value}) -join "").length #Calculate how many characters in the text are ANSI formatting characters and thus won't be displayed on screen, to prevent skewing word count.
 					}
 				}
@@ -400,14 +424,48 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			}
 		}
 		Formatter $Line
-		if ($Script:ANSIUsed -eq $True){ #if fancy pants coloured text (ANSI) is used, write out the first line. Check if ANSI was used in any overflow lines.
+		if ($Script:ANSIUsed -eq $True){ #if fancy pants coloured text (ANSI) is used, write out the first line. Check if ANSI was used in any overflow lines.	
 			do {
+				if ($Chunk -match "(?:\x1b|\$X)\[[0-9;]*m" -and $Chunk -notmatch '\x1b\[0m'){#Open ANSI without a closing tag
+					$ANSIStillActive = $True
+					$ContinueANSI = [regex]::Matches($Chunk, "\x1b\[(?!0m)[0-9;]+m") | select-object -last 1
+				}
+				elseif ($Chunk -match "(?:\x1b|\$X)\[[0-9;]*m" -and $Chunk -match '\x1b\[0m'){#open and closing ANSI tags. Lets assess if there's an equal amount of both to determine if ANSI is open or not.
+					$openCount  = 0
+					$closeCount = 0
+					$Pattern = '(?:\x1b|\$X)\[[0-9;]+m' #pattern to identify all opening or closing statements.
+					$AllANSI = [regex]::Matches($Chunk, $Pattern)
+					foreach ($Rakanishu in $AllANSI) {
+						if ($Rakanishu.Value -match '\[0m$'){
+							$CloseCount++
+						}
+						else {
+							$OpenCount++
+						}
+					}
+					if ($OpenCount -gt $CloseCount){ #if there's more opening statements than closed statements, we should capture the current formatting so we can use this on the following text.
+						$ANSIStillActive = $True
+						$ContinueANSI = [regex]::Matches($Chunk, "\x1b\[(?!0m)[0-9;]+m") | select-object -last 1
+					}
+					Else {
+						$ANSIStillActive = $False
+					}
+				}
+				elseif ($Chunk -notmatch "(?:\x1b|\$X)\[[0-9;]*m" -and $Chunk -match '\x1b\[0m'){ #closing ansi with no open tag
+					$ANSIStillActive = $False
+				}				
 				$Script:ANSIUsed = $False
-				Write-Output $Chunk | out-host #have to use out-host due to pipeline shenanigans and at this point was too lazy to do things properly :)
-				$Line = " " + $SubsequentLineIndent + $Indent + $Line.Substring($chunk.Length).trimstart() #$Line is equal to $Line but without the text that's already been outputted.
+				if ($ANSIStillActive -eq $True){#output with a closing statement and then insert the ANSI formatting into the next line to process
+					Write-Output ($Chunk + "$X[0m") | out-host #have to use out-host due to pipeline shenanigans and at this point was too lazy to do things properly :)
+					$Line = " " + $SubsequentLineIndent + $Indent + $ContinueANSI + $Line.Substring($chunk.Length).trimstart() #$Line is equal to $Line but without the text that's already been outputted.
+				}
+				Else {
+					Write-Output $Chunk | out-host #have to use out-host due to pipeline shenanigans and at this point was too lazy to do things properly :)
+					$Line = " " + $SubsequentLineIndent + $Indent + $Line.Substring($chunk.Length).trimstart() #$Line is equal to $Line but without the text that's already been outputted.
+				}
 				Formatter $Line
 			} until ($Script:ANSIUsed -eq $False)
-			if ($Chunk -ne " " -and $Chunk.lenth -ne 0){#print any remaining text.
+			if ($Chunk -ne " " -and $Chunk.length -ne 0){#print any remaining text.
 				Write-Output $Chunk | out-host
 			}
 		}
@@ -418,7 +476,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 		if ($Line.length -gt 0){ # I see you're reading my comment. How thorough of you! This whole function was an absolute mindf#$! to come up with and took probably 30 hours of trial, error and rage (in ascending order of frequency). Odd how the most boring of functions can take up the most time :)
 			Write-Output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) - $($SubsequentLineIndent.length) -1 - $($SecondLineDeltaIndent.length))})(\s+|$)", " $SubsequentLineIndent$SecondLineDeltaIndent$Indent`$1`n").trimend() | &$Colour
 		}
-	}
+	} 
 }
 Function CommaSeparatedList {
 	param (
@@ -454,12 +512,13 @@ Function GetEmuToken { #For connecting to D2Emu for TZ and/or DClone data
 		if ($PSVersionTable.psversion.major -ge 7){# Run a PowerShell 5.1 script from within PowerShell 7.x, for whatever reason no content is returned on PS 7.x. Identified in https://github.com/shupershuff/Diablo2RLoader/issues/51
 			write-host "  Getting D2Emu AES key..."
 			$AES = & "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -Command {(invoke-webrequest https://d2emu.com/api/v1/shupertoken/aes -TimeoutSec 5).content | convertfrom-json}
-			write-host "  Getting D2Emu Token..."
+			write-host "  Getting D2Emu token..."
 			$EncryptedToken = & "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy Bypass -Command {((invoke-webrequest https://d2emu.com/api/v1/shupertoken/token -TimeoutSec 5).content | convertfrom-json).token}
-		}Else {
+		}
+		Else {
 			write-host "  Getting D2Emu AES key..."
 			$AES = invoke-restmethod https://d2emu.com/api/v1/shupertoken/aes -TimeoutSec 5
-			write-host "  Getting D2Emu AES key..."
+			write-host "  Getting D2Emu AES token..."
 			$EncryptedToken = (invoke-restmethod https://d2emu.com/api/v1/shupertoken/token -TimeoutSec 5).token
 		}
 		$Key = $AES.key
@@ -655,8 +714,13 @@ Function CheckForUpdates {
 	}
 }
 Function ImportXML { #Import Config XML
+	param(
+		[Switch]$NoOutput
+	)
 	try {
-		Write-Host " Importing Config.xml..."
+		if (!$NoOutput){
+			Write-Host " Importing Config.xml..."
+		}
 		$Script:Config = ([xml](Get-Content "$Script:WorkingDirectory\Config.xml" -ErrorAction Stop)).D2loaderconfig
 		Write-Verbose "Config imported successfully."
 	}
@@ -686,6 +750,19 @@ Function SetDCloneAlarmLevels {
 Function ValidationAndSetup {
 	write-host  " Validating Config..."
 	#Perform some validation on config.xml. Helps avoid errors for people who may be on older versions of the script and are updating. Will look to remove all of this in a future update.
+	Function UpdateXML {
+		param (
+			[String]$Pattern,
+			[String]$Replacement,
+			[object[]]$XML,
+			[Switch]$Pause
+		)
+		($XML -replace [regex]::Escape($Pattern), $Replacement) | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+		if ($Pause){
+			Start-Sleep -milliseconds 1500
+			PressTheAnyKey
+		}
+	}
 	if (Select-String -path $Script:WorkingDirectory\Config.xml -pattern "multiple game installs"){#Sort out an incorrect description text that will have been in folks config.xml for some time. This description was never valid and was from when the setting switcher feature was being developed and tested.
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = ";;`t`tNote, if using multiple game installs \(to keep client specific config persistent for each account\), ensure these are referenced in the CustomGamePath field in accounts.csv."
@@ -723,10 +800,18 @@ Function ValidationAndSetup {
 		$Replacement +=	"Any setting file with a number after it will not be an available option (eg settings1.json will not be an option).`n`t"
 		$Replacement +=	"To make settings option, you can load from, call the file settings.<name>.json eg(settings.Awesome Graphics.json) which will appear as `"Awesome Graphics`" in the menu.-->`n`t"
 		$Replacement +=	"<ManualSettingSwitcherEnabled>False</ManualSettingSwitcherEnabled>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
+	}	
+	if ($Null -eq $Script:Config.ShowCloseOptionInMenu){
+		Write-Host "`n Config option 'ShowCloseOptionInMenu' missing from config.xml" -foregroundcolor Yellow
+		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+		formatfunction -IsWarning -Indents 0 -text "This will enable/disable a menu option to force shut all d2r instances."
+		Write-Host " Added this missing option into the config.xml file :)`n" -foregroundcolor green
+		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+		$Pattern = "</ManualSettingSwitcherEnabled>"
+		$Replacement = "</ManualSettingSwitcherEnabled>`n`n`t<!--If enabled this will show a menu option to be able to force close all D2r instances. Enter True if you want to enable this. Blank (disabled) by default.-->"
+		$Replacement += "`n`t<ShowCloseOptionInMenu>False</ShowCloseOptionInMenu>" #add option to config file if it doesn't exist.
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.TrackAccountUseTime){
 		Write-Host "`n Config option 'TrackAccountUseTime' missing from config.xml" -foregroundcolor Yellow
@@ -734,13 +819,10 @@ Function ValidationAndSetup {
 		Write-Host " This is an optional config option to track time played per account." -foregroundcolor Yellow
 		Write-Host " Added this missing option into the config.xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
-		$Pattern = "</ManualSettingSwitcherEnabled>"
-		$Replacement = "</ManualSettingSwitcherEnabled>`n`n`t<!--This allows you to roughly track how long you've used each account while using this script. "
+		$Pattern = "</ShowCloseOptionInMenu>"
+		$Replacement = "</ShowCloseOptionInMenu>`n`n`t<!--This allows you to roughly track how long you've used each account while using this script. "
 		$Replacement += "Choose False if you want to disable this.-->`n`t<TrackAccountUseTime>True</TrackAccountUseTime>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.IdleLimitForAccountUseTime){
 		Write-Host "`n Config option 'IdleLimitForAccountUseTime' missing from config.xml" -foregroundcolor Yellow
@@ -751,10 +833,7 @@ Function ValidationAndSetup {
 		$Pattern = "</TrackAccountUseTime>"
 		$Replacement = "</TrackAccountUseTime>`n`n`t<!--If set, this automatically pauses time tracking if you are idle for a certain amount of minutes. Set to a number (eg 5 for 5 minutes). Blank (disabled) by default.-->"
 		$Replacement += "`n`t<IdleLimitForAccountUseTime></IdleLimitForAccountUseTime>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.DisableIconStacking){
 		Write-Host "`n Config option 'DisableIconStacking' missing from config.xml" -foregroundcolor Yellow
@@ -765,24 +844,26 @@ Function ValidationAndSetup {
 		$Pattern = "</ShortcutCustomIconPath>"
 		$Replacement = "</ShortcutCustomIconPath>`n`n`t<!--If enabled, this option prevents D2r icons from stacking in the taskbar. "
 		$Replacement += "Set to True if you want to enable this feature.-->`n`t<DisableIconStacking>False</DisableIconStacking>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
-	if ($Null -eq $Script:Config.ConvertPlainTextSecrets){
+	if ($Null -ne $Script:Config.ConvertPlainTextPasswords){
 		Write-Host "`n Renaming ConvertPlainTextPasswords to ConvertPlainTextSecrets in config.xml" -foregroundcolor Yellow
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = "<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->"
 		$Replacement = "<!--Whether script should convert plain text tokens and passwords in accounts.csv to a secure string. Recommend leaving this set to True.-->"
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
+		$XML = $XML -replace [regex]::Escape($Pattern), $Replacement
 		$Pattern = "ConvertPlainTextPasswords"
 		$Replacement = "ConvertPlainTextSecrets"
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Write-Host " Config.xml file updated :)`n" -foregroundcolor green
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
+		ImportXML -NoOutput
+	}
+	if ($Null -eq $Script:Config.ConvertPlainTextSecrets){
+		Write-Host "`n Config option 'ConvertPlainTextSecrets' missing from config.xml" -foregroundcolor Yellow
+		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+		$Pattern = "</DisableIconStacking>"
+		$Replacement = "</DisableIconStacking>`n`n`t<!--Whether script should convert plain text passwords in accounts.csv to a secure string, recommend leaving this set to True.-->`n`t"
+		$Replacement += "<ConvertPlainTextSecrets>True</ConvertPlainTextSecrets>" #add option to config file if it doesn't exist.
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -ne $Script:Config.EnableBatchFeature){ # remove from config.xml. Not needed anymore as script checks accounts.csv to see if batches are used.
 		Write-Host "`n Config option 'EnableBatchFeature' is no longer needed." -foregroundcolor Yellow
@@ -829,10 +910,7 @@ Function ValidationAndSetup {
 		$Pattern = "</DefaultRegion>"
 		$Replacement = "</DefaultRegion>`n`n`t<!--Disable the functionality of being able to open all accounts at once. This is for any crazy people who have a lot of accounts and want to prevent accidentally opening all at once.-->`n`t"
 		$Replacement += "<DisableOpenAllAccountsOption>False</DisableOpenAllAccountsOption>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.RememberWindowLocations){
 		Write-Host "`n Config option 'RememberWindowLocations' missing from config.xml" -foregroundcolor Yellow
@@ -843,10 +921,7 @@ Function ValidationAndSetup {
 		$Pattern = "</ConvertPlainTextSecrets>"
 		$Replacement = "</ConvertPlainTextSecrets>`n`n`t<!--Make game launch each instance in the same screen location so you don't have to move your game windows around when starting the game.-->`n`t"
 		$Replacement += "<RememberWindowLocations>False</RememberWindowLocations>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.DCloneTrackerSource){
 		Write-Host "`n Config option 'DCloneTrackerSource' missing from config.xml" -foregroundcolor Yellow
@@ -859,10 +934,7 @@ Function ValidationAndSetup {
 		$Replacement = "</TrackAccountUseTime>`n`n`t<!--Options are d2emu.com, D2runewizard.com and diablo2.io.`n`t"
 		$Replacement += "Default and recommended option is d2emu.com as this pulls live data from the game as opposed to crowdsourced data.-->`n`t"
 		$Replacement += "<DCloneTrackerSource>d2emu.com</DCloneTrackerSource>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.DCloneAlarmLevel){
 		Write-Host "`n Config option 'DCloneAlarmLevel' missing from config.xml" -foregroundcolor Yellow
@@ -878,10 +950,7 @@ Function ValidationAndSetup {
 		$Replacement +=	"Enter `"Imminent`" to be only alarmed when status is 5/6 or has just walked.`n`t"
 		$Replacement +=	"Recommend setting to `"All`"-->`n`t"
 		$Replacement +=	"<DCloneAlarmLevel>All</DCloneAlarmLevel>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.DCloneAlarmList){
 		Write-Host "`n Config option 'DCloneAlarmList' missing from config.xml" -foregroundcolor Yellow
@@ -896,13 +965,15 @@ Function ValidationAndSetup {
 		$Replacement +=	"EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>`n`t"
 		$Replacement +=	"If left blank, this feature is disabled. Default is blank as this may be annoying for some people.-->`n`t"
 		$Replacement +=	"<DCloneAlarmList></DCloneAlarmList>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -ne $Script:Config.DCloneAlarmList -and $Script:Config.DCloneAlarmList -ne ""){#validate data to prevent errors from typos
-		$pattern = "^(HC|SC)(L?)-(NA|EU|KR)$" #set pattern: must start with HC or SC, optionally has L after it, must end in -NA -EU or -KR
+		if ($Script:Config.UseChinaRegion -ne $True){
+			$pattern = "^(HC|SC)(L?)-(NA|EU|KR)(-ROTW)?$" #set pattern: must start with HC or SC, optionally has L after it, must end in -NA -EU or -KR
+		}
+		Else {
+			$pattern = "^(HC|SC)(L?)-(CN)(-ROTW)?$" #set pattern: must start with HC or SC, optionally has L after it, must end in -NA -EU or -KR
+		}
 		ForEach ($Alarm in $Script:Config.DCloneAlarmList.split(",").trim()){
 			if ($Alarm -notmatch $pattern){
 				Write-Host "`n $Alarm is not a valid Alarm entry."  -foregroundcolor Red
@@ -911,32 +982,55 @@ Function ValidationAndSetup {
 			}
 		}
 	}
-	if ($Null -eq $Script:Config.DCloneAlarmVoice){
-		Write-Host "`n Config option 'DCloneAlarmVoice' missing from config.xml" -foregroundcolor Yellow
+	if ($Null -ne $Script:Config.DCloneAlarmVoice){
+		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+		$Pattern = "DCloneAlarmVoice"
+		$Replacement = "AlarmVoice"
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML
+		ImportXML -NoOutput
+	}
+	if ($Null -ne $Script:Config.DCloneAlarmVolume){
+		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+		$Pattern = "DCloneAlarmVolume"
+		$Replacement = "AlarmVolume"
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML
+		ImportXML -NoOutput
+	}
+	if ($Null -eq $Script:Config.AlarmVoice){
+		Write-Host "`n Config option 'AlarmVoice' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " This config allows you to choose between a Woman or Man's robot voice." -foregroundcolor Yellow
 		Write-Host " Added this missing option into the config.xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = "</DCloneAlarmLevel>"
 		$Replacement = "</DCloneAlarmLevel>`n`n`t<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->`n`t"
-		$Replacement +=	"<DCloneAlarmVoice>Paladin</DCloneAlarmVoice>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		$Replacement +=	"<AlarmVoice>Paladin</AlarmVoice>" #add option to config file if it doesn't exist.
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
-	if ($Null -eq $Script:Config.DCloneAlarmVolume){
-		Write-Host "`n Config option 'DCloneAlarmVolume' missing from config.xml" -foregroundcolor Yellow
+	if ($Null -eq $Script:Config.AlarmVolume){
+		Write-Host "`n Config option 'AlarmVolume' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
 		Write-Host " Added this missing option into the config.xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
-		$Pattern = "</DCloneAlarmVoice>"
-		$Replacement = "</DCloneAlarmVoice>`n`t<!--Specify how loud notifications can be. Range from 1 to 100.-->`n`t"
-		$Replacement +=	"<DCloneAlarmVolume>69</DCloneAlarmVolume>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		$Pattern = "</AlarmVoice>"
+		$Replacement = "</AlarmVoice>`n`t<!--Specify how loud notifications can be. Range from 1 to 100.-->`n`t"
+		$Replacement +=	"<AlarmVolume>69</AlarmVolume>" #add option to config file if it doesn't exist.
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
+	}
+	if ($Null -eq $Script:Config.TerrorZoneAlertAreas){
+		Write-Host "`n Config option 'TerrorZoneAlertAreas' missing from config.xml" -foregroundcolor Yellow
+		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
+		Write-Host " This config allows you to be notified for upcoming TZ's (eg WSK, Tombs)." -foregroundcolor Yellow
+		Write-Host " Added this missing option into the config.xml file :)`n" -foregroundcolor green
+		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+		$Pattern = "</AlarmVolume>"
+		$Replacement =	"</AlarmVolume>`n`n`t<!--This allows you to be alerted for upcoming Terror Zones.`n`t"
+		$Replacement +=	"Alerting will occur when TZ data is available (10min after the hour) and when the TZ becomes active.`n`t"
+		$Replacement +=	"Set the level ID's separated by commas for levels you want to be alerted on.`n`t"
+		$Replacement +=	"Level ID's can be seen here: https://github.com/shupershuff/Diablo2RLoader/blob/main/levels.txt`n`t"
+		$Replacement +=	"For example, for Catacombs, Tombs, Chaos and WSK this would be: '34,66,108,131'.-->`n`t"
+		$Replacement +=	"<TerrorZoneAlertAreas></TerrorZoneAlertAreas>" #add option to config file if it doesn't exist.
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.ForceAuthTokenForRegion){
 		Write-Host "`n Config option 'ForceAuthTokenForRegion' missing from config.xml" -foregroundcolor Yellow
@@ -946,25 +1040,30 @@ Function ValidationAndSetup {
 		Write-Host " their authentication servers on a particular region." -foregroundcolor Yellow
 		Write-Host " Added this missing option into the config.xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
-		$Pattern = "</DCloneAlarmVoice>"
-		$Replacement = "</DCloneAlarmVoice>`n`n`t<!--Select regions which should be forced to use Tokens over parameters (overrides config in accounts.csv).`n`t"
+		$Pattern = "</TerrorZoneAlertAreas>"
+		$Replacement = "</TerrorZoneAlertAreas>`n`t<!--Select regions which should be forced to use Tokens over parameters (overrides config in accounts.csv).`n`t"
 		$Replacement += "Only use this if connecting via Parameters is down for a particular region and you don't want to have to manually toggle.`n`t"
 		$Replacement +=	"Valid options are NA, EU and KR. Default is blank.-->`n`t"
 		$Replacement +=	"<ForceAuthTokenForRegion></ForceAuthTokenForRegion>" #add option to config file if it doesn't exist.
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
+	#if ($Null -eq $Script:Config.UseChinaRegion){
+	#	Write-Verbose "`n Config option 'UseChinaRegion' missing from config.xml" #verbose as no point notifying folk for a feature so few people will use.
+	#	Write-Verbose " This is due to the config.xml recently being updated."
+	#	Write-Verbose " This config uses China region instead of NA, KR and EU."
+	#	Write-Verbose " Added this missing option into the config.xml file :)`n"
+	#	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
+	#	$Pattern = "</TerrorZoneAlertAreas>"
+	#	$Replacement =	"</TerrorZoneAlertAreas>`n`n`t<!--If you want to use this for China region instead, set this to True.-->`n`t"
+	#	$Replacement +=	"<UseChinaRegion>False</UseChinaRegion>" #add option to config file if it doesn't exist.
+	#	UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML
+	#}
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml" -raw
 	$Pattern = "d2rapi.fly.dev"
 	if ($Null -ne (Select-Xml -Content $xml -XPath "//*[contains(.,'$pattern')]")){
 		Write-Host "`n Replaced 'd2rapi.fly.dev' in config with 'd2emu.com'." -foregroundcolor Yellow
 		$Replacement = "d2emu.com"
-		$NewXML = $XML -replace [regex]::Escape($Pattern), $Replacement
-		$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
-		Start-Sleep -milliseconds 1500
-		PressTheAnyKey
+		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	ImportXML
 	if ($Script:Config.DCloneAlarmList -ne ""){
@@ -975,8 +1074,8 @@ Function ValidationAndSetup {
 			"Man",
 			"Wench",
 			"Bloke"
-		if ($Script:Config.DCloneAlarmVoice -notin $ValidVoiceOptions){
-			Write-Host "`n Error: DCloneAlarmVoice in config has an invalid option set." -Foregroundcolor red
+		if ($Script:Config.AlarmVoice -notin $ValidVoiceOptions){
+			Write-Host "`n Error: AlarmVoice in config has an invalid option set." -Foregroundcolor red
 			Write-Host " Open config.xml and set this to either Paladin or Amazon.`n" -Foregroundcolor red
 			PressTheAnyKeyToExit
 		}
@@ -991,10 +1090,11 @@ Function ValidationAndSetup {
 	"DCloneTrackerSource",
 	"DCloneAlarmList",
 	"DCloneAlarmLevel",
-	"DCloneAlarmVoice",
-	"DCloneAlarmVolume",
+	"AlarmVoice",
+	"AlarmVolume",
 	"ForceAuthTokenForRegion",
-	"IdleLimitForAccountUseTime"
+	"IdleLimitForAccountUseTime",
+	"TerrorZoneAlertAreas"
 	$BooleanConfigs =
 	"ConvertPlainTextSecrets",
 	"ManualSettingSwitcherEnabled",
@@ -1004,19 +1104,22 @@ Function ValidationAndSetup {
 	"ForceWindowedMode",
 	"SettingSwitcherEnabled",
 	"TrackAccountUseTime",
-	"DisableIconStacking"
+	"DisableIconStacking",
+	"ShowCloseOptionInMenu"
+	#"UseChinaRegion"
 	$AvailableConfigs = $AvailableConfigs + $BooleanConfigs
 	$ConfigXMLlist = ($Config | Get-Member | Where-Object {$_.membertype -eq "Property" -and $_.name -notlike "#comment"}).name
 	ForEach ($Option in $AvailableConfigs){#Config validation
-		if ($Option -notin $ConfigXMLlist){
+		if ($Option -notin $ConfigXMLlist -and $Option -ne "UseChinaRegion"){
 			Write-Host " Config.xml file is missing a config option for $Option." -foregroundcolor yellow
 			Start-Sleep 1
 			PressTheAnyKey
+			$ConfigOptionMissing = $True
 		}
 	}
-	if ($Option -notin $ConfigXMLlist){
-		Write-Host "`n Make sure to grab the latest version of config.xml from GitHub" -foregroundcolor yellow
-		Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/releases/latest$X[0m`n"
+	if ($ConfigOptionMissing -eq $True){
+		FormatFunction -text "`nIf unsure how to resolve, try grabbing the latest version of config.xml from GitHub" -IsWarning -indents 1
+		Write-Host " $X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/blob/main/config.xml$X[0m`n"
 		PressTheAnyKey
 	}
 	if ($Config.GamePath -match "`""){#Remove any quotes from path in case someone ballses this up.
@@ -1037,6 +1140,27 @@ Function ValidationAndSetup {
 	}
 	else {
 		$ShortcutCustomIconPath = $Config.ShortcutCustomIconPath
+	}
+	if ($Config.TerrorZoneAlertAreas -ne ""){
+		$Areas = $Config.TerrorZoneAlertAreas -split ',' | ForEach-Object {$_.Trim()} #split levels
+		foreach ($Area in $Areas) {
+			$IsInteger = [int]::TryParse($Area, [ref]0) #iterate through each of the Areas to ensure it's a number and not someone typing in a level name
+			if (!$IsInteger -and $Area -ne "" -or $Area -notin 1..137) {
+				FormatFunction -Text "`nYou've made an error in the config file for TerrorZoneAlertAreas." -IsError
+				FormatFunction -Text "One of the values '$Area' is not a valid level ID." -IsError
+				if ($Area -notin 1..137){
+					FormatFunction -Text "Valid level ID's are between 1 and 137." -IsError
+				}
+				if (!$IsInteger){
+					FormatFunction -Text "TerrorZoneAlertAreas config cannot be a name, it needs to be the number of the level ID." -IsError
+				}
+				FormatFunction -Text "`nLevel ID's can be seen here: https://github.com/shupershuff/Diablo2RLoader/blob/main/levels.txt." -IsError
+				FormatFunction -Text "`nPlease adjust config.xml so that the TerrorZoneAlertAreas are valid.`n" -IsError
+				PressTheAnyKeyToExit
+			}
+		}
+		$Script:EnableBatchFeature = $True
+		$Script:BatchOption = "b" #specified here as well as in the ChooseAccounts section so that this works when being passed as a parameter
 	}
 	#Check Windows Game Path for D2r.exe is accurate.
 	if ((Test-Path -Path "$GamePath\d2r.exe") -ne $True){
@@ -1198,6 +1322,11 @@ Function ImportCSV { #Import Account CSV
 						$Account.accountlabel = ("Account " + $Account.id)
 						$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
 					}
+					if ($Account.Acct.length -gt 1 -and $Account.Acct -notmatch "@" -and $Entry.AuthenticationMethod -ne "Token"){
+						FormatFunction -Text "`nAccount $($Account.id) '$($Account.accountlabel)' has an invalid email address: '$($Account.Acct)'" -IsError
+						FormatFunction -Text "Please adjust Accounts.csv so that the 'Acct column' is a valid email address.`n" -IsError
+						PressTheAnyKeyToExit
+					}
 				}
 				$DuplicateIDs = $AccountOptionsCSV | Where-Object {$_.id -ne ""} | Group-Object -Property ID | Where-Object { $_.Count -gt 1 }
 				if ($duplicateIDs.Count -gt 0){
@@ -1216,6 +1345,17 @@ Function ImportCSV { #Import Account CSV
 				}
 				$BatchesInCSV = ($AccountOptionsCSV | group-object batches | where-object {$_.name -ne ""}).count
 				if ($BatchesInCSV -ge 1 -or $Null -ne $Batch){
+					foreach ($Entry in $Script:AccountOptionsCSV) { #validate that batches are numbers.
+						$Batches = $Entry.batches -split ',' | ForEach-Object {$_.Trim()} #split batches if there are multiple
+						foreach ($Batch in $Batches) {
+							$IsInteger = [int]::TryParse($Batch, [ref]0) #iterate through each of the batches to ensure it's a number and not some wonky typo
+							if (!$IsInteger -and $Batch -ne "") {
+								FormatFunction -Text "`nAccount $($Entry.id) has an invalid batch value set: '$Batch'" -IsError
+								FormatFunction -Text "Please adjust Accounts.csv so that the batch value(s) are numbers.`n" -IsError
+								PressTheAnyKeyToExit
+							}
+						}
+					}
 					$Script:EnableBatchFeature = $True
 					$Script:BatchOption = "b" #specified here as well as in the ChooseAccounts section so that this works when being passed as a parameter
 				}
@@ -1276,10 +1416,10 @@ Function ImportCSV { #Import Account CSV
 						PressTheAnyKeyToExit
 					}
 					if ($Entry.Token.length -ge 200){#if nothing needs converting, make sure existing entries still make it into the updated CSV
-						$Entry
+						$UpdateEntry = $True
 					}
 					#if ($Entry.Token.length -eq 0){#If no token is populated, lets automatically get it so user doesn't have too!
-						#Implement in the future if possible. Can't see a way to do this currently without using an external .exe.
+						#Implement in the future if possible. Can't see a way to do this currently without using python, an external .exe or sending keypresses which this script will never do.
 					#}
 					if ($Entry.Token.length -lt 200 -and $Entry.Token.length -ne 0 -and $Config.ConvertPlainTextSecrets -eq $True){#if accounts.csv has a Token and it's less than 200 chars long, it hasn't been secured yet.
 						$ValidatedToken = ValidateTokenInput -TokenInput $Entry.Token
@@ -1287,7 +1427,7 @@ Function ImportCSV { #Import Account CSV
 						$Entry.Token = $Entry.Token | ConvertFrom-SecureString
 						Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
-						$Entry
+						$UpdateEntry = $True
 						$TokensUpdated = $true
 					}
 					if ($Entry.Token.length -eq 0 -and $Entry.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
@@ -1303,30 +1443,41 @@ Function ImportCSV { #Import Account CSV
 							Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
 							Start-Sleep -milliseconds 100
 						}
-						$Entry
+						$UpdateEntry = $True
 						$TokensUpdated = $true
 					}
 					if ($Entry.Token.length -ge 200 -or ($Config.ConvertPlainTextSecrets -eq $False -and $Entry.Token.length -gt 10)){
 						$Script:TokensConfigured = $True
 					}
-				}
-				#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
-				$NewCSV = ForEach ($Entry in $Script:AccountOptionsCSV){
-					if ($Entry.PW.length -ge 300 -and $Config.ConvertPlainTextSecrets -eq $True){#if nothing needs converting, make sure existing entries still make it into the updated CSV
-						$Entry
+					#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
+					if ($Entry.PW.length -ge 300 -and $Entry.Acct.length -ge 1 -and $Config.ConvertPlainTextSecrets -eq $True){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+						$UpdateEntry = $True
 					}
-					ElseIf ($Entry.PW.length -ge 1 -and $Config.ConvertPlainTextSecrets -eq $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
-						$Entry
+					ElseIf ($Entry.PW.length -ge 1 -and $Entry.Acct.length -ge 1 -and $Config.ConvertPlainTextSecrets -eq $False){#if nothing needs converting, make sure existing entries still make it into the updated CSV
+						$UpdateEntry = $True
 					}
 					if ($Entry.PW.length -lt 300 -and $Entry.PW.length -ne 0 -and $Config.ConvertPlainTextSecrets -ne $False){#if accounts.csv has a password and it isn't over 300characters, this means it's not converted yet. As such, convert PW to secure string and update CSV.
 						$Entry.PW = ConvertTo-SecureString -String $Entry.PW -AsPlainText -Force
 						$Entry.PW = $Entry.PW | ConvertFrom-SecureString
 						Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
-						$Entry
+						$UpdateEntry = $True
 						$PWsUpdated = $true
 					}
-					if ($Entry.PW.length -eq 0){#if csv has account details but password field has been left blank
+					if ($Entry.Acct.length -eq 0 -and $Entry.AuthenticationMethod -ne "Token"){#if csv has account details and uses parameter Auth but email sign in field has been left blank
+						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have an email address defined.`n") -foregroundcolor yellow
+						while ($Entry.Acct.length -eq 0 -or $Entry.Acct -notmatch "@"){#prevent empty entries as this will cause errors.
+							$Entry.Acct = read-host " Enter the Battle.net email address for"$Entry.AccountLabel
+							if ($Entry.Acct -notmatch "@"){
+									FormatFunction "Please enter a valid email address.`n" -IsError
+							}
+						}
+						Write-Host (" Saved Email Address for " + $Entry.AccountLabel) -foregroundcolor green
+						Start-Sleep -milliseconds 100
+						$UpdateEntry = $True
+						$PWsUpdated = $true
+					}
+					if ($Entry.PW.length -eq 0 -and $Entry.AuthenticationMethod -ne "Token"){#if csv has account details and uses parameter Auth but password field has been left blank
 						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a password defined.`n") -foregroundcolor yellow
 						if ($Config.ConvertPlainTextSecrets -eq $True){
 							while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
@@ -1342,8 +1493,11 @@ Function ImportCSV { #Import Account CSV
 							Write-Host (" Saved Password for " + $Entry.AccountLabel) -foregroundcolor green
 						}
 						Start-Sleep -milliseconds 100
-						$Entry
+						$UpdateEntry = $True
 						$PWsUpdated = $true
+					}
+					if ($UpdateEntry -eq $True){
+						$Entry
 					}
 				}
 				if ($PWsUpdated -eq $true -or $TokensUpdated -eq $True -or $UpdateAccountsCSV -eq $True){#if CSV needs to be updated
@@ -1367,6 +1521,7 @@ Function ImportCSV { #Import Account CSV
 					}
 				}
 				$AccountCSVImportSuccess = $True
+				$Script:NumberOfAccounts = ($AccountOptionsCSV | Where-Object {$_.id -ne ""}).count
 			}
 			elseif ($Null -eq $Script:AccountUsername){# If script parameters haven't been used, Error out and exit if there's a problem with the csv.
 				if ($AccountCSVRecoveryAttempt -lt 1){
@@ -1458,7 +1613,7 @@ Function CowKingKilled {
 	Write-Host "                                    $X[38;2;165;146;99;22mMoooooooo!$X[0m"
 	$voice = New-Object -ComObject Sapi.spvoice
 	$voice.rate = -4 #How quickly the voice message should be
-	$voice.volume = $Config.DCloneAlarmVolume
+	$voice.volume = $Config.AlarmVolume
 	$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}
 	$voice.speak("MooMoo-moo moo-moo, moo-moo, moo moo.") | out-null
 	$CowLogo = @"
@@ -1675,7 +1830,6 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool ShowWindow(IntPtr handle, int state); //used in this script to restore minimized window (state 9)
-			
 			// Add SetWindowPos
 			[DllImport("user32.dll", SetLastError = true)]
 			public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -1768,25 +1922,27 @@ Function SetWindowLocations {# Move windows to preferred location/layout
 	[Window]::SetForegroundWindow($handle)
 }
 Function Options {
-	ImportXML
+	ImportXML -NoOutput
 	Clear-Host
 	Write-Host "`n This screen allows you to change script config options."
 	Write-Host " Note that you can also change these settings (and more) in config.xml."
 	Write-Host " Options you can change/toggle below:`n"
 	$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
-	if ($Script:Config.DefaultRegion -eq 1){
-		$CurrentDefaultRegion = "NA"
+	if ($Script:Config.UseChinaRegion -ne $True){
+		if ($Script:Config.DefaultRegion -eq 1){
+			$CurrentDefaultRegion = "NA"
+		}
+		ElseIf ($Script:Config.DefaultRegion -eq 2){
+			$CurrentDefaultRegion = "EU"
+		}
+		ElseIf ($Script:Config.DefaultRegion -eq 3){
+			$CurrentDefaultRegion = "Asia"
+		}
+		ElseIf ($Script:Config.DefaultRegion -eq ""){
+			$CurrentDefaultRegion = "None Specified"
+		}
+		Write-Host "  $X[38;2;255;165;000;22m1$X[0m - $X[4mDefaultRegion$X[0m (Currently $X[38;2;255;165;000;22m$CurrentDefaultRegion$X[0m)"
 	}
-	ElseIf ($Script:Config.DefaultRegion -eq 2){
-		$CurrentDefaultRegion = "EU"
-	}
-	ElseIf ($Script:Config.DefaultRegion -eq 3){
-		$CurrentDefaultRegion = "Asia"
-	}
-	ElseIf ($Script:Config.DefaultRegion -eq ""){
-		$CurrentDefaultRegion = "None Specified"
-	}
-	Write-Host "  $X[38;2;255;165;000;22m1$X[0m - $X[4mDefaultRegion$X[0m (Currently $X[38;2;255;165;000;22m$CurrentDefaultRegion$X[0m)"
 	Write-Host "`n  $X[38;2;255;165;000;22m2$X[0m - $X[4mSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.SettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
 	Write-Host "  $X[38;2;255;165;000;22m3$X[0m - $X[4mManualSettingSwitcherEnabled$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.ManualSettingSwitcherEnabled -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
 	Write-Host "  $X[38;2;255;165;000;22m4$X[0m - $X[4mRememberWindowLocations$X[0m (Currently $X[38;2;255;165;000;22m$(if($Script:Config.RememberWindowLocations -eq 'True'){'Enabled'}else{'Disabled'})$X[0m)"
@@ -1794,8 +1950,34 @@ Function Options {
 	FormatFunction -indents 1 -SubsequentLineIndents 4 -text ("$X[38;2;255;166;000;22m6$X[0m - $X[4mDCloneAlarmList$X[0m (Currently $X[38;2;255;165;000;22m" + $(if ($Script:Config.DCloneAlarmList -eq ""){"Alarms are disabled"}Else{$Script:Config.DCloneAlarmList}) + "$X[0m)")
 	if ($Script:Config.DCloneAlarmList -ne ""){
 		Write-Host "  $X[38;2;255;165;000;22m7$X[0m - $X[4mDCloneAlarmLevel$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneAlarmLevel)$X[0m)"
-		Write-Host "  $X[38;2;255;165;000;22m8$X[0m - $X[4mDCloneAlarmVoice$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneAlarmVoice)$X[0m)"
-		Write-Host "  $X[38;2;255;165;000;22m9$X[0m - $X[4mDCloneAlarmVolume$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.DCloneAlarmVolume)$X[0m)"
+	}
+	Write-Host
+	if ($Script:Config.TerrorZoneAlertAreas -eq ""){
+		$CurrentTerrorZoneAlertAreas = "Alarms are disabled"
+	}
+	Else {
+		ForEach ($Level in $Script:Config.TerrorZoneAlertAreas -split ','){
+			ForEach ($LevelID in $D2rLevels){
+				if ($LevelID[0] -eq $Level){
+					$MapNames += $LevelID[1] + ", "
+					$IDandName += "($($LevelID[0])) " + $LevelID[1] + ", "
+				}
+			}
+		}
+		if (($Script:Config.TerrorZoneAlertAreas -split ',').count -eq 137){
+			$CurrentTerrorZoneAlertAreasAndName = "enabled for every level"
+			$CurrentTerrorZoneAlertAreas = "enabled for every level"
+		}
+		else {
+			$CurrentTerrorZoneAlertAreasAndName = $IDandName -replace '..$', ''
+			$CurrentTerrorZoneAlertAreas = $MapNames -replace '..$', ''
+		}
+	}
+	FormatFunction -indents 1 -SubsequentLineIndents 4 -text ("$X[38;2;255;166;000;22m8$X[0m - $X[4mTerrorZoneAlertAreas$X[0m (Currently $X[38;2;255;165;000;22m" + $CurrentTerrorZoneAlertAreas + "$X[0m)")
+	if ($Script:Config.DCloneAlarmList -ne "" -or $Script:Config.TerrorZoneAlertAreas -ne ""){
+		Write-Host
+		Write-Host "  $X[38;2;255;165;000;22m9$X[0m - $X[4mAlarmVoice$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.AlarmVoice)$X[0m)"
+		Write-Host "  $X[38;2;255;165;000;22m0$X[0m - $X[4mAlarmVolume$X[0m (Currently $X[38;2;255;165;000;22m$($Script:Config.AlarmVolume)$X[0m)"
 	}
 	if ($Script:TokensConfigured -eq $True){
 		foreach ($row in $Script:AccountOptionsCSV){
@@ -1814,7 +1996,7 @@ Function Options {
 	}
 	Write-Host "`n Enter one of the above options to change the setting."
 	Write-Host " Otherwise, press any other key to return to main menu... " -nonewline
-	$Option = readkey
+	$Option = (ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27).tostring() #Add -TwoDigitAcctSelection $True
 	Write-Host;Write-Host
 	Function OptionSubMenu {
 		param (
@@ -1826,7 +2008,7 @@ Function Options {
 			[switch]$OptionInteger
 		)
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml" -Raw
-		FormatFunction -indents 1 -text "Changing setting for $X[4m$($ConfigName)$X[0m (Currently $X[38;2;255;165;000;22m$($Current)$X[0m).`n"
+		FormatFunction -text "Changing setting for $X[4m$($ConfigName)$X[0m (Currently $X[38;2;255;165;000;22m$($Current)$X[0m).`n" -indents 1
 		FormatFunction -text $Description -indents 1
 		Write-Host;Write-Host $OptionsText
 		do {
@@ -1847,7 +2029,7 @@ Function Options {
 			}
 		} until ($NewOptionValue -in $AcceptableOptions + "c" + "Esc")
 		if ($NewOptionValue -in $AcceptableOptions){
-			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r" -and $NewOptionValue -ne "a"){
+			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r" -and $NewOptionValue -ne "a" -and $NewOptionValue -ne "b"){
 				try {
 					$Pattern = "(<$ConfigName>)([^<]*)(</$ConfigName>)"
 					$ReplaceString = '{0}{1}{2}' -f '${1}', $NewValue, '${3}'
@@ -1905,12 +2087,31 @@ Function Options {
 				start-sleep -milliseconds 1500
 				Return $False
 			}
+			ElseIf ($NewOptionValue -eq "b"){
+				LoadWindowClass
+				CheckActiveAccounts
+				if ($null -eq $Script:ActiveAccountsList){
+					FormatFunction -text "`nThere are no open games.`nTo set window positions to alternative layout, you need to launch one or more instances first.`n" -indents 2 -IsWarning
+					PressTheAnyKey
+					Return $False
+				}
+				ForEach ($Account in $Script:AltWindowLayout2Coords){
+					if ($account.id -in $Script:ActiveAccountsList.id){
+						if ($account.WindowXCoordinates -ne "" -and $account.WindowYCoordinates -ne ""){
+							SetWindowLocations -X $Account.WindowXCoordinates -Y $Account.WindowYCoordinates -Width $Account.WindowWidth -height $Account.WindowHeight -Id ($Script:ActiveAccountsList | where-object {$_.id -eq $account.id}).ProcessID | out-null
+						}
+					}
+				}
+				FormatFunction -indents 2 -text "Moved game windows to alternative coordinates and window sizes.`n" -IsSuccess
+				start-sleep -milliseconds 1500
+				Return $False
+			}
 		}
 		else {
 			Return $False
 		}
 	}
-	if ($Option -eq "1"){ #DefaultRegion
+	if ($Option -eq "1" -and $Script:Config.UseChinaRegion -ne $True){ #DefaultRegion
 		$Options = @{
 			"1" = 1
 			"2" = 2
@@ -1968,8 +2169,18 @@ Function Options {
 				$Options += @{"R" = "PlaceholderValue Only :)"}
 				if (Test-Path -Path "$Script:WorkingDirectory\AltLayout.csv"){
 					$Script:AltWindowLayoutCoords = import-csv "$Script:WorkingDirectory\AltLayout.csv"
-					$OptionsSubTextAgain += "    Choose '$X[38;2;255;165;000;22ma$X[0m' to set window locations to alternative layout.`n"
+					$OptionsSubTextAgain += "    Choose '$X[38;2;255;165;000;22ma$X[0m' to set window locations to alternative layout A.`n"
 					$Options += @{"A" = "PlaceholderValue Only :)"}
+				}
+				if (Test-Path -Path "$Script:WorkingDirectory\AltLayout1.csv"){
+					$Script:AltWindowLayoutCoords = import-csv "$Script:WorkingDirectory\AltLayout1.csv"
+					$OptionsSubTextAgain += "    Choose '$X[38;2;255;165;000;22ma$X[0m' to set window locations to alternative layout A.`n"
+					$Options += @{"A" = "PlaceholderValue Only :)"}
+				}
+				if (Test-Path -Path "$Script:WorkingDirectory\AltLayout2.csv"){
+					$Script:AltWindowLayout2Coords = import-csv "$Script:WorkingDirectory\AltLayout2.csv"
+					$OptionsSubTextAgain += "    Choose '$X[38;2;255;165;000;22mb$X[0m' to set window locations to alternative layout B.`n"
+					$Options += @{"B" = "PlaceholderValue Only :)"}
 				}
 			}
 			$DescriptionSubText = "`nChoosing the '$X[38;2;255;165;000;22ms$X[0m' option will save coordinates (and window sizes) of any open game instances.`nChoosing the '$X[38;2;255;165;000;22mr$X[0m' option will move your windows back to their default placements."
@@ -1990,17 +2201,40 @@ Function Options {
 		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for D2Emu.com (Recommended)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for D2runewizard.com`n    Choose '$X[38;2;255;165;000;22m3$X[0m' for diablo2.io`n"
 	}
 	ElseIf ($Option -eq "6"){ #DCloneAlarmList
-		$Options = @{ # SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR
-			"1" = "SCL-NA, SCL-EU, SCL-KR"
-			"2" = "SC-NA, SC-EU, SC-KR"
-			"3" = "HCL-NA, HCL-EU, HCL-KR"
-			"4" = "HC-NA, HC-EU, HC-KR"
-			"5" = "SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR"
-			"6" = ""
+		if ($Script:Config.UseChinaRegion -ne $True){
+			$Options = @{
+				"1" = "SCL-NA, SCL-EU, SCL-KR"
+				"2" = "SC-NA, SC-EU, SC-KR"
+				"3" = "HCL-NA, HCL-EU, HCL-KR"
+				"4" = "HC-NA, HC-EU, HC-KR"
+				"5" = "SCL-NA-ROTW, SCL-EU-ROTW, SCL-KR-ROTW"
+				"6" = "SC-NA-ROTW, SC-EU-ROTW, SC-KR-ROTW"
+				"7" = "HCL-NA-ROTW, HCL-EU-ROTW, HCL-KR-ROTW"
+				"8" = "HC-NA-ROTW, HC-EU-ROTW, HC-KR-ROTW"
+				"9" = "SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR, SCL-NA-ROTW, SCL-EU-ROTW, SCL-KR-ROTW, SC-NA-ROTW, SC-EU-ROTW, SC-KR-ROTW, HCL-NA-ROTW, HCL-EU-ROTW, HCL-KR-ROTW, HC-NA-ROTW, HC-EU-ROTW, HC-KR-ROTW"
+				"0" = ""
+			}
 		}
+		Else {
+		$Options = @{ # SCL-CN, HCL-CN, SC-CN, HC-CN
+				"1" = "SCL-CN"
+				"2" = "SC-CN"
+				"3" = "HCL-CN"
+				"4" = "HC-CN"
+				"5" = "SCL-CN-ROTW"
+				"6" = "SC-CN-ROTW"
+				"7" = "HCL-CN-ROTW"
+				"8" = "HC-CN-ROTW"
+				"9" = "SCL-CN, SC-CN, HCL-CN, HC-CN, SCL-CN-ROTW, SC-CN-ROTW, HCL-CN-ROTW, HC-CN-ROTW"
+				"0" = ""
+			}
+		}
+		$OptionsText = "    Choose '$X[38;2;255;165;000;22m1$X[0m' to enable alarms for Softcore Ladder`n    Choose '$X[38;2;255;165;000;22m2$X[0m' to enable alarms for Softcore Non-Ladder`n    Choose '$X[38;2;255;165;000;22m3$X[0m' to enable alarms for Hardcore Ladder`n    Choose '$X[38;2;255;165;000;22m4$X[0m' to enable alarms for Hardcore Non-Ladder`n"
+		$OptionsText += "    Choose '$X[38;2;255;165;000;22m5$X[0m' to enable alarms for Softcore Ladder (ROTW)`n    Choose '$X[38;2;255;165;000;22m6$X[0m' to enable alarms for Softcore Non-Ladder (ROTW)`n    Choose '$X[38;2;255;165;000;22m7$X[0m' to enable alarms for Hardcore Ladder (ROTW)`n    Choose '$X[38;2;255;165;000;22m8$X[0m' to enable alarms for Hardcore Non-Ladder (ROTW)`n"
+		$OptionsText += "    Choose '$X[38;2;255;165;000;22m9$X[0m' to enable alarms for all game modes`n    Choose '$X[38;2;255;165;000;22m0$X[0m' to disable all Alarms`n"
 		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmList" -OptionsList $Options -Current $(if ($Script:Config.DCloneAlarmList -eq ""){"Alarms are disabled"}Else{$Script:Config.DCloneAlarmList}) `
 		-Description "Use this to change what game modes you'd like to have DClone alarms on.`nThis will select all regions for a given game mode. To make fine tuned adjustments (eg multiple game modes), edit config.xml directly." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to enable alarms for Softcore Ladder`n    Choose '$X[38;2;255;165;000;22m2$X[0m' to enable alarms for Softcore Non-Ladder`n    Choose '$X[38;2;255;165;000;22m3$X[0m' to enable alarms for Hardcore Ladder`n    Choose '$X[38;2;255;165;000;22m4$X[0m' to enable alarms for Hardcore Non-Ladder`n    Choose '$X[38;2;255;165;000;22m5$X[0m' to enable alarms for all game modes`n    Choose '$X[38;2;255;165;000;22m6$X[0m' to disable all Alarms`n"
+		-OptionsText $OptionsText
 		$Script:DCloneChangesCSV = $Null #Reset DClone tracking to remove old notifications appearing that may no longer be applicable.
 		SetDCloneAlarmLevels
 	}
@@ -2016,18 +2250,29 @@ Function Options {
 		$Script:DCloneChangesCSV = $Null #Reset DClone tracking to remove old notifications appearing that may no longer be applicable.
 		SetDCloneAlarmLevels
 	}
-	ElseIf ($Option -eq "8" -and $Script:Config.DCloneAlarmList -ne ""){ #DCloneAlarmVoice
+	ElseIf ($Option -eq "8"){ #TerrorZoneAlertAreas
+		$Options = @{
+			"1" = "37,73,102,108,132"
+			"2" = "12,16,25,37,39,66,73,74,83,102,108,123,131,132"
+			"3" = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137"
+			"0" = ""
+		}
+		$XMLChanged = OptionSubMenu -ConfigName "TerrorZoneAlertAreas" -OptionsList $Options -Current $CurrentTerrorZoneAlertAreasAndName `
+		-Description "This allows you to customise what Terror Zones you want to be alarmed for.`nBasic options below, if you'd like to specify other levels, add the level ID into config.xml manually for 'TerrorZoneAlertAreas'.`n`nFor a list of level ID's and what areas they relate to, copy the link below and paste it into your browser:`n$X[38;2;69;155;245;4mhttps://github.com/shupershuff/Diablo2RLoader/blob/main/levels.txt$X[0m" `
+		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to alarm on Act Boss levels`n    Choose '$X[38;2;255;165;000;22m2$X[0m' to alarm on popular XP and MF areas`n    Choose '$X[38;2;255;165;000;22m3$X[0m' to alarm on every Terror Zone`n    Choose '$X[38;2;255;165;000;22m0$X[0m' to alarm on nothing`n"
+	}
+	ElseIf ($Option -eq "9" -and ($Script:Config.DCloneAlarmList -ne "" -or $Script:Config.TerrorZoneAlertAreas -ne "")){ #AlarmVoice
 		$Options = @{
 			"1" = "Amazon"
 			"2" = "Paladin"
 		}
-		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmVoice" -OptionsList $Options -Current $Script:Config.DCloneAlarmVoice `
-		-Description "This option allows you to change the voice for the Text to Speech DClone Alarms." `
+		$XMLChanged = OptionSubMenu -ConfigName "AlarmVoice" -OptionsList $Options -Current $Script:Config.AlarmVoice `
+		-Description "This option allows you to change the voice for the Text to Speech TZ/DClone Alarms." `
 		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' for Amazon (Female Voice)`n    Choose '$X[38;2;255;165;000;22m2$X[0m' for Paladin (Male Voice)`n"
 	}
-	ElseIf ($Option -eq "9" -and $Script:Config.DCloneAlarmList -ne ""){ #DCloneAlarmVolume
-		$XMLChanged = OptionSubMenu -ConfigName "DCloneAlarmVolume" -OptionInteger -Current $Script:Config.DCloneAlarmVolume `
-		-Description "This options allows you to adjust the volume level for DClone alarms in case they're too loud or quiet."
+	ElseIf ($Option -eq "0" -and ($Script:Config.DCloneAlarmList -ne "" -or $Script:Config.TerrorZoneAlertAreas -ne "")){ #AlarmVolume
+		$XMLChanged = OptionSubMenu -ConfigName "AlarmVolume" -OptionInteger -Current $Script:Config.AlarmVolume `
+		-Description "This option allows you to adjust the volume level for TZ/DClone alarms in case they're too loud or quiet."
 	}
 	ElseIf ($Option -eq "t" -and $AllowTokenConfigMenuOption -eq $True){
 		if ($Script:ForceAuthToken -ne $True){
@@ -2049,7 +2294,7 @@ Function Options {
 	}
 	if ($XMLChanged -eq $True){
 		Write-Host "   Config Updated!" -foregroundcolor green
-		ImportXML
+		ImportXML -NoOutput
 		If ($Option -eq "4" -and $Script:Config.RememberWindowLocations -eq $True -and -not ($Script:AccountOptionsCSV | Get-Member -Name "WindowXCoordinates" -MemberType NoteProperty -ErrorAction SilentlyContinue)){#if this is the first time it's been enabled display a setup message
 			Formatfunction -indents 2 -IsWarning -Text "`nYou've enabled RememberWindowsLocations but you still need to set it up. To set this up you need to perform the following steps:"
 			FormatFunction -indents 3 -iswarning -text "`n1. Open all of your D2r account instances.`n2. Move the window for each game instance to your preferred layout and size."
@@ -2096,138 +2341,143 @@ if ($Check -eq $True -and $Script:LastNotificationCheck -lt (Get-Date).addminute
 }
 Function D2rLevels {
 	$Script:D2rLevels = @(
-		@(1, "Rogue Encampment"),
-		@(2, "Blood Moor"),
-		@(3, "Cold Plains"),
-		@(4, "Stony Field"),
-		@(5, "Dark Wood"),
-		@(6, "Black Marsh"),
-		@(7, "Tamoe Highland"),
-		@(8, "Den of Evil"),
-		@(9, "Cave 1"),
-		@(10, "Underground Passage 1"),
-		@(11, "Hole 1"),
-		@(12, "Pit 1"),
-		@(13, "Cave 2"),
-		@(14, "Underground Passage 2"),
-		@(15, "Hole 2"),
-		@(16, "Pit 2"),
-		@(17, "Burial Grounds"),
-		@(18, "Crypt"),
-		@(19, "Mausoleum"),
-		@(20, "Forgotten Tower"),
-		@(21, "Tower Cellar 1"),
-		@(22, "Tower Cellar 2"),
-		@(23, "Tower Cellar 3"),
-		@(24, "Tower Cellar 4"),
-		@(25, "Tower Cellar 5"),
-		@(26, "Monastery Gate"),
-		@(27, "Outer Cloister"),
-		@(28, "Barracks"),
-		@(29, "Jail 1"),
-		@(30, "Jail 2"),
-		@(31, "Jail 3"),
-		@(32, "Inner Cloister"),
-		@(33, "Cathedral"),
-		@(34, "Catacombs 1"),
-		@(35, "Catacombs 2"),
-		@(36, "Catacombs 3"),
-		@(37, "Catacombs 4"),
-		@(38, "Tristram"),
-		@(39, "The Secret Cow Level"),
-		@(40, "Lut Gholein"),
-		@(41, "Rocky Waste"),
-		@(42, "Dry Hills"),
-		@(43, "Far Oasis"),
-		@(44, "Lost City"),
-		@(45, "Valley of Snakes"),
-		@(46, "Canyon of the Magi"),
-		@(47, "Sewers 1"),
-		@(48, "Sewers 2"),
-		@(49, "Sewers 3"),
-		@(50, "Harem 1"),
-		@(51, "Harem 2"),
-		@(52, "Palace Cellar 1"),
-		@(53, "Palace Cellar 2"),
-		@(54, "Palace Cellar 3"),
-		@(55, "Stony Tomb 1"),
-		@(56, "Halls of the Dead 1"),
-		@(57, "Halls of the Dead 2"),
-		@(58, "Claw Viper Temple 1"),
-		@(59, "Stony Tomb 2"),
-		@(60, "Halls of the Dead 3"),
-		@(61, "Claw Viper Temple 2"),
-		@(62, "Maggot Lair 1"),
-		@(63, "Maggot Lair 2"),
-		@(64, "Maggot Lair 3"),
-		@(65, "Ancient Tunnels"),
-		@(66, "Tal Rashas Tomb 1"),
-		@(67, "Tal Rashas Tomb 2"),
-		@(68, "Tal Rashas Tomb 3"),
-		@(69, "Tal Rashas Tomb 4"),
-		@(70, "Tal Rashas Tomb 5"),
-		@(71, "Tal Rashas Tomb 6"),
-		@(72, "Tal Rashas Tomb 7"),
-		@(73, "Tal Rashas Chamber"),
-		@(74, "Arcane Sanctuary"),
-		@(75, "Kurast Docks"),
-		@(76, "Spider Forest"),
-		@(77, "Great Marsh"),
-		@(78, "Flayer Jungle"),
-		@(79, "Lower Kurast"),
-		@(80, "Kurast Bazaar"),
-		@(81, "Upper Kurast"),
-		@(82, "Kurast Causeway"),
-		@(83, "Travincal"),
-		@(84, "Archnid Lair"),
-		@(85, "Spider Cavern"),
-		@(86, "Swampy Pit 1"),
-		@(87, "Swampy Pit 2"),
-		@(88, "Flayer Dungeon 1"),
-		@(89, "Flayer Dungeon 2"),
-		@(90, "Swampy Pit 3"),
-		@(91, "Flayer Dungeon 3"),
-		@(92, "Sewers 1"),
-		@(93, "Sewers 2"),
-		@(94, "Ruined Temple"),
-		@(95, "Disused Fane"),
-		@(96, "Forgotten Reliquary"),
-		@(97, "Forgotten Temple"),
-		@(98, "Ruined Fane"),
-		@(99, "Disused Reliquary"),
-		@(100, "Durance of Hate 1"),
-		@(101, "Durance of Hate 2"),
-		@(102, "Durance of Hate 3"),
-		@(103, "Pandemonium Fortress"),
-		@(104, "Outer Steppes"),
-		@(105, "Plains of Despair"),
-		@(106, "City of the Damned"),
-		@(107, "River of Flame"),
-		@(108, "Chaos Sanctuary"),
-		@(109, "Harrogath"),
-		@(110, "Bloody Foothills"),
-		@(111, "Frigid Highlands"),
-		@(112, "Arreat Plateau"),
-		@(113, "Crystalline Passage"),
-		@(114, "Frozen River"),
-		@(115, "Glacial Trail"),
-		@(116, "Drifter Cavern"),
-		@(117, "Frozen Tundra"),
-		@(118, "The Ancients Way"),
-		@(119, "Icy Cellar"),
-		@(120, "Arreat Summit"),
-		@(121, "Nihlathaks Temple"),
-		@(122, "Halls of Anguish"),
-		@(123, "Halls of Pain"),
-		@(124, "Halls of Vaught"),
-		@(125, "Abaddon"),
-		@(126, "Pit of Acheron"),
-		@(127, "Infernal Pit"),
-		@(128, "Worldstone Keep 1"),
-		@(129, "Worldstone Keep 2"),
-		@(130, "Worldstone Keep 3"),
-		@(131, "Throne of Destruction"),
-		@(132, "Worldstone Keep")
+@(1, "Rogue Encampment",""),
+		@(2, "Blood Moor",""),
+		@(3, "Cold Plains",""),
+		@(4, "Stony Field",""),
+		@(5, "Dark Wood",""),
+		@(6, "Black Marsh",""),
+		@(7, "Tamoe Highland",""),
+		@(8, "Den of Evil",""),
+		@(9, "Cave 1","Cave"),
+		@(10, "Underground Passage 1","Underground Passage"),
+		@(11, "Hole 1","Hole"),
+		@(12, "Pit 1","Pit"),
+		@(13, "Cave 2","Cave"),
+		@(14, "Underground Passage 2","Underground Passage"),
+		@(15, "Hole 2","Hole"),
+		@(16, "Pit 2","Pit"),
+		@(17, "Burial Grounds",""),
+		@(18, "Crypt",""),
+		@(19, "Mausoleum",""),
+		@(20, "Forgotten Tower","Forgotten Tower"),
+		@(21, "Tower Cellar 1","Forgotten Tower"),
+		@(22, "Tower Cellar 2","Forgotten Tower"),
+		@(23, "Tower Cellar 3","Forgotten Tower"),
+		@(24, "Tower Cellar 4","Forgotten Tower"),
+		@(25, "Tower Cellar 5","Forgotten Tower"),
+		@(26, "Monastery Gate",""),
+		@(27, "Outer Cloister",""),
+		@(28, "Barracks",""),
+		@(29, "Jail 1","Jail"),
+		@(30, "Jail 2","Jail"),
+		@(31, "Jail 3","Jail"),
+		@(32, "Inner Cloister",""),
+		@(33, "Cathedral","Catacombs"),
+		@(34, "Catacombs 1","Catacombs"),
+		@(35, "Catacombs 2","Catacombs"),
+		@(36, "Catacombs 3","Catacombs"),
+		@(37, "Catacombs 4","Catacombs"),
+		@(38, "Tristram",""),
+		@(39, "The Secret Cow Level",""),
+		@(40, "Lut Gholein",""),
+		@(41, "Rocky Waste",""),
+		@(42, "Dry Hills",""),
+		@(43, "Far Oasis",""),
+		@(44, "Lost City",""),
+		@(45, "Valley of Snakes",""),
+		@(46, "Canyon of the Magi",""),
+		@(47, "Sewers 1","Act 2 Sewers"),
+		@(48, "Sewers 2","Act 2 Sewers"),
+		@(49, "Sewers 3","Act 2 Sewers"),
+		@(50, "Harem 1","Harem"),
+		@(51, "Harem 2","Harem"),
+		@(52, "Palace Cellar 1","Palace Cellar"),
+		@(53, "Palace Cellar 2","Palace Cellar"),
+		@(54, "Palace Cellar 3","Palace Cellar"),
+		@(55, "Stony Tomb 1","Stony Tomb"),
+		@(56, "Halls of the Dead 1","Halls of the Dead"),
+		@(57, "Halls of the Dead 2","Halls of the Dead"),
+		@(58, "Claw Viper Temple 1","Claw Viper Temple"),
+		@(59, "Stony Tomb 2","Stony Tomb"),
+		@(60, "Halls of the Dead 3","Halls of the Dead"),
+		@(61, "Claw Viper Temple 2","Claw Viper Temple"),
+		@(62, "Maggot Lair 1","Maggot Lair"),
+		@(63, "Maggot Lair 2","Maggot Lair"),
+		@(64, "Maggot Lair 3","Maggot Lair"),
+		@(65, "Ancient Tunnels",""),
+		@(66, "Tal Rashas Tomb 1","Tal Rashas Tomb"),
+		@(67, "Tal Rashas Tomb 2","Tal Rashas Tomb"),
+		@(68, "Tal Rashas Tomb 3","Tal Rashas Tomb"),
+		@(69, "Tal Rashas Tomb 4","Tal Rashas Tomb"),
+		@(70, "Tal Rashas Tomb 5","Tal Rashas Tomb"),
+		@(71, "Tal Rashas Tomb 6","Tal Rashas Tomb"),
+		@(72, "Tal Rashas Tomb 7","Tal Rashas Tomb"),
+		@(73, "Tal Rashas Chamber","Tal Rashas Tomb"),
+		@(74, "Arcane Sanctuary",""),
+		@(75, "Kurast Docks",""),
+		@(76, "Spider Forest",""),
+		@(77, "Great Marsh",""),
+		@(78, "Flayer Jungle",""),
+		@(79, "Lower Kurast",""),
+		@(80, "Kurast Bazaar",""),
+		@(81, "Upper Kurast",""),
+		@(82, "Kurast Causeway",""),
+		@(83, "Travincal",""),
+		@(84, "Archnid Lair",""),
+		@(85, "Spider Cavern",""),
+		@(86, "Swampy Pit 1","Swampy Pit"),
+		@(87, "Swampy Pit 2","Swampy Pit"),
+		@(88, "Flayer Dungeon 1","Flayer Dungeon"),
+		@(89, "Flayer Dungeon 2","Flayer Dungeon"),
+		@(90, "Swampy Pit 3","Swampy Pit"),
+		@(91, "Flayer Dungeon 3","Flayer Dungeon"),
+		@(92, "Sewers 1","Act 3 Sewers"),
+		@(93, "Sewers 2","Act 3 Sewers"),
+		@(94, "Ruined Temple",""),
+		@(95, "Disused Fane",""),
+		@(96, "Forgotten Reliquary",""),
+		@(97, "Forgotten Temple",""),
+		@(98, "Ruined Fane",""),
+		@(99, "Disused Reliquary",""),
+		@(100, "Durance of Hate 1","Durance of Hate"),
+		@(101, "Durance of Hate 2","Durance of Hate"),
+		@(102, "Durance of Hate 3","Durance of Hate"),
+		@(103, "Pandemonium Fortress",""),
+		@(104, "Outer Steppes",""),
+		@(105, "Plains of Despair",""),
+		@(106, "City of the Damned",""),
+		@(107, "River of Flame",""),
+		@(108, "Chaos Sanctuary",""),
+		@(109, "Harrogath",""),
+		@(110, "Bloody Foothills",""),
+		@(111, "Frigid Highlands",""),
+		@(112, "Arreat Plateau",""),
+		@(113, "Crystalline Passage",""),
+		@(114, "Frozen River",""),
+		@(115, "Glacial Trail",""),
+		@(116, "Drifter Cavern",""),
+		@(117, "Frozen Tundra",""),
+		@(118, "The Ancients Way",""),
+		@(119, "Icy Cellar",""),
+		@(120, "Arreat Summit",""),
+		@(121, "Nihlathaks Temple",""),
+		@(122, "Halls of Anguish",""),
+		@(123, "Halls of Pain",""),
+		@(124, "Halls of Vaught",""),
+		@(125, "Abaddon",""),
+		@(126, "Pit of Acheron",""),
+		@(127, "Infernal Pit",""),
+		@(128, "Worldstone Keep 1","Worldstone Keep"),
+		@(129, "Worldstone Keep 2","Worldstone Keep"),
+		@(130, "Worldstone Keep 3","Worldstone Keep"),
+		@(131, "Throne of Destruction","Worldstone Keep"),
+		@(132, "Worldstone Chamber","Worldstone Keep"),
+		@(133, "Matron's Den",""),
+		@(134, "Forgotten Sands",""),
+		@(135, "Furnace of Pain",""),
+		@(136, "Uber Tristram",""),
+		@(137, "Colossal Summit","")
 	)
 }
 Function QuoteList {
@@ -2319,7 +2569,8 @@ $Script:QuoteList =
 "The Ancients must be close...",
 "...That which does not kill you makes you stronger.",
 "Our Monastery is filled with voracious hellspawn. You'd best be careful, my friend.",
-"'I can't use that yet' - Emilio, 2025"
+"'I can't use that yet' - Emilio, 2025",
+"This is what happens when half measures are taken with demons."
 }
 Function BannerLogo {
 	if ($Script:IdleLimitForAccountUseTime -ne "" -and $Script:IdleLimitForAccountUseTime -gt 0 -and $Script:ActiveAccountsList.id.length -ne 0){#If Idlelimitfeature is used and there are active accounts, calc idle time to check if we should add idle status to banner
@@ -2356,6 +2607,10 @@ Function BannerLogo {
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%$IdleText
 "@
+
+	if ($Script:NumberOfAccounts -gt 9){#If user has a boat load of accounts, lets shorten the banner slightly to reclaim vertical space.
+		$BannerLogo = $BannerLogo -replace "^(.*)\r?\n.*\r?\n", "`$1`r`n" -replace '(?s)(.*?\r?\n)([^\r\n]+)\r?\n([^\r\n]+)$', '$1$3'
+	}
 	if ($Script:PGemActivated -eq $True -or $Script:CowKingActivated -eq $True ){
 		Write-Host "  $X[38;2;255;165;0;22m$BannerLogo$X[0m"
 	}
@@ -2531,7 +2786,11 @@ Function DClone {# Display DClone Status.
 				}
 			}
 			$CurrentStatus = $D2RDCloneResponse | Select-Object @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.Progress + 1)}} #| sort server #add +1 as this source counts status from 0
-			$CurrentStatus = $CurrentStatus | where-object {$_.Server -notmatch "cn"} #Remove chinese statuses.
+			if ($Script:Config.UseChinaRegion -ne $True){
+				$CurrentStatus = $CurrentStatus | where-object {$_.Server -notmatch "cn"} #Remove chinese statuses.
+			}			Else {
+				$CurrentStatus = $CurrentStatus | where-object {$_.Server -notmatch "us" -and $_.Server -notmatch "kr" -and $_.Server -notmatch "eu"} #Remove NA, EU and KR statuses.
+			}
 		}
 		Catch {#catch commands captured in WebRequestWithTimeOut function
 			Write-Debug "Problem connecting to $URI"
@@ -2595,136 +2854,141 @@ Function DClone {# Display DClone Status.
 		}
 		Return
 	}
-	$DCloneLadderTable = New-Object -TypeName System.Collections.ArrayList
-	$DCloneNonLadderTable = New-Object -TypeName System.Collections.ArrayList
-	if ($DCloneChanges -eq "" -or $null -eq $DCloneChanges){
-		$DCloneChangesArray = New-Object -TypeName System.Collections.ArrayList
-	}
-	Else {
-		$DCloneChangesArray = $DCloneChanges | ConvertFrom-Csv -ErrorAction silentlycontinue #temporarily convert to array
-	}
-	ForEach ($Status in $CurrentStatus){
-		$DCloneLadderInfo = New-Object -TypeName psobject
-		$DCloneNonLadderInfo = New-Object -TypeName psobject
-		#Convert data from all sources into consistent names and tags to be sorted and filtered.
-		if ($Status.server -like "*us*" -or $Status.server -like "*americas*" -or $Status.Server -eq "1"){$Tag = "-NA";$ServerName = "Americas"}
-		ElseIf ($Status.server -like "*eu*" -or $Status.server -like "*europe*" -or $Status.Server -eq "2"){$Tag = "-EU";$ServerName = "Europe"}
-		ElseIf ($Status.server -like "*kr*" -or $Status.server -like "*asia*" -or $Status.Server -eq "3"){$Tag = "-KR";$ServerName = "Asia"}
-		#ElseIf ($Status.server -like "*cn*" -or $Status.server -like "*china*" -or $Status.Server -eq "4"){$Tag = "-KR";$ServerName = "China"} #Will be a bit of faffing around to add China in. Will only do so if someone actually asks for it.
-		if (($Status.server -notlike "*nonladder*" -and -not [int]::TryParse($Status.server,[ref]$null)) -or $Status.Ladder -eq "1"){
-			if ($Status.server -match "hardcore" -or $Status.Core -eq "1"){$Tag = ("HCL" + $Tag);$ServerName = ("HCL - " + $ServerName)}
-			else {$Tag = ("SCL" + $Tag);$ServerName = ("SCL - " + $ServerName)}
-			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
-			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderServer -Value $ServerName
-			$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderProgress -Value $Status.progress
-			[VOID]$DCloneLadderTable.Add($DCloneLadderInfo)
+	if ($Null -ne $CurrentStatus){ #don't perform remaining steps if there was a connection issue
+		$DCloneLadderTable = New-Object -TypeName System.Collections.ArrayList
+		$DCloneNonLadderTable = New-Object -TypeName System.Collections.ArrayList
+		if ($DCloneChanges -eq "" -or $null -eq $DCloneChanges){
+			$DCloneChangesArray = New-Object -TypeName System.Collections.ArrayList
 		}
 		Else {
-			if ($Status.server -match "hardcore" -or $Status.Core -eq "1"){$Tag = ("HC" + $Tag);$ServerName = ("HC - " + $ServerName)}
-			else {$Tag = ("SC" + $Tag);$ServerName = ("SC - " + $ServerName)}
-			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
-			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderServer -Value $ServerName
-			$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderProgress -Value $Status.progress
-			[VOID]$DCloneNonLadderTable.Add($DCloneNonLadderInfo)
+			$DCloneChangesArray = $DCloneChanges | ConvertFrom-Csv -ErrorAction silentlycontinue #temporarily convert to array
 		}
-		if ($True -eq $DisableOutput){
-			if ($taglist -match $Tag ){#if D Dclone region and server matches what's in config, check for changes.
-				Write-Debug " Tag $tag in taglist" #debug
-				if ($DCloneChangesArray | where-object {$_.Tag -eq $Tag}){
-					ForEach ($Item in $DCloneChangesArray | where-object {$_.Tag -eq $Tag}){#for each tag specified in config.xml...
-						$item.VoiceAlarmStatus = $False
-						$item.TextAlarmStatus = $False
-						if ($item.Status -ne $Status.progress){
-							if ($Status.progress -ge 5 -and ($DCloneAlarmLevel -match 5)){#if DClone walk is imminent
-								$item.VoiceAlarmStatus = $True
-							}
-							ElseIf ($Status.progress -eq 1 -or $Status.progress -eq 6){#if DClone walk has just happened
-								$item.VoiceAlarmStatus = $True
-							}
-							ElseIf ($DCloneAlarmLevel -match $Status.progress){#if User has configured alarms to happen for lower DClone status levels (2,3,4)
-								$item.VoiceAlarmStatus = $True
-							}
-							$item.TextAlarmStatus = $True
-							if ($item.Status -ne "" -and $null -ne $item.Status){
-								$item.PreviousStatus = $item.Status
-							}
-							$item.Status = $Status.progress
-							$item.LastUpdate = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
-						}
-						ElseIf ($Status.progress -eq 5){#if status hasn't changed, but status is 5 (imminent), show alarm text on main menu
-							$item.TextAlarmStatus = $True
-						}
-						ElseIf ($Status.progress -lt 5 -and $item.LastUpdate -gt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#if status is less than 5 and has changed within the last 5 minutes, enable text alarm
-							$item.TextAlarmStatus = $True
-						}
-						ElseIf ($null -ne $item.LastUpdate -and $item.LastUpdate -lt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#after 5 minutes remove the text alarm
-							$item.LastUpdate = $null
+		ForEach ($Status in $CurrentStatus){
+			$DCloneLadderInfo = New-Object -TypeName psobject
+			$DCloneNonLadderInfo = New-Object -TypeName psobject
+			#Convert data from all sources into consistent names and tags to be sorted and filtered.
+			if ($Status.server -like "*us*" -or $Status.server -like "*americas*" -or $Status.Server -eq "1"){$Tag = "-NA";$ServerName = "Americas"}
+			ElseIf ($Status.server -like "*eu*" -or $Status.server -like "*europe*" -or $Status.Server -eq "2"){$Tag = "-EU";$ServerName = "Europe"}
+			ElseIf ($Status.server -like "*kr*" -or $Status.server -like "*asia*" -or $Status.Server -eq "3"){$Tag = "-KR";$ServerName = "Asia"}
+			ElseIf ($Status.server -like "*cn*" -or $Status.server -like "*china*" -or $Status.Server -eq "4"){$Tag = "-CN";$ServerName = "China"} #Will be a bit of faffing around to add China in. Will only do so if someone actually asks for it.
+			if (($Status.server -notlike "*nonladder*" -and -not [int]::TryParse($Status.server,[ref]$null)) -or $Status.Ladder -eq "1"){
+				if ($Status.server -match "hardcore" -or $Status.Core -eq "1"){$Tag = ("HCL" + $Tag);$ServerName = ("HCL - " + $ServerName)}
+				else {$Tag = ("SCL" + $Tag);$ServerName = ("SCL - " + $ServerName)}
+				if ($Status.server -match "ROTW"){$Tag = $Tag + "-ROTW";$ServerName = $ServerName + " (ROTW)"}
+				$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
+				$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderServer -Value $ServerName
+				$DCloneLadderInfo | Add-Member -MemberType NoteProperty -Name LadderProgress -Value $Status.progress
+				[VOID]$DCloneLadderTable.Add($DCloneLadderInfo)
+			}
+			Else {
+				if ($Status.server -match "hardcore" -or $Status.Core -eq "1"){$Tag = ("HC" + $Tag);$ServerName = ("HC - " + $ServerName)}
+				else {$Tag = ("SC" + $Tag);$ServerName = ("SC - " + $ServerName)}
+				if ($Status.server -match "ROTW"){$Tag = $Tag + "-ROTW";$ServerName = $ServerName + " (ROTW)"}
+				$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name Tag -Value $Tag
+				$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderServer -Value $ServerName
+				$DCloneNonLadderInfo | Add-Member -MemberType NoteProperty -Name NonLadderProgress -Value $Status.progress
+				[VOID]$DCloneNonLadderTable.Add($DCloneNonLadderInfo)
+			}
+			if ($True -eq $DisableOutput){
+				if ($TagList.Split(',') -contains $Tag){#if D Dclone region and server matches what's in config, check for changes.
+					if ($DCloneChangesArray | where-object {$_.Tag -eq $Tag}){
+						ForEach ($Item in $DCloneChangesArray | where-object {$_.Tag -eq $Tag}){#for each tag specified in config.xml...
+							$item.VoiceAlarmStatus = $False
 							$item.TextAlarmStatus = $False
+							if ($item.Status -ne $Status.progress){
+								if ($Status.progress -ge 5 -and ($DCloneAlarmLevel -match 5)){#if DClone walk is imminent
+									$item.VoiceAlarmStatus = $True
+								}
+								ElseIf ($Status.progress -eq 1 -or $Status.progress -eq 6){#if DClone walk has just happened
+									$item.VoiceAlarmStatus = $True
+								}
+								ElseIf ($DCloneAlarmLevel -match $Status.progress){#if User has configured alarms to happen for lower DClone status levels (2,3,4)
+									$item.VoiceAlarmStatus = $True
+								}
+								$item.TextAlarmStatus = $True
+								if ($item.Status -ne "" -and $null -ne $item.Status){
+									$item.PreviousStatus = $item.Status
+								}
+								$item.Status = $Status.progress
+								$item.LastUpdate = (get-date).tostring('yyyy.MM.dd HH:mm:ss')
+							}
+							ElseIf ($Status.progress -eq 5){#if status hasn't changed, but status is 5 (imminent), show alarm text on main menu
+								$item.TextAlarmStatus = $True
+							}
+							ElseIf ($Status.progress -lt 5 -and $item.LastUpdate -gt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#if status is less than 5 and has changed within the last 5 minutes, enable text alarm
+								$item.TextAlarmStatus = $True
+							}
+							ElseIf ($null -ne $item.LastUpdate -and $item.LastUpdate -lt (get-date).addminutes(-5).ToString('yyyy.MM.dd HH:mm:ss')){#after 5 minutes remove the text alarm
+								$item.LastUpdate = $null
+								$item.TextAlarmStatus = $False
+							}
 						}
 					}
-				}
-				Else {
-					try {
-						if ($Status.progress -ge 5){
-							$VoiceAlarmStatus = $True
-							$TextAlarmStatus = $True
+					Else {
+						try {
+							if ($Status.progress -ge 5){
+								$VoiceAlarmStatus = $True
+								$TextAlarmStatus = $True
+							}
+							Else {
+								$VoiceAlarmStatus = $False
+								$TextAlarmStatus = $False
+							}
+							$DCloneChangesArray += [PSCustomObject]@{Tag = $Tag; PreviousStatus = $null; Status = $Status.progress; VoiceAlarmStatus = $VoiceAlarmStatus; TextAlarmStatus = $TextAlarmStatus; LastUpdate = $null}
 						}
-						Else {
-							$VoiceAlarmStatus = $False
-							$TextAlarmStatus = $False
+						Catch {#if script is refreshed too quick and $DCloneChangesArray gets corrupted, reset it.
+							$DCloneChangesArray = $null
+							Return
 						}
-						$DCloneChangesArray += [PSCustomObject]@{Tag = $Tag; PreviousStatus = $null; Status = $Status.progress; VoiceAlarmStatus = $VoiceAlarmStatus; TextAlarmStatus = $TextAlarmStatus; LastUpdate = $null}
-					}
-					Catch {#if script is refreshed too quick and $DCloneChangesArray gets corrupted, reset it.
-						$DCloneChangesArray = $null
-						Return
 					}
 				}
 			}
 		}
-	}
-	if ($True -ne $DisableOutput){
-		$DCloneLadderTable = $DCloneLadderTable | Sort-Object LadderServer
-		$DCloneNonLadderTable = $DCloneNonLadderTable | Sort-Object NonLadderServer
-		$Count = 0
-		Do {
-			if ($Count -eq 0){
-				Write-Host "                         Current DClone Status:"
-				Write-Host
-				Write-Host " ##########################################################################"
-				Write-Host " #             Ladder               |             Non-Ladder              #"
-				Write-Host " ###################################|######################################"
-				Write-Host " #  Server                  Status  |  Server                     Status  #"
-				Write-Host " #----------------------------------|-------------------------------------#"
+		if ($True -ne $DisableOutput){
+			$DCloneLadderTable = $DCloneLadderTable | Sort-Object LadderServer
+			$DCloneNonLadderTable = $DCloneNonLadderTable | Sort-Object NonLadderServer
+			$Count = 0
+			Do {
+				if ($Count -eq 0){
+					Write-Host "                         Current DClone Status:"
+					Write-Host
+					Write-Host " ##########################################################################"
+					Write-Host " #             Ladder               |             Non-Ladder              #"
+					Write-Host " ###################################|######################################"
+					Write-Host " #  Server                  Status  |  Server                     Status  #"
+					Write-Host " #----------------------------------|-------------------------------------#"
+				}
+				if ($Count -eq $(if ($CurrentStatus.server.count -eq 12){3} Else{6}) -and $Script:Config.UseChinaRegion -ne $True){Write-Host " #----------------------------------|-------------------------------------#"}
+				$LadderServer = ($DCloneLadderTable.LadderServer[$Count]).tostring()
+				do { # formatting nonsense.
+					$LadderServer = ($LadderServer + " ")
+				}
+				until ($LadderServer.length -ge 26)
+				$NonLadderServer = ($DCloneNonLadderTable.NonLadderServer[$Count]).tostring()
+				do { # formatting nonsense.
+					$NonLadderServer = ($NonLadderServer + " ")
+				}
+				until ($NonLadderServer.length -ge 29)
+				Write-Host (" #  " + $LadderServer + " " + $DCloneLadderTable.LadderProgress[$Count] + "    |  " + $NonLadderServer + " " + $DCloneNonLadderTable.NonLadderProgress[$Count]+ "    #")
+				$Count = $Count + 1
+				if ($Count -eq ($CurrentStatus.server.length/2) -or ($Script:Config.UseChinaRegion -eq $True -and $Count -eq 2)){
+					Write-Host " #                                  |                                     #"
+					Write-Host " ##########################################################################"
+					Write-Host "`n   DClone Status provided by $DCloneTrackerSource`n"
+				}
 			}
-			if ($Count -eq 3){Write-Host " #----------------------------------|-------------------------------------#"}
-			$LadderServer = ($DCloneLadderTable.LadderServer[$Count]).tostring()
-			do { # formatting nonsense.
-				$LadderServer = ($LadderServer + " ")
-			}
-			until ($LadderServer.length -ge 26)
-			$NonLadderServer = ($DCloneNonLadderTable.NonLadderServer[$Count]).tostring()
-			do { # formatting nonsense.
-				$NonLadderServer = ($NonLadderServer + " ")
-			}
-			until ($NonLadderServer.length -ge 29)
-			Write-Host (" #  " + $LadderServer + " " + $DCloneLadderTable.LadderProgress[$Count] + "    |  " + $NonLadderServer + " " + $DCloneNonLadderTable.NonLadderProgress[$Count]+ "    #")
-			$Count = $Count + 1
-			if ($Count -eq 6){
-				Write-Host " #                                  |                                     #"
-				Write-Host " ##########################################################################"
-				Write-Host "`n   DClone Status provided by $DCloneTrackerSource`n"
-			}
+			Until ($Count -eq ($CurrentStatus.server.length/2) -or ($Script:Config.UseChinaRegion -eq $True -and $Count -eq 2))
+			PressTheAnyKey
 		}
-		Until ($Count -eq 6)
-		PressTheAnyKey
+		ElseIf ($Taglist -ne "" -and $null -ne $DCloneChangesArray){#Else if Output is disabled and taglist has been specified, output dclone changes for alarm
+			$DCloneChangesArray | ConvertTo-Csv -NoTypeInformation
+		}
 	}
-	ElseIf ($Taglist -ne "" -and $null -ne $DCloneChangesArray){#Else if Output is disabled and taglist has been specified, output dclone changes for alarm
-		$DCloneChangesArray | ConvertTo-Csv -NoTypeInformation
+	Else {
+		start-sleep -milliseconds 2000 #allow a bit of time for error message to be shown saying that we couldn't connect to DClone API.
 	}
 }
 Function DCloneVoiceAlarm {
-	Write-Host
 	ForEach ($Item in ($Script:DCloneChangesCSV | ConvertFrom-Csv) | where-object {$_.VoiceAlarmStatus -Match "True" -or $_.TextAlarmStatus -Match "True"}){
 		if ($item.tag -match "l"){#if mode contains "L"
 			$LadderText = "Ladder"
@@ -2744,20 +3008,30 @@ Function DCloneVoiceAlarm {
 		ElseIf ($item.tag -match "KR"){
 			$DCloneRegion = "Asia"
 		}
-		else {
+		elseif ($item.tag -match "EU"){
 			$DCloneRegion = "Europe"
 		}
+		elseif ($item.tag -match "cn"){
+			$DCloneRegion = "China"
+		}
+		if ($item.tag -match "ROTW"){
+			$ExpansionVoice = "R O T W"
+			$ExpansionText = "ROTW"
+		}
+		Else {#if mode contains "SC"
+			$ExpansionVoice = ""
+		}
 		if ($Item.Status -eq 5){
-			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone is about to walk in $DCloneRegion on $CoreText $LadderText ($($item.tag))!$X[0m"
-			$Message = ("D Clone Imminent! DClone is about to walk in $DCloneRegion on " + $CoreText + " " + $LadderText)
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone is about to walk in $DCloneRegion on $CoreText $LadderText $ExpansionText!$X[0m"
+			$Message = ("D Clone Imminent! DClone is about to walk in $DCloneRegion on " + $CoreText + " " + $LadderText + $ExpansionVoice)
 		}
 		ElseIf (($Item.Status -eq 1 -and $Item.PreviousStatus -ne 6) -or $Item.Status -eq 6){#check if status has just changed to 6 or it has changed to 1 from any number other than 6 (to prevent duplicate alarms.
-			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone has just walked in $DCloneRegion on $CoreText $LadderText ($($item.tag)).$X[0m"
-			$Message = ("D Clone has just walked in $DCloneRegion on " + $CoreText + " " + $LadderText)
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone has just walked in $DCloneRegion on $CoreText $LadderText $ExpansionText ($($item.tag)).$X[0m"
+			$Message = ("D Clone has just walked in $DCloneRegion on " + $CoreText + " " + $LadderText + $ExpansionVoice)
 		}
 		ElseIf ($Script:DCloneAlarmLevel -match $Item.Status){
-			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone Update! DClone is now $($Item.Status)/6 in $DCloneRegion on $CoreText $LadderText ($($item.tag))$X[0m"
-			$Message = ("D Clone is now " + $Item.Status + " out of 6 in $DCloneRegion on " + $CoreText + " " + $LadderText)
+			Write-Host "  $X[38;2;165;146;99;48;2;1;1;1;4mDClone Update! DClone is now $($Item.Status)/6 in $DCloneRegion on $CoreText $LadderText $ExpansionText$X[0m"
+			$Message = ("D Clone is now " + $Item.Status + " out of 6 in $DCloneRegion on " + $CoreText + " " + $LadderText + $ExpansionVoice)
 		}
 		if ($item.VoiceAlarmStatus -eq $True){
 			$VoiceMessages = $VoiceMessages + $Message + ". "
@@ -2784,10 +3058,10 @@ Function DCloneVoiceAlarm {
 			$null = $ps.BeginInvoke()
 		}
 		$voice = New-Object -ComObject Sapi.spvoice
-		if ($Script:Config.DCloneAlarmVoice -eq "Bloke" -or $Script:Config.DCloneAlarmVoice -eq "Man" -or $Script:Config.DCloneAlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
-		ElseIf ($Script:Config.DCloneAlarmVoice -eq "Wench" -or $Script:Config.DCloneAlarmVoice -eq "Woman" -or $Script:Config.DCloneAlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
+		if ($Script:Config.AlarmVoice -eq "Bloke" -or $Script:Config.AlarmVoice -eq "Man" -or $Script:Config.AlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
+		ElseIf ($Script:Config.AlarmVoice -eq "Wench" -or $Script:Config.AlarmVoice -eq "Woman" -or $Script:Config.AlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
 		else {break}# If specified voice doesn't exist
-		Start-Speech $VoiceMessages -Volume $Config.DCloneAlarmVolume -Rate "-2" -Voice $VoiceToUse
+		Start-Speech $VoiceMessages -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
 	}
 	if ($null -ne $Message){
 		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mDClone status provided by $($Script:Config.DCloneTrackerSource)$X[0m"
@@ -2833,140 +3107,285 @@ Function WebRequestWithTimeOut {#Used to timeout web requests that take too long
 	Remove-Job -Job $TimedJob
 }
 Function TerrorZone {
-	# Get the current time data was pulled
-	$TimeDataObtained = (Get-Date -Format 'h:mmtt')
+	param (
+		[Switch] $GetLevelIDs
+	)
 	$TZProvider = "D2Emu.com"
-	$TZURI = "https://www.d2emu.com/api/v1/tz"
-	$headers = @{
-		'x-emu-username' = 'shupershuff'
-		'x-emu-token' = $EmuToken
-	}
-	try {
-		$D2TZResponse = Invoke-RestMethod -Uri $TZURI -headers $headers -TimeoutSec 5
-	}
-	catch {
-		FormatFunction -indents 3 -IsError -Text "Couldn't retrieve TZ data from $TZProvider`n"
-		PressTheAnyKey
-		return
-	}
-	ForEach ($Level in $D2TZResponse.current){
-		Write-Debug "Level ID is: $Level"
-		ForEach ($LevelID in $D2rLevels){
-			if ($LevelID[0] -eq $Level){
-				$CurrentTZ += $LevelID[1] + ", "
+	if ($Script:Config.UseChinaRegion -ne $True){ #This feature is unsupported for China as there is no API for CN currently
+		$TZURI = "https://www.d2emu.com/api/v1/tz"
+		$headers = @{
+			'x-emu-username' = 'shupershuff'
+			'x-emu-token' = $EmuToken
+		}
+		try {
+			$D2TZResponse = Invoke-RestMethod -Uri $TZURI -headers $headers -TimeoutSec 5
+			if ($D2TZResponse.status -eq "ERROR"){
+				Throw #Error out if there's an issue with the connection
 			}
 		}
-	}
-	$CurrentTZ = $CurrentTZ -replace '..$', ''
-	Function GetImmunities {
-		param (
-			[string]$ImmunityKey
-		)
-		$KeyName = "${ImmunityKey}_immunities"  # Construct the dynamic key name
-		$Immunities = New-Object -TypeName System.Collections.ArrayList
-		$TidiedImmunities = New-Object -TypeName System.Collections.ArrayList
-		Foreach ($Immunity in $D2TZResponse.$KeyName){  # Use the dynamic key
-			#The Immunity data isn't always consistent, sometimes it's 'c' for cold or sometimes it's "cold". Let's tidy it up.
-			if ($Immunity -eq "p"){
-				$Immunity = "Poison"
-			}
-			if ($Immunity -eq "ph"){
-				$Immunity = "Physical"
-			}
-			if ($Immunity -eq "m"){
-				$Immunity = "Magic"
-			}
-			if ($Immunity -eq "c"){
-				$Immunity = "Cold"
-			}
-			if ($Immunity -eq "l"){
-				$Immunity = "Lightning"
-			}
-			if ($Immunity -eq "f"){
-				$Immunity = "Fire"
-			}
-			$Immunities += $Immunity
+		catch {
+			FormatFunction -indents 3 -IsError -Text "Couldn't retrieve TZ data from $TZProvider`n"
+			PressTheAnyKey
+			return
 		}
-		$Immunities = $Immunities | sort-object
-		Foreach ($Immunity in $Immunities) {
-			#Set some relevant colours for each of the resistances
-			if ($Immunity -eq "Poison"){
-				$Immunity = "$X[38;2;0;225;0;22mPoison$X[0m"
+		if ($GetLevelIDs){
+			$Script:CurrentTZName = [System.Collections.Generic.HashSet[string]]::new()
+			ForEach ($Level in $D2TZResponse.current){
+				ForEach ($LevelID in $D2rLevels){
+					if ($LevelID[0] -eq $Level){
+						$Counter ++
+						if ($Level -in ($Script:Config.TerrorZoneAlertAreas -split ',')){
+							if ($LevelID[2] -ne ""){
+								[void]$Script:CurrentTZName.add($LevelID[2]) #Return Name of Active TZ Group.
+							}
+							Else {
+								[void]$Script:CurrentTZName.add($LevelID[1]) #Return Name of Active TZ. [void] suppresses the true/false that comes from this command.
+							}
+							if ($Counter -gt 1){
+								$Script:TZCurrentPluralS = "s"
+								$Script:TZCurrentPluralISAre = "are"
+							}
+							Else {
+								$Script:TZCurrentPluralS = ""
+								$Script:TZCurrentPluralISAre = "is"
+							}
+							#Break #TZ's can have multiple levels so lets leave loop after first match. EDIT, decided against this with ROTW changes.
+						}
+					}
+				}
 			}
-			if ($Immunity -eq "Physical"){
-				$Immunity = "$X[38;2;165;146;99;22mPhysical$X[0m"
+			if (($D2TZResponse.next_available_time_utc + 1) -lt ([DateTimeOffset](Get-Date).ToUniversalTime()).ToUnixTimeSeconds()){ #Don't try pull next TZ details if they aren't available yet.
+				$Counter = $Null
+				$Script:UpcomingTZName = [System.Collections.Generic.HashSet[string]]::new()
+				ForEach ($Level in $D2TZResponse.next){
+					ForEach ($LevelID in $D2rLevels){
+						if ($LevelID[0] -eq $Level){
+							$Counter ++
+							if ($Level -in ($Script:Config.TerrorZoneAlertAreas -split ',')){
+								if ($LevelID[2] -ne ""){
+									[void]$Script:UpcomingTZName.add($LevelID[2])	#Return Name of Upcoming TZ Group
+								}
+								Else {
+									[void]$Script:UpcomingTZName.add($LevelID[1])  #Return Name of Upcoming TZ
+								}							
+								if ($Counter -gt 1){
+									$Script:TZNextPluralS = "s"
+									$Script:TZNextPluralISAre = "are"
+								}
+								Else {
+									$Script:TZNextPluralS = ""
+									$Script:TZNextPluralISAre = "is"
+								}
+							}
+						}
+					}
+				}
 			}
-			if ($Immunity -eq "Magic"){
-				$Immunity = "$X[38;2;165;165;164;22mMagic$X[0m"
-			}
-			if ($Immunity -eq "Cold"){
-				$Immunity = "$X[38;2;65;105;225;22mCold$X[0m"
-			}
-			if ($Immunity -eq "Lightning"){
-				$Immunity = "$X[38;2;255;255;0;22mLightning$X[0m"
-			}
-			if ($Immunity -eq "Fire"){
-				$Immunity = "$X[38;2;255;10;0;22mFire$X[0m"
-			}
-			$TidiedImmunities += $Immunity
+			$Script:CurrentTZName = ($Script:CurrentTZName -join ", ") -replace ', (?=[^,]+$)', ' and '
+			$Script:UpcomingTZName = ($Script:UpcomingTZName -join ", ") -replace ', (?=[^,]+$)', ' and '
+			return  @(($D2TZResponse.next_available_time_utc),($D2TZResponse.next_terror_time_utc))
 		}
-		$TidiedImmunities = $TidiedImmunities | select-object -unique # Get rid of any duplicate entries.
-		$TidiedImmunities = $TidiedImmunities -join ", "
-		return $TidiedImmunities
-	}
-	write-host "   $X[38;2;255;165;000;4mCurrent Terror Zone Details:$X[0m"
-	FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level$(if($D2TZResponse.current.count -gt 1){'s:'}else{': '})  $X[38;2;255;0;255;22m" + $CurrentTZ + "$X[0m")
-	FormatFunction -SubsequentLineIndents 22 -text ("  Immunities:         $X[38;2;255;0;255;22m" + (GetImmunities "Current") + "$X[0m")
-	FormatFunction -SubsequentLineIndents 22 -text ("  Boss Packs:         Between $X[38;2;255;0;255;22m" + $D2TZResponse.current_num_boss_packs[0] + "$X[0m" + " and $X[38;2;255;0;255;22m" + $D2TZResponse.current_num_boss_packs[1] + "$X[0m boss packs $(if($D2TZResponse.current.count -gt 1){'across all TZ levels.'}else{'within this TZ level.'})")
-	if ($D2TZResponse.current_superuniques.count -ge 1){
-		FormatFunction -SubsequentLineIndents 22 -text ("  SuperUniques:       $X[38;2;165;146;99;22m" + ($D2TZResponse.current_superuniques -join ", ") + "$X[0m")
-	}
-	Else {
-		FormatFunction -SubsequentLineIndents 22 -text "  SuperUniques:       No Super Unique monsters for $(if($D2TZResponse.current.count -gt 1){'these TZ levels'}else{'this TZ level'})."
-	}
-	write-host
-	write-host "   $X[38;2;255;165;000;4mNext Terror Zone Details:$X[0m"
-	if (($D2TZResponse.next_available_time_utc + 1) -lt [int]((Get-Date).ToUniversalTime() - [datetime]"1970-01-01 00:00:00").TotalSeconds){
-		ForEach ($Level in $D2TZResponse.next){
+		ForEach ($Level in $D2TZResponse.current){
 			Write-Debug "Level ID is: $Level"
 			ForEach ($LevelID in $D2rLevels){
 				if ($LevelID[0] -eq $Level){
-					$NextTZ += $LevelID[1] + ", "
+					$CurrentTZ += $LevelID[1] + ", "
 				}
 			}
 		}
-		$NextTZ = $NextTZ -replace '..$', ''
-		FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level$(if($D2TZResponse.next.count -gt 1){'s:'}else{': '})  $X[38;2;255;0;255;22m" + $NextTZ + "$X[0m")
-		FormatFunction -SubsequentLineIndents 22 -text ("  Immunities:         $X[38;2;255;0;255;22m" + (GetImmunities "Next") + "$X[0m")
-		FormatFunction -SubsequentLineIndents 22 -text ("  Boss Packs:         Between $X[38;2;255;0;255;22m" + $D2TZResponse.next_num_boss_packs[0] + "$X[0m" + " and $X[38;2;255;0;255;22m" + $D2TZResponse.next_num_boss_packs[1] + "$X[0m boss packs $(if($D2TZResponse.next.count -gt 1){'across all TZ levels.'}else{'within this TZ level.'})")
-		if ($D2TZResponse.next_superuniques.count -ge 1){
-			FormatFunction -SubsequentLineIndents 22 -text ("  SuperUniques:       $X[38;2;165;146;99;22m" + ($D2TZResponse.next_superuniques -join ", ") + "$X[0m")
+		$CurrentTZ = $CurrentTZ -replace '..$', ''
+		Function GetImmunities {
+			param (
+				[string]$ImmunityKey
+			)
+			$KeyName = "${ImmunityKey}_immunities"  # Construct the dynamic key name
+			$Immunities = New-Object -TypeName System.Collections.ArrayList
+			$TidiedImmunities = New-Object -TypeName System.Collections.ArrayList
+			Foreach ($Immunity in $D2TZResponse.$KeyName){  # Use the dynamic key
+				#The Immunity data isn't always consistent, sometimes it's 'c' for cold or sometimes it's "cold". Let's tidy it up.
+				if ($Immunity -eq "p"){
+					$Immunity = "Poison"
+				}
+				if ($Immunity -eq "ph"){
+					$Immunity = "Physical"
+				}
+				if ($Immunity -eq "m"){
+					$Immunity = "Magic"
+				}
+				if ($Immunity -eq "c"){
+					$Immunity = "Cold"
+				}
+				if ($Immunity -eq "l"){
+					$Immunity = "Lightning"
+				}
+				if ($Immunity -eq "f"){
+					$Immunity = "Fire"
+				}
+				$Immunities += $Immunity
+			}
+			$Immunities = $Immunities | sort-object
+			Foreach ($Immunity in $Immunities) {
+				#Set some relevant colours for each of the resistances
+				if ($Immunity -eq "Poison"){
+					$Immunity = "$X[38;2;0;225;0;22mPoison$X[0m"
+				}
+				if ($Immunity -eq "Physical"){
+					$Immunity = "$X[38;2;165;146;99;22mPhysical$X[0m"
+				}
+				if ($Immunity -eq "Magic"){
+					$Immunity = "$X[38;2;165;165;164;22mMagic$X[0m"
+				}
+				if ($Immunity -eq "Cold"){
+					$Immunity = "$X[38;2;65;105;225;22mCold$X[0m"
+				}
+				if ($Immunity -eq "Lightning"){
+					$Immunity = "$X[38;2;255;255;0;22mLightning$X[0m"
+				}
+				if ($Immunity -eq "Fire"){
+					$Immunity = "$X[38;2;255;10;0;22mFire$X[0m"
+				}
+				$TidiedImmunities += $Immunity
+			}
+			$TidiedImmunities = $TidiedImmunities | select-object -unique # Get rid of any duplicate entries.
+			$TidiedImmunities = $TidiedImmunities -join ", "
+			return $TidiedImmunities
+		}
+		write-host "   $X[38;2;255;165;000;4mCurrent Terror Zone Details:$X[0m"
+		FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level$(if($D2TZResponse.current.count -gt 1){'s:'}else{': '})  $X[38;2;255;0;255;22m" + $CurrentTZ + "$X[0m")
+		FormatFunction -SubsequentLineIndents 22 -text ("  Immunities:         $X[38;2;255;0;255;22m" + (GetImmunities "Current") + "$X[0m")
+		FormatFunction -SubsequentLineIndents 22 -text ("  Boss Packs:         Between $X[38;2;255;0;255;22m" + $D2TZResponse.current_num_boss_packs[0] + "$X[0m" + " and $X[38;2;255;0;255;22m" + $D2TZResponse.current_num_boss_packs[1] + "$X[0m boss packs $(if($D2TZResponse.current.count -gt 1){'across all TZ levels.'}else{'within this TZ level.'})")
+		if ($D2TZResponse.current_superuniques.count -ge 1){
+			FormatFunction -SubsequentLineIndents 22 -text ("  SuperUniques:       $X[38;2;165;146;99;22m" + ($D2TZResponse.current_superuniques -join ", ") + "$X[0m")
 		}
 		Else {
-			FormatFunction -SubsequentLineIndents 22 -text "  SuperUniques:       No Super Unique monsters for $(if($D2TZResponse.next.count -gt 1){'these TZ levels'}else{'this TZ level'})."
+			FormatFunction -SubsequentLineIndents 22 -text "  SuperUniques:       No Super Unique monsters for $(if($D2TZResponse.current.count -gt 1){'these TZ levels'}else{'this TZ level'})."
+		}
+		write-host
+		write-host "   $X[38;2;255;165;000;4mNext Terror Zone Details:$X[0m"
+		if (($D2TZResponse.next_available_time_utc + 1) -lt [int]((Get-Date).ToUniversalTime() - [datetime]"1970-01-01 00:00:00").TotalSeconds){
+			ForEach ($Level in $D2TZResponse.next){
+				Write-Debug "Level ID is: $Level"
+				ForEach ($LevelID in $D2rLevels){
+					if ($LevelID[0] -eq $Level){
+						$NextTZ += $LevelID[1] + ", "
+					}
+				}
+			}
+			$NextTZ = $NextTZ -replace '..$', ''
+			FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level$(if($D2TZResponse.next.count -gt 1){'s:'}else{': '})  $X[38;2;255;0;255;22m" + $NextTZ + "$X[0m")
+			FormatFunction -SubsequentLineIndents 22 -text ("  Immunities:         $X[38;2;255;0;255;22m" + (GetImmunities "Next") + "$X[0m")
+			FormatFunction -SubsequentLineIndents 22 -text ("  Boss Packs:         Between $X[38;2;255;0;255;22m" + $D2TZResponse.next_num_boss_packs[0] + "$X[0m" + " and $X[38;2;255;0;255;22m" + $D2TZResponse.next_num_boss_packs[1] + "$X[0m boss packs $(if($D2TZResponse.next.count -gt 1){'across all TZ levels.'}else{'within this TZ level.'})")
+			if ($D2TZResponse.next_superuniques.count -ge 1){
+				FormatFunction -SubsequentLineIndents 22 -text ("  SuperUniques:       $X[38;2;165;146;99;22m" + ($D2TZResponse.next_superuniques -join ", ") + "$X[0m")
+			}
+			Else {
+				FormatFunction -SubsequentLineIndents 22 -text "  SuperUniques:       No Super Unique monsters for $(if($D2TZResponse.next.count -gt 1){'these TZ levels'}else{'this TZ level'})."
+			}
+		}
+		else {
+			$TZDetailsNotAvailableYet = $True #API details aren't available yet.
+			$MinutesToWait = [int]([math]::Abs($D2TZResponse.next_available_time_utc - ([int]((Get-Date).ToUniversalTime() - [datetime]"1970-01-01 00:00:00").TotalSeconds)) / 60)
+			if ($MinutesToWait -gt 1){
+				$Plural = "s"
+			}
+			FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level:   $X[38;2;255;0;255;22mNext TZ info is not available from TZ Provider API for another $MinutesToWait minute$Plural. If you need this info ASAP, please visit d2emu.com/tz.$X[0m")
+			if ($D2TZResponse.next_superuniques.count -ge 1){
+				FormatFunction -SubsequentLineIndents 22 -text ("  SuperUniques:       $X[38;2;165;146;99;22m" + ($D2TZResponse.next_superuniques -join ", ") + "$X[0m")
+			}
+		}
+		if ($Debug){
+			$D2TZResponse
+			Write-Host "Current Immunities data"
+			$D2TZResponse.current_immunities
+		}
+		Write-Host "`n  Information Retrieved at:  $(([DateTimeOffset]::FromUnixTimeSeconds([int]((Get-Date).ToUniversalTime() - [datetime]'1970-01-01 00:00:00').TotalSeconds + 1).ToLocalTime().DateTime).ToString('HH:mm:ss'))"
+		if ($TZProvider -eq "D2Emu.com"){
+			if ($DebugMode -eq $True -or $TZDetailsNotAvailableYet -eq $True){
+				Write-Host "  Next TZ Data Available:    $(([DateTimeOffset]::FromUnixTimeSeconds(($D2TZResponse.next_available_time_utc)).ToLocalTime().DateTime).ToString("HH:mm:ss"))"
+			}
+			Write-Host "  Next TZ Starting time:     $(([DateTimeOffset]::FromUnixTimeSeconds(($D2TZResponse.next_terror_time_utc)).ToLocalTime().DateTime).ToString("HH:mm:ss"))"
+		}
+		Write-Host "  TZ info courtesy of:       $TZProvider`n"
+	}
+	Else { #D2Emu does not have an API for China.
+		FormatFunction -indents 2 -IsError -Text "There isn't an API to retrieve China TZ information from $TZProvider yet`n"
+	}
+	if ($TZDetailsNotAvailableYet -eq $True -or $Script:Config.UseChinaRegion -eq $True){
+		Write-Host "  Press '$X[38;2;255;165;000;22mt$X[0m' to open the D2Emu website or press any key to continue... " -nonewline
+		$OpenD2EmuSite = readkey -AllowAllKeys $True
+		if ($OpenD2EmuSite -eq "t"){
+			# Get the default browser ProgId from registry
+			$DefaultBrowserID = (Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice" -ErrorAction SilentlyContinue).ProgId
+			switch -Regex ($DefaultBrowserID) {# List of common browsers. I'm not adding Safari to this list cos it's poos.
+				"^ChromeHTML$" {
+					$exe = "$env:ProgramFiles\Google\Chrome\Application\chrome.exe"
+				}
+				"^BraveHTML$" {
+					$exe = "$env:Program Files\BraveSoftware\Brave-Browser\Application\brave.exe"
+				}
+				"^OperaStable$" {
+					$exe = "$env:Program Files\Opera\opera.exe"
+				}
+				"^Opera GXStable$" { #for gamers, by gamers, probably.
+					$exe = "$env:Program Files\Opera GX\opera.exe"
+				}
+				"^MSEdgeHTM$" { #Not as bad as everyone said it was.
+					$exe = "$env:ProgramFiles (x86)\Microsoft\Edge\Application\msedge.exe"
+				}
+				"^FirefoxURL" {  # Did it this way so that it matches "FirefoxURL" and where a GUID is appended eg "FirefoxURL-123456B0AF4A98CB"
+					$exe = "$env:ProgramFiles\Mozilla Firefox\firefox.exe"
+				}
+				"^IE\.HTTP$" { #no way is anybody still using this but here we go anyway.
+					$exe = "$env:ProgramFiles\Internet Explorer\iexplore.exe"
+				}
+			}
+			if ($Script:Config.UseChinaRegion -ne $True){
+				$URL = "https://d2emu.com/tz"
+			}
+			Else {
+				$URL = "https://d2emu.com/tz-china"
+			}
+			if (-not (Test-Path $exe)) {
+				# Fallback to just use Start-Process with URL, which uses whatever the default browser is anyway
+				Start-Process $URL
+			}
+			else {
+				Start-Process $exe $URL
+			}
 		}
 	}
-	else {
-		$MinutesToWait = [int]([math]::Abs($D2TZResponse.next_available_time_utc - ([int]((Get-Date).ToUniversalTime() - [datetime]"1970-01-01 00:00:00").TotalSeconds)) / 60)
-		if ($MinutesToWait -gt 1){
-			$Plural = "s"
-		}
-		FormatFunction -SubsequentLineIndents 22 -text ("  Terrorized Level:   $X[38;2;255;0;255;22mNext TZ info is not available from TZ Provider API for another $MinutesToWait minute$Plural.$X[0m")
-		if ($D2TZResponse.next_superuniques.count -ge 1){
-			FormatFunction -SubsequentLineIndents 22 -text ("  SuperUniques:       $X[38;2;165;146;99;22m" + ($D2TZResponse.next_superuniques -join ", ") + "$X[0m")
-		}
-		Else {
-			FormatFunction -SubsequentLineIndents 22 -text "  SuperUniques:       No Super Unique monsters for $(if($D2TZResponse.next.count -gt 1){'these TZ levels'}else{'this TZ level'})."
-		}
+	Else {
+		PressTheAnyKey
 	}
-	if ($Debug){
-		$D2TZResponse
-		Write-Host "Current Immunities data"
-		$D2TZResponse.current_immunities
+}
+Function TerrorZoneVoiceAlarm {
+	param(
+		[string] $TZAlarmMessage
+	)
+	Function Start-Speech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
+		param(
+		[string]$Text,
+		[int]$Volume = 100,
+		[int]$Rate = -2,
+		[String]$Voice
+		)
+		$ps = [powershell]::Create().AddScript({#Create a PS runspace that runs asynchronously
+			param($Message,$Vol,$Rate,$VoiceToUse)
+			$voice = New-Object -ComObject Sapi.SpVoice
+			$voice.Volume = $vol
+			$voice.Rate   = $rate
+			if ($VoiceToUse -eq "Man"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}}
+			elseif ($VoiceToUse -eq "Woman"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*Zira*"}}
+			else {break}# If specified voice doesn't exist
+			$voice.Speak($Message)
+		}).AddArgument($Text).AddArgument($Volume).AddArgument($Rate).AddArgument($Voice)
+		$null = $ps.BeginInvoke()
 	}
-	Write-Host "`n  Information Retrieved at: " $TimeDataObtained
-	Write-Host "  TZ info courtesy of:       $TZProvider`n"
-	PressTheAnyKey
+	$voice = New-Object -ComObject Sapi.spvoice
+	if ($Script:Config.AlarmVoice -eq "Bloke" -or $Script:Config.AlarmVoice -eq "Man" -or $Script:Config.AlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
+	ElseIf ($Script:Config.AlarmVoice -eq "Wench" -or $Script:Config.AlarmVoice -eq "Woman" -or $Script:Config.AlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
+	else {break}# If specified voice doesn't exist
+	Start-Speech $TZAlarmMessage -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
 }
 Function KillHandle { #Thanks to sir-wilhelm for tidying this up.
 	param ([Switch]$TryAgain)
@@ -3046,7 +3465,12 @@ Function DisplayActiveAccounts {
 	else {
 		Write-Host "  ID   Account Label"
 	}
-	$Pattern = "(?<=\()([a-z]+)(?=\.actual\.battle\.net\))" #Regex pattern to pull the region characters out of the window title.
+	if ($Script:Config.UseChinaRegion -ne $True){
+		$Pattern = "(?<=\()([a-z]+)(?=\.actual\.battle\.net\))" #Regex pattern to pull the region characters out of the window title.
+	}
+	Else {
+		$Pattern = "(?<=\()([a-z]+)(?=\.actual\.battlenet\.com\.cn\))" #Regex pattern to pull the region characters out of the window title.
+	}
 	ForEach ($AccountOption in ($Script:AccountOptionsCSV | Sort-Object -Property @{ #Try sort by number first (needed for 2 digit ID's), then sort by character.
 		Expression = {
 			$intValue = [int]::TryParse($_.ID, [ref]$null) # Try to convert the value to an integer
@@ -3100,6 +3524,8 @@ Function DisplayActiveAccounts {
 			if ($CurrentRegion -eq "US"){$CurrentRegion = "NA"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
 			if ($CurrentRegion -eq "KR"){$CurrentRegion = "Asia"}
 			if ($CurrentRegion -eq "EU"){$CurrentRegion = "EU"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
+			if ($CurrentRegion -eq "CN"){$CurrentRegion = "CN"; $RegionDisplayPreIndent = " "; $RegionDisplayPostIndent = " "}
+			if ($CurrentRegion -eq ""){$CurrentRegion = "TBC"; $RegionDisplayPreIndent = ""; $RegionDisplayPostIndent = " "}
 			Write-Host ("  " + $IDIndent + $AccountOption.ID + "    "  + $RegionDisplayPreIndent + $CurrentRegion + $RegionDisplayPostIndent + "    " + $AcctPlayTime + $AccountOption.accountlabel + " - Account Active.") -foregroundcolor yellow
 		}
 		else {#if account isn't currently active
@@ -3215,7 +3641,8 @@ Function Menu {
 			if ($Script:region -eq "NA" -or $Script:region -eq "us" -or $Script:region -eq 1){$Script:region = "us.actual.battle.net"}
 			if ($Script:region -eq "EU" -or $Script:region -eq 2){$Script:region = "eu.actual.battle.net"}
 			if ($Script:region -eq "Asia" -or $Script:region -eq "As" -or $Script:region -eq "KR" -or $Script:region -eq 3){$Script:region = "kr.actual.battle.net"}
-			if ($Script:region -ne "us.actual.battle.net" -and $Script:region -ne "eu.actual.battle.net" -and $Script:region -ne "kr.actual.battle.net"){
+			if ($Script:region -eq "China" -or $Script:region -eq "CN" -or $Script:region -eq 4){$Script:region = "cn.actual.battlenet.com.cn"}
+			if ($Script:region -ne "us.actual.battle.net" -and $Script:region -ne "eu.actual.battle.net" -and $Script:region -ne "kr.actual.battle.net" -and $Script:region -ne "cn.actual.battlenet.com.cn"){
 				Write-Host " Region $region not valid. Please choose region" -foregroundcolor red
 				ChooseRegion
 			}
@@ -3280,6 +3707,7 @@ Function Menu {
 Function ChooseAccount {
 	if ($Null -eq $Script:AccountUsername){#if no account parameters have been set already
 		do {
+			$LoopMenuOptions = "r,t,d,g,j,s,i,o,c" -split ","
 			if ($Script:AccountID -eq "t"){
 				TerrorZone
 				$Script:AccountID = "r"
@@ -3365,11 +3793,37 @@ Function ChooseAccount {
 				QuoteRoll
 			}
 			CheckActiveAccounts
-			if ($Null -ne $Close){
-				if ($Close -eq "all"){
-					stop-process -name d2r #Indescriminately KILL ALL D2r processes muahahaha.
-					Write-Host "All D2r instances closed."
-					Exit
+			if ($Null -ne $Close -or $Script:AccountID -eq "c"){
+				if ($Close -eq "all" -or $Script:AccountID -eq "c"){
+					if ($Script:AccountID -eq "c"){
+						do {
+							Write-Host "`n  $X[38;2;255;000;000;22mAre you sure you want to close all instances ($X[0m$X[38;2;255;165;000;22mY$X[0m$X[38;2;255;000;000;22m/$X[0m$X[38;2;255;165;000;22mN$X[0m$X[38;2;255;000;000;22m)?$X[0m " -nonewline
+							$Confirm = (ReadKeyTimeout "" $MenuRefreshRate "n" -AllowYesNoOnly $True).tostring()
+							if ($Confirm -eq "n"){
+								$Script:AccountID = "r"
+								Clear-Host
+								BannerLogo
+								QuoteRoll
+							}
+						} Until ($Confirm -eq "Y" -or $Confirm -eq "N")
+					}
+					if ($Confirm -eq "Y" -or $Close -eq "all"){
+						if ($Script:D2rRunning -eq $True){
+							stop-process -name d2r #Indescriminately KILL ALL D2r processes muahahaha.
+							Write-Host "  All D2r instances closed."
+							Start-Sleep -milliseconds 850
+						}
+						Else {
+							write-Host "  No D2r instances to close..." -ForegroundColor Yellow
+							Start-Sleep -milliseconds 850
+						}
+						if ($Close -eq "all"){
+							Exit
+						}
+						Else {
+							CheckActiveAccounts
+						}
+					}
 				}
 				else {
 					$ProcessToKill = ($Script:ActiveAccountsList | where-object {$_.ID -eq $close}).ProcessID
@@ -3383,7 +3837,7 @@ Function ChooseAccount {
 					Exit
 				}
 			}
-			DisplayActiveAccounts	
+			DisplayActiveAccounts
 			$AdditionalTimeSpan = New-TimeSpan -Start $Script:StartTime -End (Get-Date) #work out elapsed time for session timer and if time tracking enabled for adding time to add to accounts.csv
 			if ($Script:ActiveAccountsList.id.length -ne 0){#if there are active accounts open, add to total session time
 				if ($Script:IdleLimitForAccountUseTime -ne "" -and $Script:IdleLimitForAccountUseTime -gt 0){#If Idlelimitfeature is used, calc idle time and check if we should append session time.
@@ -3470,7 +3924,86 @@ Function ChooseAccount {
 					}
 				}
 			}
-			$accountoptions = ($Script:AcceptableValues -join  ", ").trim()
+			$AccountOptions = ($Script:AcceptableValues -join  ", ").trim()
+			#Check for TZ Alarms
+			if ($Script:Config.TerrorZoneAlertAreas -ne "" -and $Script:Config.UseChinaRegion -ne $True){
+				if ($Null -eq $Script:LastActiveTZCheck){#set initial values so if statements don't error out.
+					$Script:LastActiveTZCheck = ([DateTimeOffset](Get-Date "2000-01-01").ToUniversalTime()).ToUnixTimeSeconds()
+					$Script:LastUpcomingTZCheck = ([DateTimeOffset](Get-Date "2000-01-01").ToUniversalTime()).ToUnixTimeSeconds()
+					$Script:TZDataTimings = @($Null)
+				}
+				$timezone = [System.TimeZoneInfo]::Local
+				$UTC_Offset = $timezone.BaseUtcOffset.TotalMinutes
+				try {
+					$UpdateCurrent = $False
+					$TZAlarmTimeCheck = ([DateTimeOffset](Get-Date).ToUniversalTime()).ToUnixTimeSeconds()
+					if ($Script:LastActiveTZCheck -gt $Script:CurrentTZEndTime){
+						$Script:CurrentTZName = $Null
+						$Script:UpcomingTZName = $Null
+						$Script:TZActiveAlarmMessage = $Null
+						$Script:TZUpcomingAlarmMessage = $Null
+						$TZAlarmMessages = $Null
+					}
+					if ($Script:InitialTZCheck -ne $True -or $TZAlarmTimeCheck -gt $Script:CurrentTZEndTime -or ($TZAlarmTimeCheck -gt $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0])){	#To prevent API spam and maintain script performance, only run TZ check when required.
+						$Script:TZDataTimings = TerrorZone -GetLevelIDs #Get latest TZ detail and also return some timings to this variable	
+						if ($Null -eq $Script:CurrentTZEndTime){ #If this is the first time running
+							$UpdateCurrent = $True
+							$Script:CurrentTZEndTime = $Script:TZDataTimings[1]
+							$Script:CurrentTZStartTime = $TZAlarmTimeCheck -1 #Not actually the start time, but lets at least populate something here for comparison for the first loop.
+						}
+						if ($Script:CurrentTZEndTime -ne $Script:TZDataTimings[1]){ #if the time for when the next set of API details are available has changed
+							$UpdateCurrent = $True
+							$Script:CurrentTZStartTime = $Script:CurrentTZEndTime
+							$Script:CurrentTZEndTime = $Script:TZDataTimings[1]
+						}
+						if ($TZAlarmTimeCheck -lt $Script:TZDataTimings[0]){ #if current time is before when the the Upcoming TZ details are available from the API.
+							$Script:UpcomingTZName = $Null
+						}
+					}
+					if ($UpdateCurrent -eq $True){ # if script has just been launched or TZ hasn't been checked this cycle lets see if our fav TZ's are active
+						if ($Script:CurrentTZName){
+							write-debug "Showing and Alarming active TZ"
+							$ActiveTZAlert = ($Script:CurrentTZName -replace '\d+$','').trim() #remove any numbers and spaces at the end of the TZ name to make the announcement a bit nicer.
+							$Script:TZActiveAlarmMessage = "Terrorzone$TZCurrentPluralS $ActiveTZAlert $TZCurrentPluralISAre active!"
+							$TZAlarmMessages = $TZActiveAlarmMessage
+							FormatFunction -text "$X[38;2;165;146;99;48;2;1;1;1;4m$TZActiveAlarmMessage$X[0m" -indents 1
+						}
+						else {
+							$Script:TZActiveAlarmMessage = $Null
+						}
+						$Script:LastActiveTZCheck = ([DateTimeOffset](Get-Date).ToUniversalTime()).ToUnixTimeSeconds()
+					}
+					elseif ($Script:TZActiveAlarmMessage -and $TZAlarmTimeCheck -gt $Script:CurrentTZStartTime){
+						write-debug "Only Showing active TZ"
+						FormatFunction -text "$X[38;2;165;146;99;48;2;1;1;1;4m$TZActiveAlarmMessage$X[0m" -indents 1
+					}
+					if (($Script:InitialTZCheck -ne $True) -or ($TZAlarmTimeCheck -gt $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0])){ #Run once if not already. Show TZ details when they're available. Voicealarm if it hasn't already been checked this cycle.
+						if ($Script:UpcomingTZName){
+							write-debug "Showing and alarming upcoming TZ"
+							$UpcomingTZAlert = ($Script:UpcomingTZName -replace '\d+$','').trim() #remove any numbers and spaces at the end of the TZ name to make the announcement a bit nicer.
+							$Script:TZUpcomingAlarmMessage = "Terrorzone$TZNextPluralS $UpcomingTZAlert $TZNextPluralISAre upcoming!"
+							$TZAlarmMessages += $TZUpcomingAlarmMessage
+							FormatFunction -text "$X[38;2;165;146;99;48;2;1;1;1;4m$TZUpcomingAlarmMessage$X[0m" -indents 1
+						}
+						else {
+							$Script:TZUpcomingAlarmMessage = $Null
+						}
+						$Script:LastUpcomingTZCheck = ([DateTimeOffset](Get-Date).ToUniversalTime()).ToUnixTimeSeconds()
+					}
+					elseif ($Script:TZUpcomingAlarmMessage -and $TZAlarmTimeCheck -gt ($Script:TZDataTimings[0])){
+						write-debug "Only Showing upcoming TZ"
+						FormatFunction -text "$X[38;2;165;146;99;48;2;1;1;1;4m$TZUpcomingAlarmMessage$X[0m" -indents 1
+					}
+					if ($TZAlarmMessages){#if we need to do text to speech alarms
+						TerrorZoneVoiceAlarm -TZAlarmMessage $TZAlarmMessages
+						$TZAlarmMessages = $Null
+					}
+					$Script:InitialTZCheck = $True
+				}
+				Catch {
+					write-debug "Couldn't retrieve Terrorzone information for TZ Alarms."
+				}
+			}
 			#DClone Alarm check
 			if (!($Script:EmuOfflineMode -eq $True -and $Script:Config.DCloneTrackerSource -eq "d2emu.com")){ #if D2Emu is down and connection source is D2Emu, disable this feature by skipping it.
 				write-debug "Checking for DClone status changes."
@@ -3578,12 +4111,18 @@ Function ChooseAccount {
 				}
 				$DCloneOption = "d"
 				$TerrorZoneOption = "t"
+				$CloseOption = ""
+				$CloseText = ""
+				if ($Script:Config.ShowCloseOptionInMenu -eq $true -and $Script:D2rRunning -eq $True){
+					$CloseOption = "c"
+					$CloseText = "'$X[38;2;255;165;000;22mc$X[0m' to force close all instances,"
+				}
 				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, " -nonewline
 				if ($Script:EmuOfflineMode -ne $True){#disable TZ option if d2emu connection isn't available. If d2emu is specified as the dclone source, disable this option too.
 					Write-Host "'$X[38;2;255;165;000;22mt$X[0m' for TZ info, '$X[38;2;255;165;000;22md$X[0m' for DClone status, '$X[38;2;255;165;000;22mj$X[0m' for jokes,"
 				}
 				Else {
-					if ($Script:Config.DCloneTrackerSource -ne "d2emu.com"){	
+					if ($Script:Config.DCloneTrackerSource -ne "d2emu.com"){
 						Write-Host "'$X[38;2;255;165;000;22md$X[0m' for DClone status, " -nonewline
 					}
 					Else {
@@ -3595,11 +4134,17 @@ Function ChooseAccount {
 				if ($Script:Config.ManualSettingSwitcherEnabled -eq $true){
 					$ManualSettingSwitcherOption = "s"
 					Write-Host "  '$X[38;2;255;165;000;22mo$X[0m' for config options, '$X[38;2;255;165;000;22ms$X[0m' to toggle the Manual Setting Switcher, "
-					Write-Host "  '$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
+					Write-Host "  $CloseText'$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
 				}
 				Else {
 					$ManualSettingSwitcherOption = $null
-					Write-Host "  '$X[38;2;255;165;000;22mo$X[0m' for config options, '$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
+					if ($CloseOption -eq "c"){
+						Write-Host "  $CloseText'$X[38;2;255;165;000;22mo$X[0m' for config options,"
+						Write-Host "  '$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
+					}
+					Else {
+						Write-Host "  '$X[38;2;255;165;000;22mo$X[0m' for config options, '$X[38;2;255;165;000;22mi$X[0m' for info or '$X[38;2;255;165;000;22mx$X[0m' to $X[38;2;255;000;000;22mExit$X[0m: " -nonewline
+					}
 				}
 				if ($Script:TwoDigitIDsUsed -eq $True){
 					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" -TwoDigitAcctSelection $True #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
@@ -3607,7 +4152,7 @@ Function ChooseAccount {
 				else {
 					$Script:AccountID = ReadKeyTimeout "" $MenuRefreshRate "r" #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). if no button is pressed, send "r" for refresh.
 				}
-				if ($Script:AccountID -notin ($Script:AcceptableValues + "x" + "r" + "g" + "j" + "i" + "o" + $TerrorZoneOption + $DCloneOption + $ManualSettingSwitcherOption + $AllOption + $BatchOption) -and $Null -ne $Script:AccountID){
+				if ($Script:AccountID -notin ($Script:AcceptableValues + "x" + "r" + "g" + "j" + "i" + "o" + $TerrorZoneOption + $DCloneOption + $ManualSettingSwitcherOption + $AllOption + $BatchOption + $CloseOption) -and $Null -ne $Script:AccountID){
 					if ($Script:AccountID -eq "a" -and $Script:Config.DisableOpenAllAccountsOption -ne $true){
 						Write-Host " Can't open all accounts as all of your accounts are already open doofus!" -foregroundcolor red
 					}
@@ -3626,7 +4171,7 @@ Function ChooseAccount {
 				$Script:AccountChoice = $Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID} #filter out to only include the account we selected.
 			}
 			$Script:RunOnce = $True
-		} until ($Script:AccountID -ne "r" -and $Script:AccountID -ne "t" -and $Script:AccountID -ne "d" -and $Script:AccountID -ne "g" -and $Script:AccountID -ne "j" -and $Script:AccountID -ne "s" -and $Script:AccountID -ne "i" -and $Script:AccountID -ne "o")
+		} until ($Script:AccountID -notin $LoopMenuOptions)
 		if ($Script:AccountID -eq "a"){
 			$Script:OpenAllAccounts = $True
 		}
@@ -3663,36 +4208,43 @@ Function ChooseAccount {
 	}
 }
 Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo servers that host your games, which are all over the world :)
-	Write-Host " Choose a region to connect to. Available regions are:"
-	Write-Host "  Option  Region  Server Address"
-	Write-Host "  ------  ------  --------------"
-	ForEach ($Server in $ServerOptions){
-		if ($Server.region.length -eq 2){$Regiontablespacing = " "}
-		if ($Server.region.length -eq 4){$Regiontablespacing = ""}
-		Write-Host ("    " + $Server.option + "      " + $Regiontablespacing + $Server.region + $Regiontablespacing + "   " + $Server.region_server) -foregroundcolor green
+	if ($Script:Config.UseChinaRegion -ne $True){
+		Write-Host " Choose a region to connect to. Available regions are:"
+		Write-Host "  Option  Region  Server Address"
+		Write-Host "  ------  ------  --------------"
+		ForEach ($Server in $ServerOptions){
+			if ($Server.region.length -eq 2){$Regiontablespacing = " "}
+			if ($Server.region.length -eq 4){$Regiontablespacing = ""}
+			Write-Host ("    " + $Server.option + "      " + $Regiontablespacing + $Server.region + $Regiontablespacing + "   " + $Server.region_server) -foregroundcolor green
+		}
+		do {
+			Write-Host "`n Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
+			if ($Script:Config.DefaultRegion -ne ""){
+				$DefaultRegionText = " or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + ")"
+			}
+			Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel" + $DefaultRegionText + ": ") -nonewline
+			$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13,27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
+			if ("" -eq $Script:RegionOption){
+				$Script:RegionOption = $Config.DefaultRegion #default to NA
+			}
+			else {
+				$Script:RegionOption = $Script:RegionOption.tostring()
+			}
+			if ($Script:RegionOption -notin $Script:ServerOptions.option + "c" + "Esc"){
+				Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
+				$Script:RegionOption = ""
+			}
+		} until ("" -ne $Script:RegionOption)
+		if ($Script:RegionOption -in 1..3 ){# if value is 1,2 or 3 set the region string.
+			$Script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server
+			$Script:RegionLabel = $Script:Region.substring(0,2)
+			if ($Script:RegionLabel -eq "US"){$Script:RegionLabel = "NA"}
+			$Script:LastRegion = $Script:Region
+		}
 	}
-	do {
-		Write-Host "`n Please select a region: $X[38;2;255;165;000;22m1$X[0m, $X[38;2;255;165;000;22m2$X[0m or $X[38;2;255;165;000;22m3$X[0m"
-		if ($Script:Config.DefaultRegion -ne ""){
-			$DefaultRegionText = " or press enter for the default (" + $Config.DefaultRegion + "-" + ($Script:ServerOptions | Where-Object {$_.option -eq $Config.DefaultRegion}).region + ")"
-		}
-		Write-Host (" Alternatively select '$X[38;2;255;165;000;22mc$X[0m' to cancel" + $DefaultRegionText + ": ") -nonewline
-		$Script:RegionOption = ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 13,27 #$MenuRefreshRate represents the refresh rate of the menu in seconds (30). If no button is pressed, send "c" for cancel.
-		if ("" -eq $Script:RegionOption){
-			$Script:RegionOption = $Config.DefaultRegion #default to NA
-		}
-		else {
-			$Script:RegionOption = $Script:RegionOption.tostring()
-		}
-		if ($Script:RegionOption -notin $Script:ServerOptions.option + "c" + "Esc"){
-			Write-Host " Invalid Input. Please enter one of the options above." -foregroundcolor red
-			$Script:RegionOption = ""
-		}
-	} until ("" -ne $Script:RegionOption)
-	if ($Script:RegionOption -in 1..3 ){# if value is 1,2 or 3 set the region string.
-		$Script:region = ($ServerOptions | where-object {$_.option -eq $Script:RegionOption}).region_server
-		$Script:RegionLabel = $Script:Region.substring(0,2)
-		if ($Script:RegionLabel -eq "US"){$Script:RegionLabel = "NA"}
+	Else {
+		$Script:region = "cn.actual.battlenet.com.cn"
+		$Script:RegionLabel = "CN"
 		$Script:LastRegion = $Script:Region
 	}
 }
@@ -3772,7 +4324,12 @@ Function Processing {
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		else {
-			$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
+			if ($Script:Config.UseChinaRegion -ne $True){
+				$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
+			}
+			else {
+				$arguments = (" -uid osic " + $CustomLaunchArguments).tostring()
+			}
 		}
 		if ($Config.ForceWindowedMode -eq $true){#starting with forced window mode sucks, but someone asked for it.
 			$arguments = $arguments + " -w"
@@ -3823,8 +4380,8 @@ Function Processing {
 				else {
 					Write-Host " Couldn't detect Mod name. Standard path to be used for settings.json." -ForegroundColor Red
 				}
-			}	
-		}		
+			}
+		}
 		if ($Config.SettingSwitcherEnabled -eq $True -and $Script:AskForSettings -ne $True -and $Script:ParamLaunchAndAccountNotInAccountsCSV -ne $True){#if user has enabled the auto settings switcher.
 			$SettingsJSON = ($SettingsProfilePath + "Settings.json")
 			if ((Test-Path -Path ($SettingsProfilePath + "Settings.json")) -eq $true){ #check if settings.json does exist in the savegame path (if it doesn't, this indicates first time launch or use of a new single player mod).
@@ -3849,7 +4406,7 @@ Function Processing {
 				try {
 					Copy-item ($SettingsProfilePath + "settings" + $Script:AccountID + ".json") $SettingsJSON -ErrorAction Stop #overwrite settings.json with settings<ID>.json (<ID> being the account ID). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
 					$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
-					formatfunction -text ("Custom game settings (settings" + $Script:AccountID + ".json) being used for " + $CurrentLabel) -success
+					formatfunction -text ("Custom game settings (settings" + $Script:AccountID + ".json) being used for " + $CurrentLabel) -ISSuccess
 					Start-Sleep -milliseconds 133
 				}
 				catch {
@@ -3921,7 +4478,7 @@ Function Processing {
 					try {
 						Copy-item ($SettingsProfilePath + $SettingsToLoadFrom.FileName) -Destination $SettingsJSON #-ErrorAction Stop #overwrite settings.json with settings<Name>.json (<Name> being the name of the config user selects). This means any changes to settings in settings.json will be lost the next time an account is loaded by the script.
 						$CurrentLabel = ($Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountID}).accountlabel
-						Write-Host (" Custom game settings (" + $SettingsToLoadFrom.Name + ") being used for " + $CurrentLabel + "`n") -foregroundcolor green
+						formatfunction -text ("Custom game settings (" + $SettingsToLoadFrom.Name + ") being used for " + $CurrentLabel) -ISSuccess
 						Start-Sleep -milliseconds 100
 					}
 					catch {
@@ -3945,7 +4502,7 @@ Function Processing {
 				Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
 				Start-Process -FilePath $ShortcutPath
 				Start-Sleep -milliseconds 1100 #give D2r a bit of a chance to start up before trying to kill handle
-				Remove-Item -Path $ShortcutPath -Force
+				#Remove-Item -Path $ShortcutPath -Force #Unfortunatly removing the shortcut files afterwards somehow results in the icons stacking again.
 			}
 			Else {
 				Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
