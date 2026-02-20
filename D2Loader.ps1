@@ -621,8 +621,8 @@ Function InitialiseCurrentStats {
 	}
 }
 Function CheckForUpdates {
-	#Only Check for updates if updates haven't been checked in last 8 hours. Reduces API requests.
-	if ($Script:CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-8).ToString('yyyy.MM.dd HH:mm:ss')){# Compare current date and time to LastUpdateCheck date & time.
+	#Only Check for updates if updates haven't been checked in last 12 hours. Reduces API requests.
+	if ($Script:CurrentStats.LastUpdateCheck -lt (Get-Date).addHours(-12).ToString('yyyy.MM.dd HH:mm:ss')){# Compare current date and time to LastUpdateCheck date & time.
 		try {
 			# Check for Updates
 			Write-Host " Checking for updates..."
@@ -4629,4 +4629,5 @@ Menu #start script.
 #FFFF00		255 255 000	Rare items
 #00FF00		000 255 000	Set items
 #A59263		165 146 099	Unique items
+
 
