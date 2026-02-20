@@ -273,6 +273,7 @@ Note that this check is run in a background job that takes 1-2 seconds to comple
 This feature is disabled by default.<br>
 If you want to enable it, simply add in the option(s) you want into DcloneAlarmList in config.xml.<br>
 You will only be alarmed for the game options you add into config. EG if you only want Hardcore Ladder notifications you would enter: <DCloneAlarmList>HCL-NA, HCL-EU, HCL-KR</DCloneAlarmList><br>
+If you only wanted Softcore NonLadder notifications for Reign of the Warlock you would enter: <DCloneAlarmList>SC-NA-ROTW, SC-EU-ROTW, SC-KR-ROTW</DCloneAlarmList><br>
 You can also optionally change the other configs for DClone Tracking and DClone Alarms, however I recommend leaving the default values here.<br>
 You can also adjust the volume of the alarms if they are too quiet or if it's so loud that it's making you jump off your chair.
 See the [Script Config](#3-script-config-mostly-optional) section for more info on each config.<br>
@@ -464,3 +465,4 @@ All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
 Page views as of 21st April 2025:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader&label=Hits&icon=github&color=%23198754)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, ROTW, Reign of the Warlock, alt, d2r multibox, chat Gem workinG as intended
+
