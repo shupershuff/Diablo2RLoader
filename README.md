@@ -1,7 +1,7 @@
 # Overview
 Greetings Stranger! I'm not surprised to see your kind here.<br>
 <br>
-This is a free script I made for loading multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account.<br>
+This is a free script I made for launching multiple Diablo 2 Resurrected instances (AKA Multiboxing/MultiLaunching etc), but can also be used for a single account.<br>
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
 This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
@@ -99,6 +99,10 @@ Voice Examples (make sure to unmute, GitHub mutes by default):<br>
 https://github.com/shupershuff/Diablo2RLoader/assets/63577525/50e9a49d-a01c-40e4-8654-a8da9fe40c05
 
 https://github.com/shupershuff/Diablo2RLoader/assets/63577525/56bd87d5-157f-4119-b99b-bd1d26f06052
+
+**Alarms for your favourite Terror Zones**<br>
+You can optionally select which Terror Zones you want to be visually and audibly notified about.<br>
+<img width="729" height="270" alt="image" src="https://github.com/user-attachments/assets/eee3efee-c402-430d-8759-7d17570ac843" /><br>
 
 **Be an Entertainer in Baals Comedy Club**<br>
 If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
@@ -205,6 +209,7 @@ All other config options below this are optional:<br>
 - Set 'ForceWindowedMode' to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings. Disabled by default.
 - Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#5-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
 - Set 'ManualSettingSwitcherEnabled' to True if you want the ability to be able to choose a settings profile to load from. Once enabled, this is toggleable from the script using 's'. See the [Manual Setting Switcher](#6-manual-settings-switcher-optional) section below for more info. Disabled by default.
+- Set 'ShowCloseOptionInMenu' to True if you want the ability to force close all accounts from within the script. Use with care!
 - Set 'TrackAccountUseTime' to False if you don't want accounts.csv or stats.csv to be autoupdated with playtime. Other Stats are still tracked in stats.csv. Mainly added this option in the unlikely case there are any issues with accounts.csv getting corrupted. Enabled by default.
 - Set 'IdleLimitForAccountUseTime' to the number of minutes that should pass before the script stops recording playtime. Blank by default (disabled).
 - Set 'DCloneTrackerSource' to one of the options noted in the config file. Default (and recommended) is d2emu.com as it provides realtime data (not crowdsourced).
@@ -212,6 +217,7 @@ All other config options below this are optional:<br>
 - Set 'DCloneAlarmLevel' depending on the DClone statuses changes you want to be alarmed on (if alarms are enabled). 'Imminent' notifies only on 1,5,6. 'Close' notifies on status changes to 1,4,5,6. 'All' notifies for...all status changes. All by default.
 - Set 'DCloneAlarmVoice' to the preferred Text to Speech Robot voice. Choices are 'Amazon' or 'Paladin'. Amazon by Default.
 - Set 'DCloneAlarmVolume' to a preferred volume (1-100) to prevent frights and save your ear drums. Default is 69. Nice.
+- Set 'TerrorZoneAlertAreas' to the ID's of the maps you want to be alerted on. For a list of which ID's relate to which maps, see [here](https://github.com/shupershuff/Diablo2RLoader/blob/main/levels.txt). There are also some basic preset options from within the options menu in the script.
 - Set 'ForceAuthTokenForRegion' to enforce AuthToken based authentication for one or more regions. Useful if an Auth server goes down preventing parameter based connections (remember when Asia stopped working for several weeks?) Valid options are NA, EU and KR. Multiple values should be comma separated. Recommend leaving blank unless there are auth issues.
 
 Done editing? Make sure to save the file! CTRL + S for the win :)
@@ -287,7 +293,9 @@ I doubt many people will want to do this so instructions will be brief.
 1. In the folder that the script sits in you'll need to make a file. If you've forgotten where you put the script, use 'i' on the script to see script location path.
 2. Create a file called AltLayout.csv.
 3. Open this file in a text editor and set the headers (first line) as: ID,WindowXCoordinates,WindowYCoordinates,WindowHeight,WindowWidth
-4. Add the ID for each account and the coordinates you want for them. Hint, it's probably easier to set these details using the script and copy the coords from accounts.csv. 
+4. Add the ID for each account and the coordinates you want for them. Hint, it's probably easier to set these details using the script and copy the coords from accounts.csv.
+
+If you like you can setup a secondary alternate layout, just call the file AltLayout2.csv
 
 # Notes #
 ## Graphics Performance Recommendations ##
@@ -377,6 +385,9 @@ That said, it is possible to connect if you utilise the Auth Token method instea
 **Q:** I'm getting an error says "You have not been online in the last 30 days. Please start the game while online to check for any login agreements".<br>
 **A:** As the error suggests, try logging in from the battle.net client. If issues persist, use Google as there are dozens of threads where people have had this issue due to other reasons (eg firewall).
 
+**Q:** Is Reign of the Warlock (ROTW) supported?<br>
+**A:** Yes! Instructions to setup are exactly the same.
+
 **Q:** Is this Script against ToS?<br>
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
 
@@ -452,12 +463,4 @@ Release with the most downloads:&nbsp;&nbsp;![Downloads](https://img.shields.io/
 All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![Github All Releases](https://img.shields.io/github/downloads/shupershuff/Diablo2RLoader/total.svg?label=Downloads)<br>
 Page views as of 21st April 2025:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader&label=Hits&icon=github&color=%23198754)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)<br>
 
-Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, alt, d2r multibox, chat Gem workinG as intended
-
-
-
-
-
-
-
-
+Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, ROTW, Reign of the Warlock, alt, d2r multibox, chat Gem workinG as intended
