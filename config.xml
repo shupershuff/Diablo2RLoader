@@ -54,7 +54,8 @@
 
 	<!--Allow you to have the script audibly warn you of upcoming dclone walks.
 	Specify as many of the following options as you like: SCL-NA, SCL-EU, SCL-KR, SC-NA, SC-EU, SC-KR, HCL-NA, HCL-EU, HCL-KR, HC-NA, HC-EU, HC-KR
-	EG if you want to be notified for all Softcore ladder walks on all regions, enter <DCloneAlarmList>SCL-NA, SCL-EU, SCL-KR</DCloneAlarmList>
+	SCL-NA-ROTW, SCL-EU-ROTW, SCL-KR-ROTW, SC-NA-ROTW, SC-EU-ROTW, SC-KR-ROTW, HCL-NA-ROTW, HCL-EU-ROTW, HCL-KR-ROTW, HC-NA-ROTW, HC-EU-ROTW, HC-KR-ROTW
+	EG if you want to be notified for all Softcore ROTW ladder walks on all regions, enter <DCloneAlarmList>SCL-NA-ROTW, SCL-EU-ROTW, SCL-KR-ROTW</DCloneAlarmList>
 	If left blank, this feature is disabled. Default is blank as this may be annoying for some people.-->
 	<DCloneAlarmList></DCloneAlarmList>
 
@@ -82,4 +83,5 @@
 	Valid options are NA, EU and KR. Default is blank.-->
 	<ForceAuthTokenForRegion></ForceAuthTokenForRegion>
 </D2loaderconfig>
+
 
