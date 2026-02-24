@@ -1441,8 +1441,9 @@ Function ImportCSV { #Import Account CSV
 						$Script:TokensConfigured = $True
 					}
 					#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
-					if ($Entry.AuthenticationMethod -eq "Steam" -and $Entry.PW -ne ""){
+					if ($Entry.AuthenticationMethod -eq "Steam" -and ($Entry.PW -ne "" -or $Entry.Acct -ne "")){
 						$Entry.PW = ""
+						$Entry.Acct = ""
 						$UpdateEntry = $True
 						$PWsUpdated = $True
 					}
