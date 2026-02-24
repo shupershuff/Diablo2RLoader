@@ -19,22 +19,12 @@ Servers:
  Asia - kr.actual.battle.net
 
 Changes since 1.16.0 (next version edits):
-Make sure only numbers can be entered as batch in accounts.csv
-Fixed other apps from having maximise button disabled by accident.
-Improved validation for emails/tokens.
-Partially added China capability (except for TZ).
-Made it so if token is selected as the auth method, passwords aren't required in accounts.csv.
-Added the abilty to announce upcoming Terrorzone alarms for your preferred TZ's.
-Add ability for another alternative layout. Name the file AltLayout2.csv
-Fixed DClone features with ROTW changes.
-Added in menu option to force close all open instances. Enable via config.xml. Use with care!
-Fixed how Invoke-Webrequest works in accordance with CVE-2025-54100
+Improved Force Close options, can now force close individual stubborn accounts.
+Added Ability to add a single steam account.
 
 1.17.0+ to do list:
 Consider having dclone check 5 seconds before refresh instead of afterwards
-Add config option to disable cow.
-if upcoming/active tz is cow, say moo
-Improve Closure options (Batch, by account).
+Add config option to disable cow..
 Look to implement CTRL + Shift + number as a shortcut to switch between D2r windows. Some basic investigations show that this is possible with PowerShell. Look to build a background powershell agent that runs while the loader runs to detect key combos.
 Remove diablo2.io dclone API as it's problematic and uses D2Emu data now anyway. Possibly replace with d2tz.info
 Investigate building a TZ overlay now that there's capability built to auto check TZs.
@@ -50,7 +40,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1"
+$CurrentVersion = "1.17.1.01"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -382,21 +372,6 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$highestIndex = -1
 			$SelectedMatch = $Null
 			$PatternLengthCount = 0
-			
-			
-			#$Script:X = [char]0x1b
-			#$X[38;2;165;146;99;48;2;1;1;1;4m   $X[0m#    .replace([char]0x1b,"F")
-			#$ANSITEXT -replace '\x1b\[[0-9;]*m',''
-							
-			                    #  38      2     165    146      99      48       2       1       1      1        2       4m
-			#$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
-			#$ANSIPatterns = "(?:\x1b|\$X)\[[0-9;]*m","\x1b\[0m","\x1b\[4m"
-			
-			# Need to adjust this function so one of 2 ways, whatevers easiest/fastest
-			# the easiest way would be to identify the previous opening ANSI statement, close off the ANSI at the end of the first line $X[0m then add spaces for indent and then readd the opening ANSI statement at the beginning of next line
-			
-
-			
 			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
 			ForEach ($WordMatch in $WordMatches){# Iterate through each match (match being a block of characters, ie each word).
 				ForEach ($ANSIPattern in $ANSIPatterns){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
@@ -1108,8 +1083,8 @@ Function ValidationAndSetup {
 	"SettingSwitcherEnabled",
 	"TrackAccountUseTime",
 	"DisableIconStacking",
+	"UseChinaRegion", #this config option will be null for vast majority of users.
 	"ShowCloseOptionInMenu"
-	#"UseChinaRegion"
 	$AvailableConfigs = $AvailableConfigs + $BooleanConfigs
 	$ConfigXMLlist = ($Config | Get-Member | Where-Object {$_.membertype -eq "Property" -and $_.name -notlike "#comment"}).name
 	ForEach ($Option in $AvailableConfigs){#Config validation
@@ -1321,11 +1296,19 @@ Function ImportCSV { #Import Account CSV
 					}
 				}
 				ForEach ($Account in $AccountOptionsCSV){
+					if ($Account.AuthenticationMethod -eq "Steam"){
+						if ($SteamUsed -eq $True){
+							FormatFunction -Text "`nYou have multiple accounts setup to open using Steam in accounts.csv." -IsError
+							FormatFunction -Text "Only one steam account is supported.`n" -IsError
+							PressTheAnyKeyToExit
+						}
+						$SteamUsed = $True
+					}
 					if ($Account.accountlabel -eq ""){ # if user doesn't specify a friendly name, use id. Prevents display issues later on.
 						$Account.accountlabel = ("Account " + $Account.id)
 						$Script:AccountOptionsCSV | Export-Csv -Path "$Script:WorkingDirectory\Accounts.csv" -NoTypeInformation
 					}
-					if ($Account.Acct.length -gt 1 -and $Account.Acct -notmatch "@" -and $Entry.AuthenticationMethod -ne "Token"){
+					if ($Account.Acct.length -gt 1 -and $Account.Acct -notmatch "@" -and $Entry.AuthenticationMethod -eq "Parameter"){
 						FormatFunction -Text "`nAccount $($Account.id) '$($Account.accountlabel)' has an invalid email address: '$($Account.Acct)'" -IsError
 						FormatFunction -Text "Please adjust Accounts.csv so that the 'Acct column' is a valid email address.`n" -IsError
 						PressTheAnyKeyToExit
@@ -1413,10 +1396,15 @@ Function ImportCSV { #Import Account CSV
 						$Entry.AuthenticationMethod = "Parameter"
 						$UpdateAccountsCSV = $True
 					}
-					if ($Entry.AuthenticationMethod -ne "Token" -and $Entry.AuthenticationMethod -ne "Parameter"){
+					if ($Entry.AuthenticationMethod -ne "Token" -and $Entry.AuthenticationMethod -ne "Parameter" -and $Entry.AuthenticationMethod -ne "Steam"){
 						Write-Host ("`n Error: AuthenticationMethod in accounts.csv for " + $Entry.AccountLabel + " is invalid.") -Foregroundcolor red
-						Write-Host " Open accounts.csv and set this to either 'Parameter' or 'Token'.`n" -Foregroundcolor red
+						Write-Host " Open accounts.csv and set this to either 'Parameter', 'Token' or 'Steam'.`n" -Foregroundcolor red
 						PressTheAnyKeyToExit
+					}
+					if ($Entry.AuthenticationMethod -eq "Steam" -and $Entry.PW -ne ""){
+						$Entry.Token = ""
+						$UpdateEntry = $True
+						$TokensUpdated = $True
 					}
 					if ($Entry.Token.length -ge 200){#if nothing needs converting, make sure existing entries still make it into the updated CSV
 						$UpdateEntry = $True
@@ -1431,7 +1419,7 @@ Function ImportCSV { #Import Account CSV
 						Write-Host (" Secured Token for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
 						$UpdateEntry = $True
-						$TokensUpdated = $true
+						$TokensUpdated = $True
 					}
 					if ($Entry.Token.length -eq 0 -and $Entry.AuthenticationMethod -eq "Token"){#if csv has account details but Token field has been left blank
 						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a Token defined.") -foregroundcolor yellow
@@ -1453,6 +1441,11 @@ Function ImportCSV { #Import Account CSV
 						$Script:TokensConfigured = $True
 					}
 					#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
+					if ($Entry.AuthenticationMethod -eq "Steam" -and $Entry.PW -ne ""){
+						$Entry.PW = ""
+						$UpdateEntry = $True
+						$PWsUpdated = $True
+					}
 					if ($Entry.PW.length -ge 300 -and $Entry.Acct.length -ge 1 -and $Config.ConvertPlainTextSecrets -eq $True){#if nothing needs converting, make sure existing entries still make it into the updated CSV
 						$UpdateEntry = $True
 					}
@@ -1467,7 +1460,7 @@ Function ImportCSV { #Import Account CSV
 						$UpdateEntry = $True
 						$PWsUpdated = $true
 					}
-					if ($Entry.Acct.length -eq 0 -and $Entry.AuthenticationMethod -ne "Token"){#if csv has account details and uses parameter Auth but email sign in field has been left blank
+					if ($Entry.Acct.length -eq 0 -and $Entry.AuthenticationMethod -eq "Parameter"){#if csv has account details and uses parameter Auth but email sign in field has been left blank
 						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have an email address defined.`n") -foregroundcolor yellow
 						while ($Entry.Acct.length -eq 0 -or $Entry.Acct -notmatch "@"){#prevent empty entries as this will cause errors.
 							$Entry.Acct = read-host " Enter the Battle.net email address for"$Entry.AccountLabel
@@ -1478,9 +1471,9 @@ Function ImportCSV { #Import Account CSV
 						Write-Host (" Saved Email Address for " + $Entry.AccountLabel) -foregroundcolor green
 						Start-Sleep -milliseconds 100
 						$UpdateEntry = $True
-						$PWsUpdated = $true
+						$PWsUpdated = $True
 					}
-					if ($Entry.PW.length -eq 0 -and $Entry.AuthenticationMethod -ne "Token"){#if csv has account details and uses parameter Auth but password field has been left blank
+					if ($Entry.PW.length -eq 0 -and $Entry.AuthenticationMethod -eq "Parameter"){#if csv has account details and uses parameter Auth but password field has been left blank
 						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a password defined.`n") -foregroundcolor yellow
 						if ($Config.ConvertPlainTextSecrets -eq $True){
 							while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
@@ -1999,7 +1992,7 @@ Function Options {
 	}
 	Write-Host "`n Enter one of the above options to change the setting."
 	Write-Host " Otherwise, press any other key to return to main menu... " -nonewline
-	$Option = (ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27).tostring() #Add -TwoDigitAcctSelection $True
+	$Option = (ReadKeyTimeout "" $MenuRefreshRate "c" -AdditionalAllowedKeys 27,13).tostring() #Add -TwoDigitAcctSelection $True
 	Write-Host;Write-Host
 	Function OptionSubMenu {
 		param (
@@ -3315,6 +3308,13 @@ Function TerrorZone {
 	Else { #D2Emu does not have an API for China.
 		FormatFunction -indents 2 -IsError -Text "There isn't an API to retrieve China TZ information from $TZProvider yet`n"
 	}
+	if (39 -in $D2TZResponse.current -or 39 -in $D2TZResponse.next){
+		$voice = New-Object -ComObject Sapi.spvoice
+		$voice.rate = -4 #How quickly the voice message should be
+		$voice.volume = $Config.AlarmVolume
+		$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}
+		$voice.speak("MooMoo-moo moo-moo, moo-moo, moo moo.") | out-null
+	}
 	if ($TZDetailsNotAvailableYet -eq $True -or $Script:Config.UseChinaRegion -eq $True){
 		Write-Host "  Press '$X[38;2;255;165;000;22mt$X[0m' to open the D2Emu website or press any key to continue... " -nonewline
 		$OpenD2EmuSite = readkey -AllowAllKeys $True
@@ -3655,7 +3655,7 @@ Function Menu {
 	}
 	$Script:AccountOptionsCSV = import-csv "$Script:WorkingDirectory\Accounts.csv" #Import accounts.csv again in case someone has updated Auth Method without closing the script.
 	if ($Script:OpenAllAccounts -eq $True){
-		Write-Host "`n Opening all accounts..."
+		Write-Host " Opening all accounts..."
 		ForEach ($ID in $Script:AcceptableValues){
 			$Script:AccountChoice = $Script:AccountOptionsCSV | where-object {$_.id -eq $ID}
 			$Script:AccountID = $ID
@@ -3801,6 +3801,25 @@ Function ChooseAccount {
 			if ($Null -ne $Close -or $Script:AccountID -eq "c"){
 				if ($Close -eq "all" -or $Script:AccountID -eq "c"){
 					if ($Script:AccountID -eq "c"){
+							Write-Host "   $X[38;2;255;000;000;22m#######################################################################$X[0m"
+							Write-Host "   $X[38;2;255;000;000;22m# !!!  You are about to force close one or more instances of D2r  !!! #$X[0m"
+							Write-Host "   $X[38;2;255;000;000;22m#######################################################################$X[0m"
+							Write-Host "`n    Enter the ID# of an active D2r instance to force close,"
+							Write-Host "    '$X[38;2;255;165;000;22ma$X[0m' to force close all D2r instances or '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
+						do {
+							if ($CloseChoice -ne $Null -and $CloseChoice -notin $Script:ActiveIDs + "c" + "a"){
+								Write-Host "     Invalid Input. Please enter one of the options above. "  -nonewline -foregroundcolor red
+							}
+							$CloseChoice = (ReadKeyTimeout "" $MenuRefreshRate "c").tostring()
+							if ($CloseChoice -eq "c"){
+								$Script:AccountID = "r"
+								Clear-Host
+								BannerLogo
+								QuoteRoll
+							}
+						} Until ($CloseChoice -in $Script:ActiveIDs + "c" + "a")
+					}
+					if ($Close -eq "all" -or $CloseChoice -eq "a"){
 						do {
 							Write-Host "`n  $X[38;2;255;000;000;22mAre you sure you want to close all instances ($X[0m$X[38;2;255;165;000;22mY$X[0m$X[38;2;255;000;000;22m/$X[0m$X[38;2;255;165;000;22mN$X[0m$X[38;2;255;000;000;22m)?$X[0m " -nonewline
 							$Confirm = (ReadKeyTimeout "" $MenuRefreshRate "n" -AllowYesNoOnly $True).tostring()
@@ -3810,9 +3829,7 @@ Function ChooseAccount {
 								BannerLogo
 								QuoteRoll
 							}
-						} Until ($Confirm -eq "Y" -or $Confirm -eq "N")
-					}
-					if ($Confirm -eq "Y" -or $Close -eq "all"){
+						} Until ($Confirm -in "Y","N" -or $Close -eq "all")
 						if ($Script:D2rRunning -eq $True){
 							stop-process -name d2r #Indescriminately KILL ALL D2r processes muahahaha.
 							Write-Host "  All D2r instances closed."
@@ -3830,17 +3847,28 @@ Function ChooseAccount {
 						}
 					}
 				}
-				else {
-					$ProcessToKill = ($Script:ActiveAccountsList | where-object {$_.ID -eq $close}).ProcessID
+				if ($Close -in $Script:ActiveIDs -or $CloseChoice -in $Script:ActiveIDs) {
+					if ($Close -in $Script:ActiveIDs){
+						$CloseChoice = $Close
+					}
+					Elseif ($Null -ne $Close){#shutdown if it's trying to shutdown an instance that isn't running.
+						Exit
+					}
+					$ProcessToKill = ($Script:ActiveAccountsList | where-object {$_.ID -eq $CloseChoice}).ProcessID
 					try {
 						stop-process -id $ProcessToKill
-						Write-Host "Process killed for account $Close."
+						Write-Host "     Force shut D2r process for account $CloseChoice."
 					}
 					Catch {
-						write-host "Account $close isn't currently running."
+						write-host "     Account $close isn't currently running."
 					}
-					Exit
+					Start-Sleep -milliseconds 1250
+					if ($Null -ne $Close){ #if $close was used then we can exit the script.
+						Exit
+					}
+					CheckActiveAccounts
 				}
+				$CloseChoice = $Null
 			}
 			DisplayActiveAccounts
 			$AdditionalTimeSpan = New-TimeSpan -Start $Script:StartTime -End (Get-Date) #work out elapsed time for session timer and if time tracking enabled for adding time to add to accounts.csv
@@ -3967,7 +3995,7 @@ Function ChooseAccount {
 						if ($Script:CurrentTZName){
 							write-debug "Showing and Alarming active TZ"
 							$ActiveTZAlert = ($Script:CurrentTZName -replace '\d+$','').trim() #remove any numbers and spaces at the end of the TZ name to make the announcement a bit nicer.
-							$Script:TZActiveAlarmMessage = "Terrorzone$TZCurrentPluralS $ActiveTZAlert $TZCurrentPluralISAre active!"
+							$Script:TZActiveAlarmMessage = "Terror Zone$TZCurrentPluralS $ActiveTZAlert $TZCurrentPluralISAre active!"
 							$TZAlarmMessages = $TZActiveAlarmMessage
 							FormatFunction -text "$X[38;2;165;146;99;48;2;1;1;1;4m$TZActiveAlarmMessage$X[0m" -indents 1
 						}
@@ -3984,7 +4012,7 @@ Function ChooseAccount {
 						if ($Script:UpcomingTZName){
 							write-debug "Showing and alarming upcoming TZ"
 							$UpcomingTZAlert = ($Script:UpcomingTZName -replace '\d+$','').trim() #remove any numbers and spaces at the end of the TZ name to make the announcement a bit nicer.
-							$Script:TZUpcomingAlarmMessage = "Terrorzone$TZNextPluralS $UpcomingTZAlert $TZNextPluralISAre upcoming!"
+							$Script:TZUpcomingAlarmMessage = "Terror Zone$TZNextPluralS $UpcomingTZAlert $TZNextPluralISAre upcoming!"
 							$TZAlarmMessages += $TZUpcomingAlarmMessage
 							FormatFunction -text "$X[38;2;165;146;99;48;2;1;1;1;4m$TZUpcomingAlarmMessage$X[0m" -indents 1
 						}
@@ -4118,7 +4146,7 @@ Function ChooseAccount {
 				$CloseText = ""
 				if ($Script:Config.ShowCloseOptionInMenu -eq $true -and $Script:D2rRunning -eq $True){
 					$CloseOption = "c"
-					$CloseText = "'$X[38;2;255;165;000;22mc$X[0m' to force close all instances,"
+					$CloseText = "'$X[38;2;255;165;000;22mc$X[0m' to force close instances,"
 				}
 				Write-Host "  '$X[38;2;255;165;000;22mr$X[0m' to Refresh, " -nonewline
 				if ($Script:EmuOfflineMode -ne $True){#disable TZ option if d2emu connection isn't available. If d2emu is specified as the dclone source, disable this option too.
@@ -4256,7 +4284,7 @@ Function Processing {
 		if (($Script:PW -eq "" -or $Null -eq $Script:PW) -and $Script:PWmanualset -eq 0){
 			$Script:PW = $Script:AccountChoice.PW.tostring()
 		}
-		if ($Script:AccountChoice.AuthenticationMethod -ne "Token"){
+		if ($Script:AccountChoice.AuthenticationMethod -ne "Token" -and $Script:AccountChoice.AuthenticationMethod -ne "Steam"){
 			try {
 				if ($Script:ParamLaunchAndAccountNotInAccountsCSV -eq $False -or $Script:ParamsUsed -ne $true -or ($Script:ParamsUsed -eq $true -and ($Script:OpenBatches -eq $True -or $Script:OpenAllAccounts -eq $True))){ # If Params aren't used or if Params are used with either batches or open all accounts.
 					$Script:acct = $Script:AccountChoice.acct.tostring()
@@ -4327,11 +4355,11 @@ Function Processing {
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		else {
-			if ($Script:Config.UseChinaRegion -ne $True){
-				$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
+			if ($Script:Config.UseChinaRegion -eq $True){
+				$arguments = (" -uid osic " + $CustomLaunchArguments).tostring()
 			}
 			else {
-				$arguments = (" -uid osic " + $CustomLaunchArguments).tostring()
+				$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
 			}
 		}
 		if ($Config.ForceWindowedMode -eq $true){#starting with forced window mode sucks, but someone asked for it.
@@ -4508,12 +4536,25 @@ Function Processing {
 				#Remove-Item -Path $ShortcutPath -Force #Unfortunatly removing the shortcut files afterwards somehow results in the icons stacking again.
 			}
 			Else {
-				Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
-				Start-Sleep -milliseconds 1100 #give D2r a bit of a chance to start up before trying to kill handle
+				if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -or $Script:AccountChoice.AuthenticationMethod -eq "Token"){
+					Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
+					Start-Sleep -milliseconds 100
+				}
+				elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
+					start-process "steam://run/2536520//$arguments"
+					Start-Sleep -milliseconds 500
+				}
 			}
-			$process = Get-CimInstance -ClassName Win32_Process | Where-Object {
-				$_.Name -eq "D2R.exe" -and $_.CommandLine -match "--instance$($Script:AccountChoice.ID)\b" #command requires elevation to show commandline details.
-			}
+			do {
+				$process = Get-CimInstance -ClassName Win32_Process | Where-Object {
+					$_.Name -eq "D2R.exe" -and $_.CommandLine -match "--instance$($Script:AccountChoice.ID)\b" #command requires elevation to show commandline details.
+				}
+				if ($Null -eq $Process){
+					Write-Host "  D2r isn't open yet for $($Script:AccountChoice.ID). Waiting another second..."
+					Start-Sleep -milliseconds 1000 #Give it another second before trying again
+				}
+			} until ($Null -ne $Process)
+			Start-Sleep -milliseconds 1000 #give D2r a bit of a chance to start up before trying to kill handle
 			#Close the 'Check for other instances' handle
 			Write-Host " Attempting to close `"Check for other instances`" handle..."
 			$Output = KillHandle | out-string #run KillHandle function.
