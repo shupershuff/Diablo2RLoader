@@ -4556,7 +4556,7 @@ Function Processing {
 					Start-Sleep -milliseconds 1000 #Give it another second before trying again
 				}
 			} until ($Null -ne $Process -or $WaitCounter -gt 20)
-			if ($WaitCounter -gt 20 -or 1 -eq 1){
+			if ($WaitCounter -gt 20){
 				Write-Host "  D2r did not start as expected." -foregroundcolor red
 				PressTheAnyKey
 				return
@@ -4678,3 +4678,4 @@ Menu #start script.
 #FFFF00		255 255 000	Rare items
 #00FF00		000 255 000	Set items
 #A59263		165 146 099	Unique items
+
