@@ -40,7 +40,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.01"
+$CurrentVersion = "1.17.1.02"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -1401,7 +1401,7 @@ Function ImportCSV { #Import Account CSV
 						Write-Host " Open accounts.csv and set this to either 'Parameter', 'Token' or 'Steam'.`n" -Foregroundcolor red
 						PressTheAnyKeyToExit
 					}
-					if ($Entry.AuthenticationMethod -eq "Steam" -and $Entry.PW -ne ""){
+					if ($Entry.AuthenticationMethod -eq "Steam" -and $Entry.token -ne ""){
 						$Entry.Token = ""
 						$UpdateEntry = $True
 						$TokensUpdated = $True
@@ -4359,7 +4359,7 @@ Function Processing {
 			if ($Script:Config.UseChinaRegion -eq $True){
 				$arguments = (" -uid osic " + $CustomLaunchArguments).tostring()
 			}
-			else {
+			elseif ($Script:AccountChoice.AuthenticationMethod -ne "Steam"){
 				$arguments = (" -uid osi " + $CustomLaunchArguments).tostring()
 			}
 		}
