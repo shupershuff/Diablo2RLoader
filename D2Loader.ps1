@@ -3124,7 +3124,7 @@ Function TerrorZone {
 		}
 		catch {
 			FormatFunction -indents 3 -IsError -Text "Couldn't retrieve TZ data from $TZProvider`n"
-			PressTheAnyKey
+			Start-Sleep -milliseconds 1500
 			return
 		}
 		if ($GetLevelIDs){
@@ -4033,7 +4033,7 @@ Function ChooseAccount {
 					$Script:InitialTZCheck = $True
 				}
 				Catch {
-					write-debug "Couldn't retrieve Terrorzone information for TZ Alarms."
+					write-debug "Couldn't retrieve Terror Zone information for TZ Alarms."
 				}
 			}
 			#DClone Alarm check
@@ -4211,7 +4211,7 @@ Function ChooseAccount {
 			$Script:OpenBatches = $True
 		}
 	}
-	if (($Null -ne $Script:AccountUsername -and ($Null -eq $Script:PW -or "" -eq $Script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.PW.length -eq 0))){#This is called when params are used but the password wasn't entered. Not used for -all or -batch
+	if (($Null -ne $Script:AccountUsername -and ($Null -eq $Script:PW -or "" -eq $Script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.PW.length -eq 0)) -and $Script:AccountChoice.AuthenticationMethod -ne "Steam"){#This is called when params are used but the password wasn't entered. Not used for -all or -batch
 		if ($Null -ne $Script:AccountOptionsCSV){#compare parameter against account ID in case they specified ID instead of email.
 			$Script:AccountChoice = $Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountUsername}
 			if ($Null -eq $Script:AccountChoice){#if still null, compare against username in accounts.csv
@@ -4547,6 +4547,7 @@ Function Processing {
 				}
 			}
 			do {
+				$WaitCounter ++
 				$process = Get-CimInstance -ClassName Win32_Process | Where-Object {
 					$_.Name -eq "D2R.exe" -and $_.CommandLine -match "--instance$($Script:AccountChoice.ID)\b" #command requires elevation to show commandline details.
 				}
@@ -4554,7 +4555,12 @@ Function Processing {
 					Write-Host "  D2r isn't open yet for $($Script:AccountChoice.ID). Waiting another second..."
 					Start-Sleep -milliseconds 1000 #Give it another second before trying again
 				}
-			} until ($Null -ne $Process)
+			} until ($Null -ne $Process -or $WaitCounter -gt 20)
+			if ($WaitCounter -gt 20 -or 1 -eq 1){
+				Write-Host "  D2r did not start as expected." -foregroundcolor red
+				PressTheAnyKey
+				return
+			}
 			Start-Sleep -milliseconds 1000 #give D2r a bit of a chance to start up before trying to kill handle
 			#Close the 'Check for other instances' handle
 			Write-Host " Attempting to close `"Check for other instances`" handle..."
