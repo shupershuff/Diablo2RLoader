@@ -4559,13 +4559,8 @@ Function Processing {
 					Start-Sleep -milliseconds 100
 				}
 				elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
-					#start-process "steam://run/2536520//$arguments"
-
-					
-					$SteamLaunchCommand = ('"'+ $SteamPath + '\steam.exe" -applaunch 813780 ' + $arguments)
+					$SteamLaunchCommand = ('"'+ $SteamPath + '\steam.exe" -applaunch 2536520 ' + $arguments)
 					cmd.exe /c $SteamLaunchCommand
-					#cmd.exe /c "$SteamPath\steam.exe -applaunch 813780" 
-					#start-process "steam://run/813780//-skipintro"
 					Start-Sleep -milliseconds 500
 				}
 			}
