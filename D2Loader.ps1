@@ -40,7 +40,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.03"
+$CurrentVersion = "1.17.1.04"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -4547,8 +4547,15 @@ Function Processing {
 			KillHandle | out-null # Quickly check that there's no open handles already for "DiabloII Check For Other Instances"
 			$arguments += " --instance$($Script:AccountChoice.ID)"
 			if ($Script:Config.DisableIconStacking -eq $True){
-				$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
-				Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
+				if ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
+					$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
+					$arguments = "-applaunch 2536520 $arguments"
+					Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$SteamPath\Steam.exe" -arguments $arguments	
+				}
+				Else {
+					$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
+					Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
+				}
 				Start-Process -FilePath $ShortcutPath
 				Start-Sleep -milliseconds 1100 #give D2r a bit of a chance to start up before trying to kill handle
 				#Remove-Item -Path $ShortcutPath -Force #Unfortunatly removing the shortcut files afterwards somehow results in the icons stacking again.
