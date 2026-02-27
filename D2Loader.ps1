@@ -18,9 +18,9 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 
-Changes since 1.16.0 (next version edits):
+Changes since 1.17.1 (next version edits):
 Improved Force Close options, can now force close individual stubborn accounts.
-Added Ability to add a single steam account.
+Added ability to launch a single Steam account.
 
 1.17.0+ to do list:
 Consider having dclone check 5 seconds before refresh instead of afterwards
@@ -40,7 +40,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.02"
+$CurrentVersion = "1.17.1.03"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -1301,6 +1301,20 @@ Function ImportCSV { #Import Account CSV
 							FormatFunction -Text "`nYou have multiple accounts setup to open using Steam in accounts.csv." -IsError
 							FormatFunction -Text "Only one steam account is supported.`n" -IsError
 							PressTheAnyKeyToExit
+						}
+						Else {
+							try {
+								$Script:SteamPath = ((Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam" -name "InstallPath" -ErrorAction Stop)."InstallPath") #Get Steam path from registry rather than assume it's in C:\Program Files (x86)\Steam
+							}
+							Catch {
+								try {
+									$Script:SteamPath = ((Get-ItemProperty -Path "HKLM:\SOFTWARE\Valve\Steam" -name "InstallPath" -ErrorAction Stop)."InstallPath") #Get Steam path from registry rather than assume it's in C:\Program Files (x86)\Steam
+								}
+								Catch {
+									Write-host " Couldn't find Steam install path. Ensure that Steam is installed." -foregroundcolor red
+									PressTheAnyKey
+								}
+							}
 						}
 						$SteamUsed = $True
 					}
@@ -4355,6 +4369,9 @@ Function Processing {
 		if ($Script:AccountChoice.AuthenticationMethod -eq "Parameter" -and $Script:ForceAuthToken -ne $True -and $Script:Config.ForceAuthTokenForRegion -notmatch $RegionLabel -or $Script:ParamLaunchAndAccountNotInAccountsCSV -eq $True){
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
+		elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
+			$arguments = (" -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
+		}
 		else {
 			if ($Script:Config.UseChinaRegion -eq $True){
 				$arguments = (" -uid osic " + $CustomLaunchArguments).tostring()
@@ -4542,7 +4559,13 @@ Function Processing {
 					Start-Sleep -milliseconds 100
 				}
 				elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
-					start-process "steam://run/2536520//$arguments"
+					#start-process "steam://run/2536520//$arguments"
+
+					
+					$SteamLaunchCommand = ('"'+ $SteamPath + '\steam.exe" -applaunch 813780 ' + $arguments)
+					cmd.exe /c $SteamLaunchCommand
+					#cmd.exe /c "$SteamPath\steam.exe -applaunch 813780" 
+					#start-process "steam://run/813780//-skipintro"
 					Start-Sleep -milliseconds 500
 				}
 			}
@@ -4678,4 +4701,3 @@ Menu #start script.
 #FFFF00		255 255 000	Rare items
 #00FF00		000 255 000	Set items
 #A59263		165 146 099	Unique items
-
