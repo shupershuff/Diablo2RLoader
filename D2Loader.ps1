@@ -21,10 +21,11 @@ Servers:
 Changes since 1.17.1 (next version edits):
 Improved Force Close options, can now force close individual stubborn accounts.
 Added ability to launch a single Steam account.
+Fixed issue for accounts using token auth asking for password.
+Cow voice alerts can be disabled (manually add a config for DisableMoo in config.xml and set to true).
 
 1.17.0+ to do list:
 Consider having dclone check 5 seconds before refresh instead of afterwards
-Add config option to disable cow..
 Look to implement CTRL + Shift + number as a shortcut to switch between D2r windows. Some basic investigations show that this is possible with PowerShell. Look to build a background powershell agent that runs while the loader runs to detect key combos.
 Remove diablo2.io dclone API as it's problematic and uses D2Emu data now anyway. Possibly replace with d2tz.info
 Investigate building a TZ overlay now that there's capability built to auto check TZs.
@@ -40,7 +41,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.04"
+$CurrentVersion = "1.17.1.05"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -1622,11 +1623,13 @@ Function CowKingKilled {
 	Write-Host "`n                          You Killed the Cow King!" -foregroundcolor green
 	Write-Host "                                $X[38;2;165;146;99;22mMoo.$X[0m"
 	Write-Host "                                    $X[38;2;165;146;99;22mMoooooooo!$X[0m"
-	$voice = New-Object -ComObject Sapi.spvoice
-	$voice.rate = -4 #How quickly the voice message should be
-	$voice.volume = $Config.AlarmVolume
-	$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}
-	$voice.speak("MooMoo-moo moo-moo, moo-moo, moo moo.") | out-null
+	if ($Script:Config.DisableMoo -ne $True){
+		$voice = New-Object -ComObject Sapi.spvoice
+		$voice.rate = -4 #How quickly the voice message should be
+		$voice.volume = $Config.AlarmVolume
+		$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}
+		$voice.speak("MooMoo-moo moo-moo, moo-moo, moo moo.") | out-null
+	}
 	$CowLogo = @"
  -)[<-
    +[[[*
@@ -3323,7 +3326,7 @@ Function TerrorZone {
 	Else { #D2Emu does not have an API for China.
 		FormatFunction -indents 2 -IsError -Text "There isn't an API to retrieve China TZ information from $TZProvider yet`n"
 	}
-	if (39 -in $D2TZResponse.current -or 39 -in $D2TZResponse.next){
+	if ((39 -in $D2TZResponse.current -or 39 -in $D2TZResponse.next) -and $Script:Config.DisableMoo -ne $True){
 		$voice = New-Object -ComObject Sapi.spvoice
 		$voice.rate = -4 #How quickly the voice message should be
 		$voice.volume = $Config.AlarmVolume
@@ -4225,7 +4228,10 @@ Function ChooseAccount {
 			$Script:OpenBatches = $True
 		}
 	}
-	if (($Null -ne $Script:AccountUsername -and ($Null -eq $Script:PW -or "" -eq $Script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.PW.length -eq 0)) -and $Script:AccountChoice.AuthenticationMethod -ne "Steam"){#This is called when params are used but the password wasn't entered. Not used for -all or -batch
+	if (($Null -ne $Script:AccountUsername -and ($Null -eq $Script:PW -or "" -eq $Script:PW) -or ($Script:AccountChoice.id.length -gt 0 -and $Script:AccountChoice.PW.length -eq 0))){#This is called when params are used but the password wasn't entered. Not used for -all or -batch
+		if ($Script:AccountChoice.AuthenticationMethod -eq "Steam" -or $Script:AccountChoice.AuthenticationMethod -eq "Token"){
+			return
+		}
 		if ($Null -ne $Script:AccountOptionsCSV){#compare parameter against account ID in case they specified ID instead of email.
 			$Script:AccountChoice = $Script:AccountOptionsCSV | where-object {$_.id -eq $Script:AccountUsername}
 			if ($Null -eq $Script:AccountChoice){#if still null, compare against username in accounts.csv
