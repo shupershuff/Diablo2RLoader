@@ -1,8 +1,7 @@
 {
-    "Notification":  "Due to game and API changes, TZ and DClone behaviour will be a bit funky until the next D2rLoader update.
-Hope you're all enjoying the new content!
-
-FYI, there is reportedly an issue with the Chronicle resetting when identifying items from weapon racks.",
-    "PublishDate":  "2026.02.14 12:00:00",
-    "ExpiryDate":  "2026.02.21 17:00:00"
+    "Notification":  "For those who use Token authentication to sign in due to issues switching regions when using Parameter method of authentication:
+You can potentially resolve this issue by manually logging into each region (and creating a game) for the impacted account using the battlenet client.
+I've just tested this with a problematic account that I had and it appears to have resolved the issue!",
+    "PublishDate":  "2026.03.08 12:00:00",
+    "ExpiryDate":  "2026.03.13 17:00:00"
 }
