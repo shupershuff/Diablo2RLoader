@@ -1,7 +1,5 @@
 {
-    "Notification":  "For those who use Token authentication to sign in due to issues switching regions when using Parameter method of authentication:
-You can potentially resolve this issue by manually logging into each region (and creating a game) for the impacted account using the battlenet client.
-I've just tested this with a problematic account that I had and it appears to have resolved the issue!",
-    "PublishDate":  "2026.03.08 12:00:00",
-    "ExpiryDate":  "2026.03.13 17:00:00"
+    "Notification":  "Happy St Patricks day! Have a beer for me everyone!",
+    "PublishDate":  "2026.03.17 00:00:00",
+    "ExpiryDate":  "2026.03.18 00:00:00"
 }
