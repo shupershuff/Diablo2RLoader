@@ -104,6 +104,18 @@ https://github.com/shupershuff/Diablo2RLoader/assets/63577525/56bd87d5-157f-4119
 You can optionally select which Terror Zones you want to be visually and audibly notified about.<br>
 <img width="729" height="270" alt="image" src="https://github.com/user-attachments/assets/eee3efee-c402-430d-8759-7d17570ac843" /><br>
 
+**COMING SOON - TZ Overlay**<br>
+Finding it tricky to see what area is currently terrorised when acts have been sharded?<br>
+Want to know next TZ without alt tabbing or having alarms?<br>
+You can optionally enable a Terror Zone overlay to display:<br>
+<img width="1111" height="194" alt="image" src="https://github.com/user-attachments/assets/fc24a9b7-5a60-4e79-b0b3-9445bc6fa86a" />
+
+**COMING SOON - Shortcut keys to switch Windows**<br>
+Some of you have 50 different apps open and keep getting confused where D2R is.
+To help with this, you can configure a shortcut key combo to bring a D2R instance to the foreground as your active instance.
+Your shortcut key combo is specified in config.xml. Use the Combo (eg Shift + Alt) with a number (eg 2) to open account 2, or use the combo with comma (<) or period (>) to switch to previous or next account.
+This feature (and all other features for that matter) does not input any key presses into the game.
+
 **Be an Entertainer in Baals Comedy Club**<br>
 If you're an A grade leecher like me and typically stand around in Baals Throne room sapping up XP, why not at least pretend you have a sense of humour by using the built in joke generator to copy & paste mediocre jokes.<br>
 That way instead of providing any real value in terms of damage, you can provide entertainment value instead.<br>
