@@ -26,7 +26,7 @@
 
 	<!--If specified, this enables the window switching feature where you can use a keyboard combination + a number to switch to a window.
 	Specify which combo keys (exclude numbers) that should be used for switching windows.
-	Valid (comma separated) options are: Alt, Ctrl, Shift and WindowsKey.
+	Valid (comma separated) options are: Alt, Ctrl and Shift.
 	You can choose one or more of these keys to use.
 	For example, if you set this value as 'Shift,Alt', this would mean you press SHIFT + ALT + 2, it will switch to your 2nd instance.You can also use the shortcut key combination + ',' (AKA '<') or '.' (AKA '>') to switch to previous/next account.-->
 	<WindowSwitcherComboKeys></WindowSwitcherComboKeys>
