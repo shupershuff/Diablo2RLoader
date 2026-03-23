@@ -27,7 +27,7 @@ Cow voice alerts can be disabled (manually add a config for 'DisableMoo' in conf
 Added a TZ overlay now that there's capability built to auto check TZs. Enable this by setting 'TerrorZoneOverlay' to true in config.xml
 Made Act 3 Kurast Bazaar TZ alerts less punishing to read/hear.
 Other minor Tweaks to TZ alert display.
-Added the a ability to use shortcut keys to switch between D2r Windows. Set shortcut keys in config.xml. these shortcut keys can be used with 0-9 (eg Shift + Alt + 2 for account 2) or with '<' & '>' for previous/next account.
+Added the ability to use shortcut keys to switch between D2r Windows. Set shortcut keys in config.xml. these shortcut keys can be used with 0-9 (eg Shift + Alt + 2 for account 2) or with '<' & '>' for previous/next account.
 Made adjustements to Options menu.
 
 1.17.0+ to do list:
@@ -43,7 +43,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.07"
+$CurrentVersion = "1.17.1.08"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -813,8 +813,8 @@ Function ValidationAndSetup {
 		Write-Host " Added this missing option into the config.xml file :)`n" -foregroundcolor green
 		$XML = Get-Content "$Script:WorkingDirectory\Config.xml"
 		$Pattern = "</TrackAccountUseTime>"
-		$Replacement = "</TrackAccountUseTime>`n`n`t<!--If set, this automatically pauses time tracking if you are idle for a certain amount of minutes. Set to a number (eg 5 for 5 minutes). Blank (disabled) by default.-->"
-		$Replacement += "`n`t<IdleLimitForAccountUseTime></IdleLimitForAccountUseTime>" #add option to config file if it doesn't exist.
+		$Replacement = "</TrackAccountUseTime>`n`n`t<!--If set, this automatically pauses time tracking if you are idle for a certain amount of minutes. Set to a number (eg 5 for 5 minutes).-->"
+		$Replacement += "`n`t<IdleLimitForAccountUseTime>5</IdleLimitForAccountUseTime>" #add option to config file if it doesn't exist.
 		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
 	}
 	if ($Null -eq $Script:Config.DisableIconStacking){
@@ -2261,7 +2261,13 @@ Function Options {
 			}
 		} until ($NewOptionValue -in $AcceptableOptions + "c" + "Esc")
 		if ($NewOptionValue -in $AcceptableOptions){
-			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r" -and $NewOptionValue -ne "a" -and $NewOptionValue -ne "b"){
+			If ($Option -eq "8" -and $NewOptionValue -eq 2){
+				$Script:ForceOverlayUpdate = $True
+				$Script:ForceTZCheck = $True
+				$Script:OverlayRunOnce = $False
+				return $False
+			}
+			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r" -and $NewOptionValue -ne "a" -and $NewOptionValue -ne "b" -and ($Option -ne "8" -and $NewOptionValue -ne 2)){
 				try {
 					$Pattern = "(<$ConfigName>)([^<]*)(</$ConfigName>)"
 					$ReplaceString = '{0}{1}{2}' -f '${1}', $NewValue, '${3}'
@@ -2508,13 +2514,18 @@ Function Options {
 			$CurrentState = "Disabled"
 		}
 		Else {
-			$Options = @{"1" = "False"}
+			if ($Script:Overlay.IsClosed()){
+				$Options = @{"1" = "False";"2" = "Placeholder"}
+			}
+			Else {
+				$Options = @{"1" = "False"}
+			}
 			$OptionsSubText = "disable"
 			$CurrentState = "Enabled"
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "TerrorZoneOverlay" -OptionsList $Options -Current $CurrentState `
 		-Description "This enables a terror zone overlay that is shown when the game is running.`nHandy if you want to see current TZ (when all acts are sharded it's not always easy to see) or the upcoming TZ." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n"
+		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n $(if ($Script:Overlay.IsClosed()){`"   Choose `'$X[38;2;255;165;000;22m2$X[0m`' to reopen overlay`"})`n"
 	}
 	ElseIf ($Option -eq "9" -and ($Script:Config.DCloneAlarmList -ne "" -or $Script:Config.TerrorZoneAlertAreas -ne "")){ #AlarmVoice
 		$Options = @{
@@ -2565,6 +2576,9 @@ Function Options {
 			If ($Script:Config.WindowSwitcherComboKeys -ne ""){
 				SwitchWindows
 			}
+		}
+		If (($Option -eq "7" -and $Script:Config.TerrorZoneAlertAreas -ne "") -or  ($Option -eq "8" -and $Script:Config.TerrorZoneOverlay -eq "True")){
+			$Script:ForceTZCheck = $True
 		}
 		start-sleep -milliseconds 2500
 	}
@@ -4660,9 +4674,11 @@ Function ChooseAccount {
 						$Script:TZUpcomingAlarmMessage = $Null
 						$TZAlarmMessages = $Null
 					}
-					if ($Script:InitialTZCheck -ne $True -or $TZAlarmTimeCheck -gt $Script:CurrentTZEndTime -or ($TZAlarmTimeCheck -gt $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0]) -or ($Script:Config.TerrorZoneOverlay -eq $True -and $Script:OverlayRunOnce -ne $True)){	#To prevent API spam and maintain script performance, only run TZ check when required.
-						$ForceOverlayUpdate = $True
+					if ($Script:InitialTZCheck -ne $True -or $Script:ForceTZCheck -eq $True -or $TZAlarmTimeCheck -gt $Script:CurrentTZEndTime -or ($TZAlarmTimeCheck -gt $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0]) -or ($Script:Config.TerrorZoneOverlay -eq $True -and $Script:OverlayRunOnce -ne $True)){	#To prevent API spam and maintain script performance, only run TZ check when required.
+						$Script:ForceOverlayUpdate = $True
+						$Script:ForceTZCheck = $False
 						$Script:TZDataTimings = TerrorZone -GetLevelIDs #Get latest TZ detail and also return some timings to this variable
+						write-host "testing, I just checked"
 						if ($Null -eq $Script:CurrentTZEndTime){ #If this is the first time running
 							$UpdateCurrent = $True
 							$Script:CurrentTZEndTime = $Script:TZDataTimings[1]
@@ -4715,8 +4731,12 @@ Function ChooseAccount {
 						TerrorZoneVoiceAlarm -TZAlarmMessage $TZAlarmMessages
 						$TZAlarmMessages = $Null
 					}
-					if ($ForceOverlayUpdate -eq $True){
-						$ForceOverlayUpdate = $False
+					if ($Script:ForceCheckWhenD2rNextOpen -eq $True -and $Script:D2rRunning -eq $True){ #ensure that if the script is open but game is closed, we check next time the game is reopened so overlay isn't showing old data.
+						$Script:ForceOverlayUpdate = $True
+						$Script:ForceCheckWhenD2rNextOpen = $False
+					}
+					if ($Script:ForceOverlayUpdate -eq $True){
+						$Script:ForceOverlayUpdate = $False
 						if ($Script:Config.TerrorZoneOverlay -eq $True){ #Only show overlay once Next TZ is known. We don't bother showing current TZ details as this can be seen in game.
 							If ($Script:OverlayRunOnce -ne $True -and $Script:D2rRunning -eq $True){
 								$Script:Overlay = TerrorZoneOverlay -PrefixTextCurrent "Current TZ: " -TZTextCurrent "Loading..." -PrefixTextNext "Next TZ:    " -TZTextNext "Loading..."
@@ -4755,7 +4775,8 @@ Function ChooseAccount {
 								$overlay.SetWidth($Width)
 							}
 							else {
-								$ForceOverlayUpdate = $True
+								$Script:ForceCheckWhenD2rNextOpen = $True
+								$Script:ForceOverlayUpdate = $True
 								if ($null -ne $overlay){
 									$overlay.Close()
 								}
