@@ -43,7 +43,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.09"
+$CurrentVersion = "1.17.1.10"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -2521,7 +2521,7 @@ Function Options {
 			$CurrentState = "Disabled"
 		}
 		Else {
-			if ($Script:Overlay.IsClosed()){
+			if ($Script:Overlay -and $Script:Overlay.IsClosed()){
 				$Options = @{"1" = "False";"2" = "Placeholder"}
 			}
 			Else {
@@ -2532,7 +2532,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "TerrorZoneOverlay" -OptionsList $Options -Current $CurrentState `
 		-Description "This enables a terror zone overlay that is shown when the game is running.`nHandy if you want to see current TZ (when all acts are sharded it's not always easy to see) or the upcoming TZ." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n $(if ($Script:Overlay -and $Script:Overlay.IsClosed()){`"   Choose `'$X[38;2;255;165;000;22m2$X[0m`' to reopen overlay`"})`n"
+		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n $(if ($Script:Overlay -and $Script:Overlay.IsClosed() -and $Script:Config.TerrorZoneOverlay -eq `"True`"){`"   Choose `'$X[38;2;255;165;000;22m2$X[0m`' to reopen overlay`"})`n"
 	}
 	ElseIf ($Option -eq "9" -and ($Script:Config.DCloneAlarmList -ne "" -or $Script:Config.TerrorZoneAlertAreas -ne "")){ #AlarmVoice
 		$Options = @{
