@@ -43,7 +43,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.08"
+$CurrentVersion = "1.17.1.09"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -2261,18 +2261,25 @@ Function Options {
 			}
 		} until ($NewOptionValue -in $AcceptableOptions + "c" + "Esc")
 		if ($NewOptionValue -in $AcceptableOptions){
-			If ($Option -eq "8" -and $NewOptionValue -eq 2){
+			If ($Option -eq "8" -and ($NewOptionValue -eq 2 -or ($NewOptionValue -eq 1 -and $NewValue -eq "True"))){ # If user chooses to enable the overlay or reopen the closed overlay
 				$Script:ForceOverlayUpdate = $True
 				$Script:ForceTZCheck = $True
 				$Script:OverlayRunOnce = $False
-				return $False
+				if ($NewOptionValue -eq 2){ #if option 2 (reopen) we don't need to change config.
+					return $False
+				}
 			}
-			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r" -and $NewOptionValue -ne "a" -and $NewOptionValue -ne "b" -and ($Option -ne "8" -and $NewOptionValue -ne 2)){
+			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r" -and $NewOptionValue -ne "a" -and $NewOptionValue -ne "b" -or ($Option -eq "8" -and $NewOptionValue -ne 2)){		
 				try {
 					$Pattern = "(<$ConfigName>)([^<]*)(</$ConfigName>)"
 					$ReplaceString = '{0}{1}{2}' -f '${1}', $NewValue, '${3}'
 					$NewXML = ([regex]::Replace($Xml, $Pattern, $ReplaceString)).trim()
 					$NewXML | Set-Content -Path "$Script:WorkingDirectory\Config.xml"
+					If ($Option -eq "8" -and $NewOptionValue -eq 1 -and $NewValue -eq "False"){#if user is choosing to disable TZ overlay, then we should close it in addition to changing config.
+						if ($Script:Overlay -and -not $Script:Overlay.IsClosed()){ #if TZ overlay is running.
+							$Script:Overlay.Close()
+						}
+					}
 					return $True
 				}
 				Catch {
@@ -2525,7 +2532,7 @@ Function Options {
 		}
 		$XMLChanged = OptionSubMenu -ConfigName "TerrorZoneOverlay" -OptionsList $Options -Current $CurrentState `
 		-Description "This enables a terror zone overlay that is shown when the game is running.`nHandy if you want to see current TZ (when all acts are sharded it's not always easy to see) or the upcoming TZ." `
-		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n $(if ($Script:Overlay.IsClosed()){`"   Choose `'$X[38;2;255;165;000;22m2$X[0m`' to reopen overlay`"})`n"
+		-OptionsText "    Choose '$X[38;2;255;165;000;22m1$X[0m' to $OptionsSubText`n $(if ($Script:Overlay -and $Script:Overlay.IsClosed()){`"   Choose `'$X[38;2;255;165;000;22m2$X[0m`' to reopen overlay`"})`n"
 	}
 	ElseIf ($Option -eq "9" -and ($Script:Config.DCloneAlarmList -ne "" -or $Script:Config.TerrorZoneAlertAreas -ne "")){ #AlarmVoice
 		$Options = @{
@@ -3432,7 +3439,7 @@ Function TerrorZone {
 					}
 				}
 			}
-			if (($D2TZResponse.next_available_time_utc + 1) -lt ([DateTimeOffset](Get-Date).ToUniversalTime()).ToUnixTimeSeconds()){ #Don't try pull next TZ details if they aren't available yet.
+			if (($D2TZResponse.next_available_time_utc) -lt ([DateTimeOffset](Get-Date).ToUniversalTime()).ToUnixTimeSeconds()){ #Don't try pull next TZ details if they aren't available yet.
 				$Script:UpcomingTZNameAlert = [System.Collections.Generic.HashSet[string]]::new()
 				$Script:UpcomingTZName = [System.Collections.Generic.HashSet[string]]::new()
 				ForEach ($Level in $D2TZResponse.next){
@@ -3459,6 +3466,7 @@ Function TerrorZone {
 				}
 			}
 			Else {
+				$MinutesToWait = [int]([math]::Abs($D2TZResponse.next_available_time_utc - ([int]((Get-Date).ToUniversalTime() - [datetime]"1970-01-01 00:00:00").TotalSeconds)) / 60)
 				$Script:UpcomingTZNameAlert = ""
 				$Script:UpcomingTZName = ""
 			}
@@ -3518,7 +3526,7 @@ Function TerrorZone {
 			Else {
 				$Script:UpcomingTZName = ($Script:UpcomingTZName -join ", ")
 			}
-			return  @(($D2TZResponse.next_available_time_utc),($D2TZResponse.next_terror_time_utc))
+			return  @(($D2TZResponse.next_available_time_utc),($D2TZResponse.next_terror_time_utc),$MinutesToWait)
 		}
 		ForEach ($Level in $D2TZResponse.current){
 			Write-Debug "Level ID is: $Level"
@@ -3596,7 +3604,7 @@ Function TerrorZone {
 			FormatFunction -SubsequentLineIndents 22 -text "  SuperUniques:       No Super Unique monsters for $(if($D2TZResponse.current.count -gt 1){'these TZ levels'}else{'this TZ level'})."
 		}
 		write-host "`n   $X[38;2;255;165;000;4mNext Terror Zone Details:$X[0m"
-		if (($D2TZResponse.next_available_time_utc + 1) -lt [int]((Get-Date).ToUniversalTime() - [datetime]"1970-01-01 00:00:00").TotalSeconds){
+		if (($D2TZResponse.next_available_time_utc) -lt [int]((Get-Date).ToUniversalTime() - [datetime]"1970-01-01 00:00:00").TotalSeconds){
 			ForEach ($Level in $D2TZResponse.next){
 				Write-Debug "Level ID is: $Level"
 				ForEach ($LevelID in $D2rLevels){
@@ -3730,7 +3738,7 @@ Function TerrorZoneVoiceAlarm {
 }
 Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate this. It's not bad though!
 	[CmdletBinding()]
-	param(
+	param( # several of these parameters aren't used. Might use these later. who knows.
 		[string]$PrefixTextCurrent = "Current TZ: ",
 		[string]$TZTextCurrent = "",
 		[string]$PrefixTextNext = "Next TZ: ",
@@ -3773,6 +3781,7 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		WindowStyle="None"
+		Title="Shupershuff's Terror Zone Overlay"
 		ResizeMode="CanResizeWithGrip"
 		AllowsTransparency="True"
 		Background="Transparent"
@@ -3895,13 +3904,6 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 		$closeButton.Add_Click({
 			try { $window.Close() } catch {}
 		})
-		# ESC closes window
-		$window.Add_KeyDown({
-			param($sender, $e)
-			if ($e.Key -eq [System.Windows.Input.Key]::Escape) {
-				try { $window.Close() } catch {}
-			}
-		})
 		# Track manual close
 		$window.Add_Closed({
 			$syncHash.Closed = $true
@@ -3911,7 +3913,7 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 				) | Out-Null
 			} catch {}
 		})
-		# Optional auto-refresh text from sync hash
+		# Auto-refresh text from sync hash
 		if ($overlayAutoRefresh) {
 			$timer = New-Object System.Windows.Threading.DispatcherTimer
 			$timer.Interval = [TimeSpan]::FromMilliseconds(250)
@@ -4055,18 +4057,6 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 			}.GetNewClosure())
 		}
 	}
-	#$overlay | Add-Member -MemberType ScriptMethod -Name SetOpacity -Value {
-	#	param([double]$NewOpacity)
-	#	if ($NewOpacity -lt 0) { $NewOpacity = 0 }
-	#	if ($NewOpacity -gt 1) { $NewOpacity = 1 }
-	#	$window = $this.SyncHash.Window
-	#	if ($window -and -not $this.SyncHash.Closed -and -not $window.Dispatcher.HasShutdownStarted) {
-	#		$window.Dispatcher.Invoke([action]{
-	#			$window.Opacity = $NewOpacity
-	#		}.GetNewClosure())
-	#	}
-	#}
-	$Global:banana = "banana"
 	$overlay | Add-Member -MemberType ScriptMethod -Name Close -Value {
 		if (-not $this.SyncHash.Closed) {
 			$window = $this.SyncHash.Window
@@ -4656,7 +4646,7 @@ Function ChooseAccount {
 			}
 			$AccountOptions = ($Script:AcceptableValues -join  ", ").trim()
 			#Check for TZ Alarms
-			if ($Script:EmuOfflineMode -ne $True -and ($Script:Config.TerrorZoneAlertAreas -ne "" -or $Script:Config.TerrorZoneOverlay -eq $True) -and $Script:Config.UseChinaRegion -ne $True){
+			if ($Script:EmuOfflineMode -ne $True -and ($Script:Config.TerrorZoneAlertAreas -ne "" -or $Script:Config.TerrorZoneOverlay -eq $True) -and $Script:Config.UseChinaRegion -ne $True -and $Script:ParamsUsed -ne $True){
 				if ($Null -eq $Script:LastActiveTZCheck){#set initial values so if statements don't error out.
 					$Script:LastActiveTZCheck = ([DateTimeOffset](Get-Date "2000-01-01").ToUniversalTime()).ToUnixTimeSeconds()
 					$Script:LastUpcomingTZCheck = ([DateTimeOffset](Get-Date "2000-01-01").ToUniversalTime()).ToUnixTimeSeconds()
@@ -4674,11 +4664,13 @@ Function ChooseAccount {
 						$Script:TZUpcomingAlarmMessage = $Null
 						$TZAlarmMessages = $Null
 					}
-					if ($Script:InitialTZCheck -ne $True -or $Script:ForceTZCheck -eq $True -or $TZAlarmTimeCheck -gt $Script:CurrentTZEndTime -or ($TZAlarmTimeCheck -gt $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0]) -or ($Script:Config.TerrorZoneOverlay -eq $True -and $Script:OverlayRunOnce -ne $True)){	#To prevent API spam and maintain script performance, only run TZ check when required.
+					if ($Script:InitialTZCheck -ne $True -or $Script:ForceTZCheck -eq $True -or $TZAlarmTimeCheck -gt $Script:CurrentTZEndTime -or ($TZAlarmTimeCheck -ge $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0]) -or ($Script:Config.TerrorZoneOverlay -eq $True -and $Script:OverlayRunOnce -ne $True)){	#To prevent API spam and maintain script performance, only run TZ check when required.
 						$Script:ForceOverlayUpdate = $True
 						$Script:ForceTZCheck = $False
+						if ($TZAlarmTimeCheck -eq $Script:TZDataTimings[0]){# If TZ data is due to arrive this exact second, give it a smidge more time to get data so that we don't have to wait another 30 seconds to retry.
+							start-sleep 750 -milliseconds
+						}
 						$Script:TZDataTimings = TerrorZone -GetLevelIDs #Get latest TZ detail and also return some timings to this variable
-						write-host "testing, I just checked"
 						if ($Null -eq $Script:CurrentTZEndTime){ #If this is the first time running
 							$UpdateCurrent = $True
 							$Script:CurrentTZEndTime = $Script:TZDataTimings[1]
@@ -4689,7 +4681,7 @@ Function ChooseAccount {
 							$Script:CurrentTZStartTime = $Script:CurrentTZEndTime
 							$Script:CurrentTZEndTime = $Script:TZDataTimings[1]
 						}
-						if ($TZAlarmTimeCheck -lt $Script:TZDataTimings[0]){ #if current time is before when the the Upcoming TZ details are available from the API.
+						if ($TZAlarmTimeCheck -le $Script:TZDataTimings[0]){ #if current time is before when the the Upcoming TZ details are available from the API.
 							$Script:UpcomingTZNameAlert = $Null
 						}
 					}
@@ -4710,7 +4702,7 @@ Function ChooseAccount {
 						write-debug "Only Showing active TZ"
 						FormatFunction -text "$X[38;2;230;24;245;48;2;1;1;1;4m$TZActiveAlarmMessage$X[0m" -indents 1
 					}
-					if (($Script:InitialTZCheck -ne $True) -or ($TZAlarmTimeCheck -gt $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0])){ #Run once if not already. Show TZ details when they're available. Voicealarm if it hasn't already been checked this cycle.
+					if (($Script:InitialTZCheck -ne $True) -or ($TZAlarmTimeCheck -ge $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0])){ #Run once if not already. Show TZ details when they're available. Voicealarm if it hasn't already been checked this cycle.
 						if ($Script:UpcomingTZNameAlert){
 							write-debug "Showing and alarming upcoming TZ"
 							$UpcomingTZAlert = ($Script:UpcomingTZNameAlert -replace '\d+$','').trim() #remove any numbers and spaces at the end of the TZ name to make the announcement a bit nicer.
@@ -4761,8 +4753,9 @@ Function ChooseAccount {
 								}
 								If ($Script:CurrentTZName -and !$Script:UpcomingTZName){
 									$overlay.SetTZTextCurrent($Script:CurrentTZName)
-									$overlay.SetTZTextNext("Next TZ Data not available yet...")
-									$Width = if (348 + 108 -gt $Width){348 + 108}else{$Width} #whatever value is bigger
+									$overlay.SetTZTextNext("TBC - Next TZ Data available in $($Script:TZDataTimings[2]) minute$(if($Script:TZDataTimings[2] -gt 1){`"s`"}else{`"`"})...")
+									#$overlay.SetTZTextNext("Next TZ Data not available yet...")
+									$Width = if (348 + 204 -gt $Width){348 + 204}else{$Width} #whatever value is bigger
 								}
 								Elseif ($Script:CurrentTZName -and $Script:UpcomingTZName){
 									$overlay.SetTZTextCurrent($Script:CurrentTZName)
@@ -4790,7 +4783,7 @@ Function ChooseAccount {
 				}
 			}
 			#DClone Alarm check
-			if (!($Script:EmuOfflineMode -eq $True -and $Script:Config.DCloneTrackerSource -eq "d2emu.com")){ #if D2Emu is down and connection source is D2Emu, disable this feature by skipping it.
+			if (!($Script:EmuOfflineMode -eq $True -and $Script:Config.DCloneTrackerSource -eq "d2emu.com" ) -and $Script:ParamsUsed -ne $True){ #if D2Emu is down and connection source is D2Emu, disable this feature by skipping it.
 				write-debug "Checking for DClone status changes."
 				$GetDCloneFunc = $(Get-Command DClone).Definition
 				$GetWebRequestFunc = $(Get-Command WebRequestWithTimeOut).Definition
@@ -5322,6 +5315,9 @@ Function Processing {
 					Write-Host "  D2r isn't open yet for $($Script:AccountChoice.ID). Waiting another second..."
 					Start-Sleep -milliseconds 1000 #Give it another second before trying again
 				}
+				else {
+					Start-Sleep -milliseconds 1250
+				}
 			} until ($Null -ne $Process -or $WaitCounter -gt 20)
 			if ($WaitCounter -gt 20){
 				Write-Host "  D2r did not start as expected." -foregroundcolor red
@@ -5426,6 +5422,9 @@ if ($Script:ParamsUsed -ne $True){ #Check if there's new versions and if so disp
 ImportXML #Get your config
 if ($Script:ParamsUsed -ne $True){#Get D2Emu connection details. Required for TZ/DClone data. Adds half a second to start up time.
 	GetEmuToken #Don't bother getting D2Emu connection details if script parameters are being used.
+	if ($Script:Config.WindowSwitcherComboKeys -ne ""){
+		SwitchWindows
+	}
 }
 ValidationAndSetup #I've made a few changes over different versions, this checks for any config updates that need to be made and helps prevent user error (Typo's)
 ImportCSV #Get accounts and account stats.
@@ -5433,9 +5432,6 @@ Clear-Host #Clear screen of all the initialisation crap.
 D2rLevels #Level ID's used for comparing TZ data against.
 QuoteList #List of D2 quotes to display.
 SetQualityRolls #Randomly roll quotes in D2 themed colours.
-if ($Script:Config.WindowSwitcherComboKeys -ne ""){
-	SwitchWindows
-}
 Menu #start script.
 
 #For Diablo II: Resurrected
