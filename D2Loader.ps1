@@ -43,7 +43,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.10"
+$CurrentVersion = "1.17.1.11"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -3962,6 +3962,9 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 				if (($d2rPids -contains $fgPid) -or ($PowerShellPids -contains $fgPid)){
 					$d2rActive = $True
 				}
+				if ($Null -eq $d2rPids) {
+					$d2rActive = $False
+				}
 				$window.Visibility = if ($d2rActive) {
 					[System.Windows.Visibility]::Visible
 				} else {
@@ -5300,9 +5303,13 @@ Function Processing {
 					Start-Process "$Gamepath\D2R.exe" -ArgumentList "$arguments"
 					Start-Sleep -milliseconds 100
 				}
-				elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
-					$SteamLaunchCommand = ('"'+ $SteamPath + '\steam.exe" -applaunch 2536520 ' + $arguments)
-					cmd.exe /c $SteamLaunchCommand
+				elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){ #D2r Steam ID is 2536520
+					if(!(get-process steam -erroraction silentlycontinue)){$SteamNotRunning = $True}
+					Start-Process -FilePath "$SteamPath\steam.exe" -ArgumentList "-applaunch 2536520 $arguments"
+					if ($SteamNotRunning){ #Lets give steam some bonus time to start running
+						Write-host "  Waiting for Steam to start..."
+						Start-Sleep -milliseconds 2500
+					}
 					Start-Sleep -milliseconds 500
 				}
 			}
@@ -5314,9 +5321,6 @@ Function Processing {
 				if ($Null -eq $Process){
 					Write-Host "  D2r isn't open yet for $($Script:AccountChoice.ID). Waiting another second..."
 					Start-Sleep -milliseconds 1000 #Give it another second before trying again
-				}
-				else {
-					Start-Sleep -milliseconds 1250
 				}
 			} until ($Null -ne $Process -or $WaitCounter -gt 20)
 			if ($WaitCounter -gt 20){
