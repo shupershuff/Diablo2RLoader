@@ -5,7 +5,7 @@ This is a free script I made for launching multiple Diablo 2 Resurrected instanc
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
 This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
-<ins>Please note that this is not supported for Steam accounts (YET, it will be in th next update), only [Battle Net accounts](https://us.shop.battle.net/).</ins>
+<ins>Please note that this is not supported for Steam accounts (YET, it will be in the next update), only [Battle Net accounts](https://us.shop.battle.net/).</ins>
 
 Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?<br>
 <br>
@@ -19,7 +19,7 @@ Using this script means you DON'T have to do any of this stuff to multibox:<br>
  	- Note that this script also builds an executable called SetTextv2.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
 	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
-Note that this script DOES NOT (and will never) alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game.
+Note that this script DOES NOT (and will never) alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game, you still manually control your characters one at a time.<br>
 If you want to use additional scripts, programs or mods to achieve any of the above (which I would strongly discourage), then that's at your own risk.<br>
 
 This is a labour of love, for a game I love, for what I feel is a pretty good gaming community :)<br>
@@ -405,13 +405,13 @@ That said, it is possible to connect if you utilise the Auth Token method instea
 **A:** Multiboxing itself is not against Blizzard TOS as per this [Blizzard Rep](https://us.forums.blizzard.com/en/d2r/t/blizzard-please-give-us-an-official-statement-on-multiboxing/21958/5) and this [Blizzard Article](https://eu.battle.net/support/en/article/24258). However the only way of achieving this without additional physical computers or Virtual Machines is by killing the "Check for Other instances" handle.
 
 Outside of killing this handle and changing the window title, there are absolutely no modifications to the game made by this script, it's simply an improved, alternative way to start the application.
-To be clear, this script in no way enhances or assists with actual game play and I would strongly advise against seeking/using any tools for automation.
+To be clear, this script in no way enhances, assists or automates actual game play and I would strongly advise against seeking/using any tools for automation.
 The script is essentially launching the game the same way you would if you had setup shortcuts to the game with parameters (account, region and password), launching that way and then killing the "Check for other instances" handle (as suggested in several guides). This script is a QoL tool to help consolidate your accounts to one simple launcher to simply open the game with the account(s) and region(s) you want.
 
 So the real question is, regardless of this script, is using procexp or another method to kill the "check for other instances" handle against ToS? Stricly speaking yes and this topic has been broached in Blizzard forums many times without an official response either for or against.
-If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances' handle?" which to that I'm confident the answer is no. If I wasn't confident, this script wouldn't exist and people wouldn't be using procexp/handle.exe to multibox through traditional methods. Given the widespread use of procexp/handle being used to multibox, this method (and therefore also this script), is considered safe.
+If you're reading this your real question is actually "Will I get banned for multiboxing by killing the 'check for other instances' handle?" which to that I'm confident the answer is no. If I wasn't confident, this script wouldn't exist and people wouldn't be using procexp/handle.exe to multibox through traditional methods. Given the widespread use of procexp/handle being used to multibox, this method (and therefore also this script), is considered safe. That said, it goes without saying that the risk is not zero should Blizzard misinterpret what this script does and doesn't do.
 
-This script can also be used for folk who have one account and want to track playtime details or simply want to be able to use an interface to launch different single player mods.
+This script can also be used for folk who have one account and want to track playtime details or simply want to be able to use an interface to launch different single player mods. I also have a [Single Player Launcher](https://github.com/shupershuff/D2rSPLoader) for that use case too :)
 
 ## Notes about the Window title rename (SetTextv2.exe)
 
