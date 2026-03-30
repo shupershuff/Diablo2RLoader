@@ -5,7 +5,7 @@ This is a free script I made for launching multiple Diablo 2 Resurrected instanc
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
 This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
-<ins>Please note that this is not supported for Steam accounts, only [Battle Net accounts](https://us.shop.battle.net/).</ins>
+<ins>Please note that this is not supported for Steam accounts (YET, it will be in th next update), only [Battle Net accounts](https://us.shop.battle.net/).</ins>
 
 Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?<br>
 <br>
