@@ -24,6 +24,13 @@
 	<!--Make game launch each instance in the same screen location so you don't have to move your game windows around when starting the game.-->
 	<RememberWindowLocations>False</RememberWindowLocations>
 
+	<!--If specified, this enables the window switching feature where you can use a keyboard combination + a number to switch to a window.
+	Specify which combo keys (exclude numbers) that should be used for switching windows.
+	Valid (comma separated) options are: Alt, Ctrl and Shift.
+	You can choose one or more of these keys to use.
+	For example, if you set this value as 'Shift,Alt', this would mean you press SHIFT + ALT + 2, it will switch to your 2nd instance.You can also use the shortcut key combination + ',' (AKA '<') or '.' (AKA '>') to switch to previous/next account.-->
+	<WindowSwitcherComboKeys></WindowSwitcherComboKeys>
+
 	<!--Make sure game always starts in Windowed mode rather than full screen. Note that this seems to cause issues remembering your last window size. Recommend leaving false-->
 	<ForceWindowedMode>False</ForceWindowedMode>
 
@@ -45,8 +52,8 @@
 	<!--This allows you to roughly track how long you've used each account while using this script. Choose False if you want to disable this.-->
 	<TrackAccountUseTime>True</TrackAccountUseTime>
 
-	<!--If set, this automatically pauses time tracking if you are idle for a certain amount of minutes. Set to a number (eg 5 for 5 minutes). Blank (disabled) by default.-->
-	<IdleLimitForAccountUseTime></IdleLimitForAccountUseTime>
+	<!--If set, this automatically pauses time tracking if you are idle for a certain amount of minutes. Set to a number (eg 5 for 5 minutes).-->
+	<IdleLimitForAccountUseTime>5</IdleLimitForAccountUseTime>
 
 	<!--Options are d2emu.com, D2runewizard.com and diablo2.io.
 	Default and recommended option is d2emu.com as this pulls live data from the game as opposed to crowdsourced data.-->
@@ -73,6 +80,9 @@
 	For example, for Catacombs, Tombs, Chaos and WSK this would be: '34,66,108,131'.-->
 	<TerrorZoneAlertAreas></TerrorZoneAlertAreas>
 
+	<!--This enables a movable overlay to display current and upcoming TZ's.-->
+	<TerrorZoneOverlay>False</TerrorZoneOverlay>
+
 	<!--Specify what voice you want. Choose 'Paladin' for David (Man) or 'Amazon' for Zira (Woman).-->
 	<AlarmVoice>Amazon</AlarmVoice>
 	<!--Specify how loud notifications can be. Range from 1 and 100.-->
@@ -83,5 +93,4 @@
 	Valid options are NA, EU and KR. Default is blank.-->
 	<ForceAuthTokenForRegion></ForceAuthTokenForRegion>
 </D2loaderconfig>
-
 
