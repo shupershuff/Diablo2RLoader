@@ -365,7 +365,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$SubsequentLineIndent += " "
 			$SubsequentLineIndents --
 		}
-	}	
+	}
 	$Text -split "`n" | ForEach-Object {
 		$Line = " " + $Indent + $_
 		$SecondLineDeltaIndent = ""
@@ -382,28 +382,25 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$highestIndex = -1
 			$SelectedMatch = $Null
 			$PatternLengthCount = 0
-			
-			
+
 			#$Script:X = [char]0x1b
 			#$X[38;2;165;146;99;48;2;1;1;1;4m   $X[0m#    .replace([char]0x1b,"F")
 			#$ANSITEXT -replace '\x1b\[[0-9;]*m',''
-							
+
 			                    #  38      2     165    146      99      48       2       1       1      1        2       4m
 			#$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
 			#$ANSIPatterns = "(?:\x1b|\$X)\[[0-9;]*m","\x1b\[0m","\x1b\[4m"
-			
+
 			# Need to adjust this function so one of 2 ways, whatevers easiest/fastest
 			# the easiest way would be to identify the previous opening ANSI statement, close off the ANSI at the end of the first line $X[0m then add spaces for indent and then readd the opening ANSI statement at the beginning of next line
-			
 
-			
 			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
 			ForEach ($WordMatch in $WordMatches){# Iterate through each match (match being a block of characters, ie each word).
 				ForEach ($ANSIPattern in $ANSIPatterns){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
 					$ANSIMatches = $WordMatch.value | Select-String -Pattern $ANSIPattern -AllMatches
 					ForEach ($ANSIMatch in $ANSIMatches){
 						if ($line -ne "  $ContinueANSI"){
-							$Script:ANSIUsed = $True	
+							$Script:ANSIUsed = $True
 						}
 						$PatternLengthCount = $PatternLengthCount + (($ANSIMatch.matches | ForEach-Object {$_.Value}) -join "").length #Calculate how many characters in the text are ANSI formatting characters and thus won't be displayed on screen, to prevent skewing word count.
 					}
@@ -427,7 +424,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			}
 		}
 		Formatter $Line
-		if ($Script:ANSIUsed -eq $True){ #if fancy pants coloured text (ANSI) is used, write out the first line. Check if ANSI was used in any overflow lines.	
+		if ($Script:ANSIUsed -eq $True){ #if fancy pants coloured text (ANSI) is used, write out the first line. Check if ANSI was used in any overflow lines.
 			do {
 				if ($Chunk -match "(?:\x1b|\$X)\[[0-9;]*m" -and $Chunk -notmatch '\x1b\[0m'){#Open ANSI without a closing tag
 					$ANSIStillActive = $True
@@ -456,7 +453,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 				}
 				elseif ($Chunk -notmatch "(?:\x1b|\$X)\[[0-9;]*m" -and $Chunk -match '\x1b\[0m'){ #closing ansi with no open tag
 					$ANSIStillActive = $False
-				}				
+				}
 				$Script:ANSIUsed = $False
 				if ($ANSIStillActive -eq $True){#output with a closing statement and then insert the ANSI formatting into the next line to process
 					Write-Output ($Chunk + "$X[0m") | out-host #have to use out-host due to pipeline shenanigans and at this point was too lazy to do things properly :)
@@ -479,7 +476,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 		if ($Line.length -gt 0){ # I see you're reading my comment. How thorough of you! This whole function was an absolute mindf#$! to come up with and took probably 30 hours of trial, error and rage (in ascending order of frequency). Odd how the most boring of functions can take up the most time :)
 			Write-Output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) - $($SubsequentLineIndent.length) -1 - $($SecondLineDeltaIndent.length))})(\s+|$)", " $SubsequentLineIndent$SecondLineDeltaIndent$Indent`$1`n").trimend() | &$Colour
 		}
-	} 
+	}
 }
 Function CommaSeparatedList {
 	param (
@@ -804,7 +801,7 @@ Function ValidationAndSetup {
 		$Replacement +=	"To make settings option, you can load from, call the file settings.<name>.json eg(settings.Awesome Graphics.json) which will appear as `"Awesome Graphics`" in the menu.-->`n`t"
 		$Replacement +=	"<ManualSettingSwitcherEnabled>False</ManualSettingSwitcherEnabled>" #add option to config file if it doesn't exist.
 		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
-	}	
+	}
 	if ($Null -eq $Script:Config.ShowCloseOptionInMenu){
 		Write-Host "`n Config option 'ShowCloseOptionInMenu' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -1174,7 +1171,7 @@ Function ValidationAndSetup {
 	#Check IdleLimitForAccountUseTime is an integer
 	if ($Config.IdleLimitForAccountUseTime -ne ""){#if this config option isn't blank and isn't number, have a big moan about it.
 		try {
-			$Script:IdleLimitForAccountUseTime = [int]$Config.IdleLimitForAccountUseTime  
+			$Script:IdleLimitForAccountUseTime = [int]$Config.IdleLimitForAccountUseTime
 		}
 		Catch {
 			Write-Host "`n Config Option 'IdleLimitForAccountUseTime' is invalid." -foregroundcolor red
@@ -3172,7 +3169,7 @@ Function TerrorZone {
 								}
 								Else {
 									[void]$Script:UpcomingTZName.add($LevelID[1])  #Return Name of Upcoming TZ
-								}							
+								}
 								if ($Counter -gt 1){
 									$Script:TZNextPluralS = "s"
 									$Script:TZNextPluralISAre = "are"
@@ -3948,7 +3945,7 @@ Function ChooseAccount {
 						$TZAlarmMessages = $Null
 					}
 					if ($Script:InitialTZCheck -ne $True -or $TZAlarmTimeCheck -gt $Script:CurrentTZEndTime -or ($TZAlarmTimeCheck -gt $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0])){	#To prevent API spam and maintain script performance, only run TZ check when required.
-						$Script:TZDataTimings = TerrorZone -GetLevelIDs #Get latest TZ detail and also return some timings to this variable	
+						$Script:TZDataTimings = TerrorZone -GetLevelIDs #Get latest TZ detail and also return some timings to this variable
 						if ($Null -eq $Script:CurrentTZEndTime){ #If this is the first time running
 							$UpdateCurrent = $True
 							$Script:CurrentTZEndTime = $Script:TZDataTimings[1]
