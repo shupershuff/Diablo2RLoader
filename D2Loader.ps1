@@ -548,7 +548,7 @@ Function GetEmuToken { #For connecting to D2Emu for TZ and/or DClone data
 		PressTheAnyKey
 	}
 }
-Function Create-Shortcut {# Create Shortcut Function
+Function CreateShortcut {# Create Shortcut Function
 	param (
 		[string]$shortcutPath,
 		[string]$targetPath,
@@ -4499,7 +4499,7 @@ Function Processing {
 			$arguments += " --instance$($Script:AccountChoice.ID)"
 			if ($Script:Config.DisableIconStacking -eq $True){
 				$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
-				Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
+				CreateShortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
 				Start-Process -FilePath $ShortcutPath
 				Start-Sleep -milliseconds 1100 #give D2r a bit of a chance to start up before trying to kill handle
 				#Remove-Item -Path $ShortcutPath -Force #Unfortunatly removing the shortcut files afterwards somehow results in the icons stacking again.
