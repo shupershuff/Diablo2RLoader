@@ -16,7 +16,6 @@ Using this script means you DON'T have to do any of this stuff to multibox:<br>
 - You don't need to use Virtual Machines, multiple computers or multiple user accounts (Windows account switching).
 - You don't need to run any dodgy executables where you don't know what's actually running, this is all open source.
  	- Note that this script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool.
- 	- Note that this script also builds an executable called SetTextv2.exe for window renaming, details of which can be seen on [StackOverflow](https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389). This .exe has been whitelisted by Microsoft.
 	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
 Note that this script DOES NOT (and will never) alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game, you still manually control your characters one at a time.<br>
@@ -244,7 +243,7 @@ Done editing? Make sure to save the file! CTRL + S for the win :)
    d) Type in "y" and press enter to confirm.<br>
    e) Run the D2Loader.ps1 script again.<br>
 3. If the script prompts to trust it and add it to the unblock list, type in y and press enter to confirm.
-4. This will perform the first time setup for compiling settext.exe, encrypting your passwords and will create a shortcut on your desktop.
+4. This will perform the first time setup for encrypting your passwords and creating a shortcut on your desktop.
 
 If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped.
 
@@ -413,28 +412,6 @@ If you're reading this your real question is actually "Will I get banned for mul
 
 This script can also be used for folk who have one account and want to track playtime details or simply want to be able to use an interface to launch different single player mods. I also have a [Single Player Launcher](https://github.com/shupershuff/D2rSPLoader) for that use case too :)
 
-## Notes about the Window title rename (SetTextv2.exe)
-
-The script will generate a file called SetTextv2.exe if it doesn't exist.
-This is used to rename the Game Windows so that you and the script can tell each instance apart.
-To compile the .exe this requires DotNet4.0. If you don't have it the script will prompt you to download this from Microsoft.
-~~A Windows Defender exception will also be automatically added for the directory this sits in, as at the time of writing (24.4.2023), Windows Defender considers it to be dodgy.~~ <br>
-~~A submission has since been sent to Microsoft and submission has been cleared :)~~ <br>
-I have since made a new version of SetText so that it can rename Windows based on process ID (instead of looking for any window matching Diablo II) to prevent any issues with folk who launch an instance via Battlenet as well as the script.
-
-If you have a 3rd Party Anti-Virus product installed and it kicks up a fuss, you may need to manually add an exception to the .\SetText\ folder location.
-
-Optional: If you want to build the .exe yourself you can do the following.
-1. Browse to the SetText Folder.
-2. In the Address bar (the part that shows the path of the folder you're in), click in this, clear out anything that's in it, type in cmd and press enter.
-3. This will open the command prompt with it set in the path of where you've saved the script.
-4. Next copy and paste the following into CMD:
-	SET var=%cd%
-	"C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" /target:winexe /out:"%var%\SetTextv2.exe" "%var%\SetTextv2.bas" /verbose
-5. This should compile SetText.exe. This is used to give the Diablo windows a unique name once it's initialized.
-
-See this site for more information on what this does, this contains the original version and the updated version that I've made: https://stackoverflow.com/questions/39021975/changing-title-of-an-application-when-launching-from-command-prompt/39033389#39033389
-
 # What's Next #
 You tell me. If there's something you want to see added or improved then let me know. Future updates may include:<br>
 * Terror Zone audio Alarms. Be notified (audibly) when your favourite Terror Zones are starting or coming next hour.
@@ -461,7 +438,7 @@ Happy for you to make any modifications this script for your own needs providing
 - Thanks to Mysterio ([D2Emu.com](https://D2Emu.com)), Prowner ([d2runewizard.com](https://d2runewizard.com)) and Teebling "Teebs" ([diablo2.io](https://diablo2.io)) for providing their awesome respective API's for DClone status for you to choose from.
 - Thanks to dschu012 for [discovering the AuthToken method](https://github.com/Farmith/D2RMIM/pull/11/files#diff-5408bbaf05738fe52729de093b38981abecffeb304b1cd388713cbe6a0461d21) and thanks to Sunblood for pointing me towards this discovery.
 - Thanks to v2.jokeapi.dev, official-joke-api.appspot.com, icanhazdadjoke.com and api.chucknorris.io for API's providing top notch cringe for us to smirk at.
-- Thanks to Sir-Wilhelm for tidying up Handle killer and providing code for resizing and relocating windows.
+- Thanks to Sir-Wilhelm for tidying up Handle killer, providing code for resizing/relocating windows, renaming window titles, and minor code cleanup.
 - ChatGPT for helping with regex patterns.
 - Google.com for everything else.
 - Live, Laugh, Love.

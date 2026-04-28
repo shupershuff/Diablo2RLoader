@@ -688,30 +688,6 @@ Function CheckForUpdates {
 			Start-Sleep -milliseconds 3500
 		}
 	}
-	#Update (or replace missing) SetTextV2.bas file. This is an newer version of SetText (built by me and ChatGPT) that allows windows to be closed by process ID.
-	if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.bas')) -ne $True){#if SetTextv2.bas doesn't exist, download it.
-		try {
-			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") -ErrorAction stop | Out-Null #create temporary folder to download zip to and extract
-		}
-		Catch {#if folder already exists for whatever reason.
-			Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force
-			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
-		}
-		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
-		$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
-		$ZipURL = $ReleaseInfo.zipball_url #get zip download URL
-		$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
-		Invoke-WebRequest -Uri $ZipURL -UseBasicParsing -OutFile $ZipPath
-		if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.
-			Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -UseBasicParsing -OutFile $null | out-null #identify the latest file only.
-		}
-		$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
-		Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
-		$FolderPath = Get-ChildItem -Path $ExtractPath -Directory -Filter "shupershuff*" | Select-Object -ExpandProperty FullName
-		Copy-Item -Path ($FolderPath + "\SetText\SetTextv2.bas") -Destination ($Script:WorkingDirectory + "\SetText\SetTextv2.bas")
-		Write-Host "  SetTextV2.bas was missing and was downloaded."
-		Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force #delete update temporary folder
-	}
 }
 Function ImportXML { #Import Config XML
 	param(
@@ -1202,25 +1178,6 @@ Function ValidationAndSetup {
 			$Shortcut.IconLocation = $ShortcutCustomIconPath
 		}
 		$Shortcut.Save()
-	}
-	#Check if SetTextv2.exe exists, if not, compile from SetTextv2.bas. SetTextv2.exe is what's used to rename the windows.
-	if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
-		Write-Host "`n First Time run!`n" -foregroundcolor Yellow
-		Write-Host " SetTextv2.exe not in .\SetText\ folder and needs to be built."
-		if ((Test-Path -Path "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe") -ne $True){#check that .net4.0 is actually installed or compile will fail.
-			Write-Host " .Net v4.0 not installed. This is required to compile the Window Renamer for Diablo." -foregroundcolor red
-			Write-Host " Download and install it from Microsoft here:" -foregroundcolor red
-			Write-Host " https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40" #actual download link https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net40-web-installer
-			PressTheAnyKeyToExit
-		}
-		Write-Host " Compiling SetTextv2.exe from SetTextv2.bas..."
-		& "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" -target:winexe -out:"`"$WorkingDirectory\SetText\SetTextv2.exe`"" "`"$WorkingDirectory\SetText\SetTextv2.bas`"" | out-null #/verbose  #actually compile the bastard
-		if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){#if it fails for some reason and settextv2.exe still doesn't exist.
-			Write-Host " SetTextv2 Could not be built for some reason :/"
-			PressTheAnyKeyToExit
-		}
-		Write-Host " Successfully built SetTextv2.exe for Diablo 2 Launcher script :)" -foregroundcolor green
-		Start-Sleep -milliseconds 4000 #a small delay so the first time run outputs can briefly be seen
 	}
 	#Check Handle64.exe downloaded and placed into correct folder
 	$Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
@@ -1809,7 +1766,7 @@ Function Inventory {#Info screen
 	Write-Host
 	PressTheAnyKey
 }
-Function LoadWindowClass { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
+Function LoadWindowClass { #Used to get window locations, place them in the same screen locations at launch, and set window titles. Code courtesy of Sir-Wilhelm and Microsoft.
 	try {
 		[void][Window]
 	}
@@ -1830,6 +1787,9 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool ShowWindow(IntPtr handle, int state); //used in this script to restore minimized window (state 9)
+			[DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool SetWindowText(IntPtr hWnd, string lpString);
 			// Add SetWindowPos
 			[DllImport("user32.dll", SetLastError = true)]
 			public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -4531,11 +4491,11 @@ Function Processing {
 				PressTheAnyKey
 			}
 			#Rename the Diablo Game window for easier identification of which account and region the game is.
-			$rename = ($Script:AccountID + " - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")" + " - Diablo II: Resurrected")
-			$Command = ('"'+ $WorkingDirectory + '\SetText\SetTextv2.exe" /PID ' + $process.ProcessID + ' "' + $rename + '"')
+			$handle = (Get-Process -Id $process.ProcessID).MainWindowHandle
+			$title = ($Script:AccountID + " - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")" + " - Diablo II: Resurrected")
 			try {
-				cmd.exe /c $Command
-				write-debug $Command #debug
+				LoadWindowClass
+				[Window]::SetWindowText($handle, $title) | Out-Null
 				Write-debug " Window Renamed." #debug
 				Start-Sleep -milliseconds 250
 			}
