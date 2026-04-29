@@ -3000,7 +3000,7 @@ Function DCloneVoiceAlarm {
 		}
 	}
 	if ($Null -ne $VoiceMessages){#if there are voice messages to play
-		function Start-Speech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
+		function StartSpeech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
 			param(
 			[string]$Text,
 			[int]$Volume = 100,
@@ -3023,7 +3023,7 @@ Function DCloneVoiceAlarm {
 		if ($Script:Config.AlarmVoice -eq "Bloke" -or $Script:Config.AlarmVoice -eq "Man" -or $Script:Config.AlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
 		ElseIf ($Script:Config.AlarmVoice -eq "Wench" -or $Script:Config.AlarmVoice -eq "Woman" -or $Script:Config.AlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
 		else {break}# If specified voice doesn't exist
-		Start-Speech $VoiceMessages -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
+		StartSpeech $VoiceMessages -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
 	}
 	if ($null -ne $Message){
 		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mDClone status provided by $($Script:Config.DCloneTrackerSource)$X[0m"
@@ -3324,7 +3324,7 @@ Function TerrorZoneVoiceAlarm {
 	param(
 		[string] $TZAlarmMessage
 	)
-	Function Start-Speech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
+	Function StartSpeech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
 		param(
 		[string]$Text,
 		[int]$Volume = 100,
@@ -3347,7 +3347,7 @@ Function TerrorZoneVoiceAlarm {
 	if ($Script:Config.AlarmVoice -eq "Bloke" -or $Script:Config.AlarmVoice -eq "Man" -or $Script:Config.AlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
 	ElseIf ($Script:Config.AlarmVoice -eq "Wench" -or $Script:Config.AlarmVoice -eq "Woman" -or $Script:Config.AlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
 	else {break}# If specified voice doesn't exist
-	Start-Speech $TZAlarmMessage -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
+	StartSpeech $TZAlarmMessage -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
 }
 Function KillHandle { #Thanks to sir-wilhelm for tidying this up.
 	param ([Switch]$TryAgain)
