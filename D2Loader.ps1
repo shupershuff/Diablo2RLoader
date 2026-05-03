@@ -365,7 +365,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$SubsequentLineIndent += " "
 			$SubsequentLineIndents --
 		}
-	}	
+	}
 	$Text -split "`n" | ForEach-Object {
 		$Line = " " + $Indent + $_
 		$SecondLineDeltaIndent = ""
@@ -382,28 +382,25 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			$highestIndex = -1
 			$SelectedMatch = $Null
 			$PatternLengthCount = 0
-			
-			
+
 			#$Script:X = [char]0x1b
 			#$X[38;2;165;146;99;48;2;1;1;1;4m   $X[0m#    .replace([char]0x1b,"F")
 			#$ANSITEXT -replace '\x1b\[[0-9;]*m',''
-							
+
 			                    #  38      2     165    146      99      48       2       1       1      1        2       4m
 			#$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
 			#$ANSIPatterns = "(?:\x1b|\$X)\[[0-9;]*m","\x1b\[0m","\x1b\[4m"
-			
+
 			# Need to adjust this function so one of 2 ways, whatevers easiest/fastest
 			# the easiest way would be to identify the previous opening ANSI statement, close off the ANSI at the end of the first line $X[0m then add spaces for indent and then readd the opening ANSI statement at the beginning of next line
-			
 
-			
 			$ANSIPatterns = "\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[38;\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3};\d{1,3}m","\x1b\[0m","\x1b\[4m"
 			ForEach ($WordMatch in $WordMatches){# Iterate through each match (match being a block of characters, ie each word).
 				ForEach ($ANSIPattern in $ANSIPatterns){ #iterate through each possible ANSI pattern to find any text that might have ANSI formatting.
 					$ANSIMatches = $WordMatch.value | Select-String -Pattern $ANSIPattern -AllMatches
 					ForEach ($ANSIMatch in $ANSIMatches){
 						if ($line -ne "  $ContinueANSI"){
-							$Script:ANSIUsed = $True	
+							$Script:ANSIUsed = $True
 						}
 						$PatternLengthCount = $PatternLengthCount + (($ANSIMatch.matches | ForEach-Object {$_.Value}) -join "").length #Calculate how many characters in the text are ANSI formatting characters and thus won't be displayed on screen, to prevent skewing word count.
 					}
@@ -427,7 +424,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 			}
 		}
 		Formatter $Line
-		if ($Script:ANSIUsed -eq $True){ #if fancy pants coloured text (ANSI) is used, write out the first line. Check if ANSI was used in any overflow lines.	
+		if ($Script:ANSIUsed -eq $True){ #if fancy pants coloured text (ANSI) is used, write out the first line. Check if ANSI was used in any overflow lines.
 			do {
 				if ($Chunk -match "(?:\x1b|\$X)\[[0-9;]*m" -and $Chunk -notmatch '\x1b\[0m'){#Open ANSI without a closing tag
 					$ANSIStillActive = $True
@@ -456,7 +453,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 				}
 				elseif ($Chunk -notmatch "(?:\x1b|\$X)\[[0-9;]*m" -and $Chunk -match '\x1b\[0m'){ #closing ansi with no open tag
 					$ANSIStillActive = $False
-				}				
+				}
 				$Script:ANSIUsed = $False
 				if ($ANSIStillActive -eq $True){#output with a closing statement and then insert the ANSI formatting into the next line to process
 					Write-Output ($Chunk + "$X[0m") | out-host #have to use out-host due to pipeline shenanigans and at this point was too lazy to do things properly :)
@@ -479,7 +476,7 @@ Function FormatFunction { # Used to get long lines formatted nicely within the C
 		if ($Line.length -gt 0){ # I see you're reading my comment. How thorough of you! This whole function was an absolute mindf#$! to come up with and took probably 30 hours of trial, error and rage (in ascending order of frequency). Odd how the most boring of functions can take up the most time :)
 			Write-Output ($Line -replace "(.{1,$($MaxLineLength - $($Indent.length) - $($SubsequentLineIndent.length) -1 - $($SecondLineDeltaIndent.length))})(\s+|$)", " $SubsequentLineIndent$SecondLineDeltaIndent$Indent`$1`n").trimend() | &$Colour
 		}
-	} 
+	}
 }
 Function CommaSeparatedList {
 	param (
@@ -551,7 +548,7 @@ Function GetEmuToken { #For connecting to D2Emu for TZ and/or DClone data
 		PressTheAnyKey
 	}
 }
-Function Create-Shortcut {# Create Shortcut Function
+Function CreateShortcut {# Create Shortcut Function
 	param (
 		[string]$shortcutPath,
 		[string]$targetPath,
@@ -691,30 +688,6 @@ Function CheckForUpdates {
 			Start-Sleep -milliseconds 3500
 		}
 	}
-	#Update (or replace missing) SetTextV2.bas file. This is an newer version of SetText (built by me and ChatGPT) that allows windows to be closed by process ID.
-	if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.bas')) -ne $True){#if SetTextv2.bas doesn't exist, download it.
-		try {
-			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") -ErrorAction stop | Out-Null #create temporary folder to download zip to and extract
-		}
-		Catch {#if folder already exists for whatever reason.
-			Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force
-			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
-		}
-		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
-		$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
-		$ZipURL = $ReleaseInfo.zipball_url #get zip download URL
-		$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
-		Invoke-WebRequest -Uri $ZipURL -UseBasicParsing -OutFile $ZipPath
-		if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.
-			Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -UseBasicParsing -OutFile $null | out-null #identify the latest file only.
-		}
-		$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
-		Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
-		$FolderPath = Get-ChildItem -Path $ExtractPath -Directory -Filter "shupershuff*" | Select-Object -ExpandProperty FullName
-		Copy-Item -Path ($FolderPath + "\SetText\SetTextv2.bas") -Destination ($Script:WorkingDirectory + "\SetText\SetTextv2.bas")
-		Write-Host "  SetTextV2.bas was missing and was downloaded."
-		Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force #delete update temporary folder
-	}
 }
 Function ImportXML { #Import Config XML
 	param(
@@ -804,7 +777,7 @@ Function ValidationAndSetup {
 		$Replacement +=	"To make settings option, you can load from, call the file settings.<name>.json eg(settings.Awesome Graphics.json) which will appear as `"Awesome Graphics`" in the menu.-->`n`t"
 		$Replacement +=	"<ManualSettingSwitcherEnabled>False</ManualSettingSwitcherEnabled>" #add option to config file if it doesn't exist.
 		UpdateXML -Pattern $Pattern -Replacement $Replacement -XML $XML -Pause
-	}	
+	}
 	if ($Null -eq $Script:Config.ShowCloseOptionInMenu){
 		Write-Host "`n Config option 'ShowCloseOptionInMenu' missing from config.xml" -foregroundcolor Yellow
 		Write-Host " This is due to the config.xml recently being updated." -foregroundcolor Yellow
@@ -1174,7 +1147,7 @@ Function ValidationAndSetup {
 	#Check IdleLimitForAccountUseTime is an integer
 	if ($Config.IdleLimitForAccountUseTime -ne ""){#if this config option isn't blank and isn't number, have a big moan about it.
 		try {
-			$Script:IdleLimitForAccountUseTime = [int]$Config.IdleLimitForAccountUseTime  
+			$Script:IdleLimitForAccountUseTime = [int]$Config.IdleLimitForAccountUseTime
 		}
 		Catch {
 			Write-Host "`n Config Option 'IdleLimitForAccountUseTime' is invalid." -foregroundcolor red
@@ -1205,25 +1178,6 @@ Function ValidationAndSetup {
 			$Shortcut.IconLocation = $ShortcutCustomIconPath
 		}
 		$Shortcut.Save()
-	}
-	#Check if SetTextv2.exe exists, if not, compile from SetTextv2.bas. SetTextv2.exe is what's used to rename the windows.
-	if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
-		Write-Host "`n First Time run!`n" -foregroundcolor Yellow
-		Write-Host " SetTextv2.exe not in .\SetText\ folder and needs to be built."
-		if ((Test-Path -Path "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe") -ne $True){#check that .net4.0 is actually installed or compile will fail.
-			Write-Host " .Net v4.0 not installed. This is required to compile the Window Renamer for Diablo." -foregroundcolor red
-			Write-Host " Download and install it from Microsoft here:" -foregroundcolor red
-			Write-Host " https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40" #actual download link https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net40-web-installer
-			PressTheAnyKeyToExit
-		}
-		Write-Host " Compiling SetTextv2.exe from SetTextv2.bas..."
-		& "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" -target:winexe -out:"`"$WorkingDirectory\SetText\SetTextv2.exe`"" "`"$WorkingDirectory\SetText\SetTextv2.bas`"" | out-null #/verbose  #actually compile the bastard
-		if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){#if it fails for some reason and settextv2.exe still doesn't exist.
-			Write-Host " SetTextv2 Could not be built for some reason :/"
-			PressTheAnyKeyToExit
-		}
-		Write-Host " Successfully built SetTextv2.exe for Diablo 2 Launcher script :)" -foregroundcolor green
-		Start-Sleep -milliseconds 4000 #a small delay so the first time run outputs can briefly be seen
 	}
 	#Check Handle64.exe downloaded and placed into correct folder
 	$Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
@@ -1812,7 +1766,7 @@ Function Inventory {#Info screen
 	Write-Host
 	PressTheAnyKey
 }
-Function LoadWindowClass { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
+Function LoadWindowClass { #Used to get window locations, place them in the same screen locations at launch, and set window titles. Code courtesy of Sir-Wilhelm and Microsoft.
 	try {
 		[void][Window]
 	}
@@ -1833,6 +1787,9 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool ShowWindow(IntPtr handle, int state); //used in this script to restore minimized window (state 9)
+			[DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool SetWindowText(IntPtr hWnd, string lpString);
 			// Add SetWindowPos
 			[DllImport("user32.dll", SetLastError = true)]
 			public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -3043,7 +3000,7 @@ Function DCloneVoiceAlarm {
 		}
 	}
 	if ($Null -ne $VoiceMessages){#if there are voice messages to play
-		function Start-Speech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
+		function StartSpeech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
 			param(
 			[string]$Text,
 			[int]$Volume = 100,
@@ -3066,7 +3023,7 @@ Function DCloneVoiceAlarm {
 		if ($Script:Config.AlarmVoice -eq "Bloke" -or $Script:Config.AlarmVoice -eq "Man" -or $Script:Config.AlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
 		ElseIf ($Script:Config.AlarmVoice -eq "Wench" -or $Script:Config.AlarmVoice -eq "Woman" -or $Script:Config.AlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
 		else {break}# If specified voice doesn't exist
-		Start-Speech $VoiceMessages -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
+		StartSpeech $VoiceMessages -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
 	}
 	if ($null -ne $Message){
 		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mDClone status provided by $($Script:Config.DCloneTrackerSource)$X[0m"
@@ -3172,7 +3129,7 @@ Function TerrorZone {
 								}
 								Else {
 									[void]$Script:UpcomingTZName.add($LevelID[1])  #Return Name of Upcoming TZ
-								}							
+								}
 								if ($Counter -gt 1){
 									$Script:TZNextPluralS = "s"
 									$Script:TZNextPluralISAre = "are"
@@ -3367,7 +3324,7 @@ Function TerrorZoneVoiceAlarm {
 	param(
 		[string] $TZAlarmMessage
 	)
-	Function Start-Speech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
+	Function StartSpeech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
 		param(
 		[string]$Text,
 		[int]$Volume = 100,
@@ -3390,7 +3347,7 @@ Function TerrorZoneVoiceAlarm {
 	if ($Script:Config.AlarmVoice -eq "Bloke" -or $Script:Config.AlarmVoice -eq "Man" -or $Script:Config.AlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
 	ElseIf ($Script:Config.AlarmVoice -eq "Wench" -or $Script:Config.AlarmVoice -eq "Woman" -or $Script:Config.AlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
 	else {break}# If specified voice doesn't exist
-	Start-Speech $TZAlarmMessage -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
+	StartSpeech $TZAlarmMessage -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
 }
 Function KillHandle { #Thanks to sir-wilhelm for tidying this up.
 	param ([Switch]$TryAgain)
@@ -3948,7 +3905,7 @@ Function ChooseAccount {
 						$TZAlarmMessages = $Null
 					}
 					if ($Script:InitialTZCheck -ne $True -or $TZAlarmTimeCheck -gt $Script:CurrentTZEndTime -or ($TZAlarmTimeCheck -gt $Script:TZDataTimings[0] -and $Script:LastUpcomingTZCheck -lt $Script:TZDataTimings[0])){	#To prevent API spam and maintain script performance, only run TZ check when required.
-						$Script:TZDataTimings = TerrorZone -GetLevelIDs #Get latest TZ detail and also return some timings to this variable	
+						$Script:TZDataTimings = TerrorZone -GetLevelIDs #Get latest TZ detail and also return some timings to this variable
 						if ($Null -eq $Script:CurrentTZEndTime){ #If this is the first time running
 							$UpdateCurrent = $True
 							$Script:CurrentTZEndTime = $Script:TZDataTimings[1]
@@ -4502,7 +4459,7 @@ Function Processing {
 			$arguments += " --instance$($Script:AccountChoice.ID)"
 			if ($Script:Config.DisableIconStacking -eq $True){
 				$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
-				Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
+				CreateShortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
 				Start-Process -FilePath $ShortcutPath
 				Start-Sleep -milliseconds 1100 #give D2r a bit of a chance to start up before trying to kill handle
 				#Remove-Item -Path $ShortcutPath -Force #Unfortunatly removing the shortcut files afterwards somehow results in the icons stacking again.
@@ -4534,11 +4491,11 @@ Function Processing {
 				PressTheAnyKey
 			}
 			#Rename the Diablo Game window for easier identification of which account and region the game is.
-			$rename = ($Script:AccountID + " - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")" + " - Diablo II: Resurrected")
-			$Command = ('"'+ $WorkingDirectory + '\SetText\SetTextv2.exe" /PID ' + $process.ProcessID + ' "' + $rename + '"')
+			$handle = (Get-Process -Id $process.ProcessID).MainWindowHandle
+			$title = ($Script:AccountID + " - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")" + " - Diablo II: Resurrected")
 			try {
-				cmd.exe /c $Command
-				write-debug $Command #debug
+				LoadWindowClass
+				[Window]::SetWindowText($handle, $title) | Out-Null
 				Write-debug " Window Renamed." #debug
 				Start-Sleep -milliseconds 250
 			}
