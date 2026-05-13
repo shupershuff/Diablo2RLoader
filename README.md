@@ -235,7 +235,7 @@ Done editing? Make sure to save the file! CTRL + S for the win :)
 ## 4. Run the script manually for the first time
 1. Browse to the folder, right click on D2Loader.ps1 and choose run (if you see an option for 'Run with PowerShell', use this).
 2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
-   ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
+   ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)
 3. If the script opens up and immediately closes or you instead get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following steps:
    a) Open the start menu and type in powershell. Right click on PowerShell and click "Run as administrator".<br>
    b) Enter the following command: **Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser**<br>
@@ -244,7 +244,7 @@ Done editing? Make sure to save the file! CTRL + S for the win :)
 3. If the script prompts to trust it and add it to the unblock list, type in y and press enter to confirm.
 4. This will perform the first time setup for encrypting your passwords and creating a shortcut on your desktop.
 
-If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped. 
+If you've skipped ahead, the script will error out and tell you which of the previous setup steps you've skipped.
 
 ## 5. Auto Settings Switcher (Optional but recommended)
 Do you want your primary account to launch with decent graphics settings with your other accounts to be set to poo tier settings? This is for you! This feature is disabled by default, as it will cause confusing behaviour for users who haven't read and understood this first.<br>
@@ -278,7 +278,7 @@ You can optionally configure the script to advise when DClone walk status change
 This is very handy for when you're playing on another region/game mode or playing another game entirely so you can be audibly warned on status changes without having to manually check a website.<br>
 This will display text warnings on screen for 5 minutes since last status change and will also perform a one off voice alarm advising you what region and game mode the status changed on.
 Checks are performed each time the script refreshes on the main menu (IE, every 30 seconds). As such any planned walks where SOJ's are sold very rapidly will not be captured in realtime.<br>
-Note that this check is run in a background job that takes 1-2 seconds to complete. As such manually refreshing the menu constantly (r) will prevent checks from occuring.<br>
+Note that this check is run in a background job that takes 1-2 seconds to complete. As such manually refreshing the menu rapidly (r) will prevent checks from occuring.<br>
 
 This feature is disabled by default.<br>
 If you want to enable it, simply add in the option(s) you want into DcloneAlarmList in config.xml.<br>
@@ -453,5 +453,3 @@ All Time Downloads:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
 Page views as of 21st April 2025:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fshupershuff%2FDiablo2RLoader&label=Hits&icon=github&color=%23198754)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)<br>
 
 Tags for Google SEO (maybe): Multiboxing, Multiboxes, multibox, multi-box, multi-boxing, multi-launcher, boxer, launcher, Shuper, d2loader, d2rloader, script, diabloloader, loader, D2r, Diablo 2: Resurrected, Diablo II: Resurrected, uber, dclone, youtube, DiabloII, powershell, process explorer, procexp, windows, battle.net, warriv, d2r Multi, d2r launcher, d2r loader, ROTW, Reign of the Warlock, alt, d2r multibox, chat Gem workinG as intended
-
-
