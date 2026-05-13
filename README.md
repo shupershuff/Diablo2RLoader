@@ -236,12 +236,12 @@ Done editing? Make sure to save the file! CTRL + S for the win :)
 ## 4. Run the script manually for the first time
 1. Browse to the folder, right click on D2Loader.ps1 and choose run (if you see an option for 'Run with PowerShell', use this).
 2. If you get prompted to change the execution policy so you can run the script, type y and press enter.
-   ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)
-   a) If the script opens up and immediately closes or you instead get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following steps:
-   b) Open the start menu and type in powershell. Right click on PowerShell and click "Run as administrator".<br>
-   c) Enter the following command: **Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser**<br>
-   d) Type in "y" and press enter to confirm.<br>
-   e) Run the D2Loader.ps1 script again.<br>
+   ![image](https://user-images.githubusercontent.com/63577525/234580880-e78df284-edea-4a5e-b4c6-4825f6031b4e.png)   
+3. If the script opens up and immediately closes or you instead get a message about "D2Loader.ps1 cannot be loaded because running scripts is disabled on this system" then you will need to perform the following steps:
+   a) Open the start menu and type in powershell. Right click on PowerShell and click "Run as administrator".<br>
+   b) Enter the following command: **Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser**<br>
+   c) Type in "y" and press enter to confirm.<br>
+   d) Run the D2Loader.ps1 script again.<br>
 3. If the script prompts to trust it and add it to the unblock list, type in y and press enter to confirm.
 4. This will perform the first time setup for encrypting your passwords and creating a shortcut on your desktop.
 
