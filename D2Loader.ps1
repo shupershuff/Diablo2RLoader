@@ -25,12 +25,15 @@ Fixed issue for accounts using token auth asking for password.
 Fixed DClone alarms not working if there were spaces between entries in config.xml
 Cow voice alerts can be disabled (manually add a config for 'DisableMoo' in config.xml and set to true).
 Added a TZ overlay now that there's capability built to auto check TZs. Enable this by setting 'TerrorZoneOverlay' to true in config.xml
+Made it so if token is selected as the Auth method, passwords aren't required in accounts.csv.
 Made Act 3 Kurast Bazaar TZ alerts less punishing to read/hear.
 Other minor Tweaks to TZ alert display.
 Added the ability to use shortcut keys to switch between D2r Windows. Set shortcut keys in config.xml. these shortcut keys can be used with 0-9 (eg Shift + Alt + 2 for account 2) or with '<' & '>' for previous/next account.
 Made adjustements to Options menu.
 
 1.17.0+ to do list:
+check formatting of LK, kurast etc. does box resize correctly
+Add slight delay for set text if the first game has just been started (may or may not be able to use $Script:D2rRunning) and if overlay is enabled.
 Remove diablo2.io dclone API as it's problematic and uses D2Emu data now anyway. Possibly replace with d2tz.info
 Fix whatever I broke or poorly implemented in the last update :)
 
@@ -43,7 +46,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.11"
+$CurrentVersion = "1.17.1.13"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -219,7 +222,7 @@ Function ReadKey([string]$message=$Null,[bool]$NoOutput,[bool]$AllowAllKeys){#us
 		}
 	)
 }
-Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null, [bool]$TwoDigitAcctSelection = $False,[bool]$AllowYesNoOnly){
+Function ReadKeyTimeout([string]$message=$Null, [int]$timeOutSeconds=0, [string]$Default=$Null, [object[]]$AdditionalAllowedKeys = $null, [bool]$TwoDigitAcctSelection = $False,[bool]$AllowYesNoOnly){#used to receive user input and timeout (eg refresh or go back to main menu) if no response.
 	$key = $Null
 	$inputString = ""
 	$Host.UI.RawUI.FlushInputBuffer()
@@ -530,7 +533,7 @@ Function GetEmuToken { #For connecting to D2Emu for TZ and/or DClone data
 	}
 	$Script:TZProvider = "D2Emu.com"
 }
-Function Create-Shortcut {# Create Shortcut Function
+Function CreateShortcut {# Create Shortcut Function
 	param (
 		[string]$shortcutPath,
 		[string]$targetPath,
@@ -669,30 +672,6 @@ Function CheckForUpdates {
 			Write-Host "`n Couldn't check for updates. GitHub API limit may have been reached..." -foregroundcolor Yellow
 			Start-Sleep -milliseconds 3500
 		}
-	}
-	#Update (or replace missing) SetTextV2.bas file. This is an newer version of SetText (built by me and ChatGPT) that allows windows to be closed by process ID.
-	if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.bas')) -ne $True){#if SetTextv2.bas doesn't exist, download it.
-		try {
-			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") -ErrorAction stop | Out-Null #create temporary folder to download zip to and extract
-		}
-		Catch {#if folder already exists for whatever reason.
-			Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force
-			New-Item -ItemType Directory -Path ($Script:WorkingDirectory + "\UpdateTemp\") | Out-Null #create temporary folder to download zip to and extract
-		}
-		$Releases = Invoke-RestMethod -Uri "https://api.github.com/repos/shupershuff/Diablo2RLoader/releases"
-		$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
-		$ZipURL = $ReleaseInfo.zipball_url #get zip download URL
-		$ZipPath = ($WorkingDirectory + "\UpdateTemp\D2Loader_" + $ReleaseInfo.tag_name + "_temp.zip")
-		Invoke-WebRequest -Uri $ZipURL -UseBasicParsing -OutFile $ZipPath
-		if ($Null -ne $releaseinfo.assets.browser_download_url){#Check If I didn't forget to make a version.zip file and if so download it. This is purely so I can get an idea of how many people are using the script or how many people have updated. I have to do it this way as downloading the source zip file doesn't count as a download in github and won't be tracked.
-			Invoke-WebRequest -Uri $releaseinfo.assets.browser_download_url -UseBasicParsing -OutFile $null | out-null #identify the latest file only.
-		}
-		$ExtractPath = ($Script:WorkingDirectory + "\UpdateTemp\")
-		Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
-		$FolderPath = Get-ChildItem -Path $ExtractPath -Directory -Filter "shupershuff*" | Select-Object -ExpandProperty FullName
-		Copy-Item -Path ($FolderPath + "\SetText\SetTextv2.bas") -Destination ($Script:WorkingDirectory + "\SetText\SetTextv2.bas")
-		Write-Host "  SetTextV2.bas was missing and was downloaded."
-		Remove-Item -Path ($Script:WorkingDirectory + "\UpdateTemp\") -Recurse -Force #delete update temporary folder
 	}
 }
 Function ImportXML { #Import Config XML
@@ -1223,25 +1202,6 @@ Function ValidationAndSetup {
 			$Shortcut.IconLocation = $ShortcutCustomIconPath
 		}
 		$Shortcut.Save()
-	}
-	#Check if SetTextv2.exe exists, if not, compile from SetTextv2.bas. SetTextv2.exe is what's used to rename the windows.
-	if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){ #-PathType Leaf check windows renamer is configured.
-		Write-Host "`n First Time run!`n" -foregroundcolor Yellow
-		Write-Host " SetTextv2.exe not in .\SetText\ folder and needs to be built."
-		if ((Test-Path -Path "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe") -ne $True){#check that .net4.0 is actually installed or compile will fail.
-			Write-Host " .Net v4.0 not installed. This is required to compile the Window Renamer for Diablo." -foregroundcolor red
-			Write-Host " Download and install it from Microsoft here:" -foregroundcolor red
-			Write-Host " https://dotnet.microsoft.com/en-us/download/dotnet-framework/net40" #actual download link https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net40-web-installer
-			PressTheAnyKeyToExit
-		}
-		Write-Host " Compiling SetTextv2.exe from SetTextv2.bas..."
-		& "C:\Windows\Microsoft.NET\Framework\v4.0.30319\vbc.exe" -target:winexe -out:"`"$WorkingDirectory\SetText\SetTextv2.exe`"" "`"$WorkingDirectory\SetText\SetTextv2.bas`"" | out-null #/verbose  #actually compile the bastard
-		if ((Test-Path -Path ($workingdirectory + '\SetText\SetTextv2.exe')) -ne $True){#if it fails for some reason and settextv2.exe still doesn't exist.
-			Write-Host " SetTextv2 Could not be built for some reason :/"
-			PressTheAnyKeyToExit
-		}
-		Write-Host " Successfully built SetTextv2.exe for Diablo 2 Launcher script :)" -foregroundcolor green
-		Start-Sleep -milliseconds 4000 #a small delay so the first time run outputs can briefly be seen
 	}
 	#Check Handle64.exe downloaded and placed into correct folder
 	$Script:WorkingDirectory = ((Get-ChildItem -Path $PSScriptRoot)[0].fullname).substring(0,((Get-ChildItem -Path $PSScriptRoot)[0].fullname).lastindexof('\'))
@@ -1865,7 +1825,7 @@ Function Inventory {#Info screen
 	Write-Host
 	PressTheAnyKey
 }
-Function LoadWindowClass { #Used to get window locations and place them in the same screen locations at launch. Code courtesy of Sir-Wilhelm and Microsoft.
+Function LoadWindowClass { #Used to get window locations, place them in the same screen locations at launch, and set window titles. Code courtesy of Sir-Wilhelm and Microsoft.
 	try {
 		[void][Window]
 	}
@@ -1886,6 +1846,10 @@ Function LoadWindowClass { #Used to get window locations and place them in the s
 			[DllImport("user32.dll")]
 			[return: MarshalAs(UnmanagedType.Bool)]
 			public static extern bool ShowWindow(IntPtr handle, int state); //used in this script to restore minimized window (state 9)
+			//Used for window renaming. Replaces settext2.bas.
+			[DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool SetWindowText(IntPtr hWnd, string lpString);
 			// Add SetWindowPos
 			[DllImport("user32.dll", SetLastError = true)]
 			public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -2269,7 +2233,7 @@ Function Options {
 					return $False
 				}
 			}
-			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r" -and $NewOptionValue -ne "a" -and $NewOptionValue -ne "b" -or ($Option -eq "8" -and $NewOptionValue -ne 2)){		
+			if ($NewOptionValue -ne "s" -and $NewOptionValue -ne "r" -and $NewOptionValue -ne "a" -and $NewOptionValue -ne "b" -or ($Option -eq "8" -and $NewOptionValue -ne 2)){
 				try {
 					$Pattern = "(<$ConfigName>)([^<]*)(</$ConfigName>)"
 					$ReplaceString = '{0}{1}{2}' -f '${1}', $NewValue, '${3}'
@@ -2506,7 +2470,7 @@ Function Options {
 	ElseIf ($Option -eq "7"){ #TerrorZoneAlertAreas
 		$Options = @{
 			"1" = "37,73,102,108,132"
-			"2" = "12,16,25,37,39,66,73,74,83,102,108,123,131,132"
+			"2" = "12,16,25,37,39,66,73,74,83,102,107,108,123,131,132"
 			"3" = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137"
 			"0" = ""
 		}
@@ -3075,7 +3039,8 @@ Function DClone {# Display DClone Status.
 			$CurrentStatus = $D2RDCloneResponse | Select-Object @{Name='Server'; Expression={$_.name}},@{Name='Progress'; Expression={($_.Progress + 1)}} #| sort server #add +1 as this source counts status from 0
 			if ($Script:Config.UseChinaRegion -ne $True){
 				$CurrentStatus = $CurrentStatus | where-object {$_.Server -notmatch "cn"} #Remove chinese statuses.
-			}			Else {
+			}
+			Else {
 				$CurrentStatus = $CurrentStatus | where-object {$_.Server -notmatch "us" -and $_.Server -notmatch "kr" -and $_.Server -notmatch "eu"} #Remove NA, EU and KR statuses.
 			}
 		}
@@ -3275,6 +3240,25 @@ Function DClone {# Display DClone Status.
 		start-sleep -milliseconds 2000 #allow a bit of time for error message to be shown saying that we couldn't connect to DClone API.
 	}
 }
+Function StartSpeech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
+	param(
+	[string]$Text,
+	[int]$Volume = 100,
+	[int]$Rate = -2,
+	[String]$Voice
+	)
+	$ps = [powershell]::Create().AddScript({#Create a PS runspace that runs asynchronously
+		param($Message,$Vol,$Rate,$VoiceToUse)
+		$voice = New-Object -ComObject Sapi.SpVoice
+		$voice.Volume = $vol
+		$voice.Rate   = $rate
+		if ($VoiceToUse -eq "Man"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}}
+		elseif ($VoiceToUse -eq "Woman"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*Zira*"}}
+		else {break}# If specified voice doesn't exist
+		$voice.Speak($Message)
+	}).AddArgument($Text).AddArgument($Volume).AddArgument($Rate).AddArgument($Voice)
+	$null = $ps.BeginInvoke()
+}
 Function DCloneVoiceAlarm {
 	ForEach ($Item in ($Script:DCloneChangesCSV | ConvertFrom-Csv) | where-object {$_.VoiceAlarmStatus -Match "True" -or $_.TextAlarmStatus -Match "True"}){
 		if ($item.tag -match "l"){#if mode contains "L"
@@ -3325,30 +3309,11 @@ Function DCloneVoiceAlarm {
 		}
 	}
 	if ($Null -ne $VoiceMessages){#if there are voice messages to play
-		function Start-Speech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
-			param(
-			[string]$Text,
-			[int]$Volume = 100,
-			[int]$Rate = -2,
-			[String]$Voice
-			)
-			$ps = [powershell]::Create().AddScript({#Create a PS runspace that runs asynchronously
-				param($Message,$Vol,$Rate,$VoiceToUse)
-				$voice = New-Object -ComObject Sapi.SpVoice
-				$voice.Volume = $vol
-				$voice.Rate   = $rate
-				if ($VoiceToUse -eq "Man"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}}
-				elseif ($VoiceToUse -eq "Woman"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*Zira*"}}
-				else {break}# If specified voice doesn't exist
-				$voice.Speak($Message)
-			}).AddArgument($Text).AddArgument($Volume).AddArgument($Rate).AddArgument($Voice)
-			$null = $ps.BeginInvoke()
-		}
 		$voice = New-Object -ComObject Sapi.spvoice
 		if ($Script:Config.AlarmVoice -eq "Bloke" -or $Script:Config.AlarmVoice -eq "Man" -or $Script:Config.AlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
 		ElseIf ($Script:Config.AlarmVoice -eq "Wench" -or $Script:Config.AlarmVoice -eq "Woman" -or $Script:Config.AlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
 		else {break}# If specified voice doesn't exist
-		Start-Speech $VoiceMessages -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
+		StartSpeech $VoiceMessages -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
 	}
 	if ($null -ne $Message){
 		Write-Host "  $X[38;2;065;105;225;48;2;1;1;1;4mDClone status provided by $($Script:Config.DCloneTrackerSource)$X[0m"
@@ -3711,30 +3676,11 @@ Function TerrorZoneVoiceAlarm {
 	param(
 		[string] $TZAlarmMessage
 	)
-	Function Start-Speech {#Function to play these asynchronously so it doesn't hold up the rest of the script. Makes loading up games in a hurry a bit less stressful :)
-		param(
-		[string]$Text,
-		[int]$Volume = 100,
-		[int]$Rate = -2,
-		[String]$Voice
-		)
-		$ps = [powershell]::Create().AddScript({#Create a PS runspace that runs asynchronously
-			param($Message,$Vol,$Rate,$VoiceToUse)
-			$voice = New-Object -ComObject Sapi.SpVoice
-			$voice.Volume = $vol
-			$voice.Rate   = $rate
-			if ($VoiceToUse -eq "Man"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*David*"}}
-			elseif ($VoiceToUse -eq "Woman"){$voice.voice = $voice.getvoices() | Where-Object {$_.id -like "*Zira*"}}
-			else {break}# If specified voice doesn't exist
-			$voice.Speak($Message)
-		}).AddArgument($Text).AddArgument($Volume).AddArgument($Rate).AddArgument($Voice)
-		$null = $ps.BeginInvoke()
-	}
 	$voice = New-Object -ComObject Sapi.spvoice
 	if ($Script:Config.AlarmVoice -eq "Bloke" -or $Script:Config.AlarmVoice -eq "Man" -or $Script:Config.AlarmVoice -eq "Paladin"){$VoiceToUse = "Man"} #$voice.getvoices() | Where-Object {$_.id -like "*David*"}}
 	ElseIf ($Script:Config.AlarmVoice -eq "Wench" -or $Script:Config.AlarmVoice -eq "Woman" -or $Script:Config.AlarmVoice -eq "Amazon"){$VoiceToUse = "Woman"}#$voice.getvoices() | Where-Object {$_.id -like "*ZIRA*"}}
 	else {break}# If specified voice doesn't exist
-	Start-Speech $TZAlarmMessage -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
+	StartSpeech $TZAlarmMessage -Volume $Config.AlarmVolume -Rate "-2" -Voice $VoiceToUse
 }
 Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate this. It's not bad though!
 	[CmdletBinding()]
@@ -3747,8 +3693,7 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 		[double]$Height = 68,
 		[double]$Left = 445,
 		[double]$Top = 33,
-		[double]$Opacity = 0.81,
-		[switch]$AutoRefreshText
+		[double]$Opacity = 0.81
 	)
 	Add-Type -AssemblyName PresentationFramework
 	Add-Type -AssemblyName WindowsBase
@@ -3770,7 +3715,6 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 	$runspace.SessionStateProxy.SetVariable('overlayLeft', $Left)
 	$runspace.SessionStateProxy.SetVariable('overlayTop', $Top)
 	$runspace.SessionStateProxy.SetVariable('overlayOpacity', $Opacity)
-	$runspace.SessionStateProxy.SetVariable('overlayAutoRefresh', [bool]$AutoRefreshText)
 	$runspace.SessionStateProxy.SetVariable('TZProvider', $Script:TZProvider)
 	$ps = [powershell]::Create()
 	$ps.Runspace = $runspace
@@ -3913,35 +3857,6 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 				) | Out-Null
 			} catch {}
 		})
-		# Auto-refresh text from sync hash
-		if ($overlayAutoRefresh) {
-			$timer = New-Object System.Windows.Threading.DispatcherTimer
-			$timer.Interval = [TimeSpan]::FromMilliseconds(250)
-			$timer.Add_Tick({
-				try {
-					if (-not $syncHash.Closed) {
-						$newText = [string]$syncHash.PrefixTextCurrent
-						if ($overlayText.Text -ne $newText) {
-							$overlayText.Text = $newText
-						}
-						$newText2 = [string]$syncHash.TZTextCurrent
-						if ($overlayText2.Text -ne $newText2) {
-							$overlayText2.Text = $newText2
-						}
-						$newText3 = [string]$syncHash.PrefixTextNext
-						if ($overlayText3.Text -ne $newText3) {
-							$overlayText3.Text = $newText3
-						}
-						$newText4 = [string]$syncHash.TZTextNext
-						if ($overlayText4.Text -ne $newText4) {
-							$overlayText4.Text = $newText4
-						}
-					}
-				} catch {}
-			})
-			$timer.Start()
-			$syncHash.Timer = $timer
-		}
 		# P/Invoke signatures
 		Add-Type -MemberDefinition @'
 [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
@@ -3953,18 +3868,28 @@ Function TerrorZoneOverlay { #Not gunna lie, I was lazy and used AI to generate 
 		$d2rTimer.Add_Tick({
 			try {
 				if ($syncHash.Closed) { return }
-				# Get all D2R process IDs (refresh list in case game restarted)
+				$d2rActive = $False  # reset every tick
 				$d2rPids = [System.Diagnostics.Process]::GetProcessesByName('D2R') | Select-Object -ExpandProperty Id
-				$PowerShellPids = [System.Diagnostics.Process]::GetCurrentProcess().Id # Also allow the overlay's own process so focusing it doesn't hide it
-				$hwnd      = [WinAPIHelper]::GetForegroundWindow()
-				$fgPid     = 0
-				[WinAPIHelper]::GetWindowThreadProcessId($hwnd, [ref]$fgPid) | Out-Null
-				if (($d2rPids -contains $fgPid) -or ($PowerShellPids -contains $fgPid)){
-					$d2rActive = $True
+				$currentPid = [System.Diagnostics.Process]::GetCurrentProcess().Id
+				if ($d2rPids) {  # only bother checking foreground if D2R is actually running
+					$hwnd  = [WinAPIHelper]::GetForegroundWindow()
+					$fgPid = 0
+					[WinAPIHelper]::GetWindowThreadProcessId($hwnd, [ref]$fgPid) | Out-Null
+					if (($d2rPids -contains $fgPid) -or ($currentPid -eq $fgPid)) {
+						$d2rActive = $True
+					}
 				}
-				if ($Null -eq $d2rPids) {
-					$d2rActive = $False
+				if ($syncHash.TZNextDataTimestamp) {
+					$secondsRemaining = $syncHash.TZNextDataTimestamp - [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+					if ($secondsRemaining -gt 0) {
+						$minsRemaining = [math]::Ceiling($secondsRemaining / 60)
+						$newText4 = "TBC - Next TZ Data available in $minsRemaining minute$(if ($minsRemaining -gt 1) {'s'} else {''})..."
+					} else {
+						$newText4 = "TBC - Next TZ Data available soon..."
+					}
+					if ($overlayText4.Text -ne $newText4) { $overlayText4.Text = $newText4 }
 				}
+
 				$window.Visibility = if ($d2rActive) {
 					[System.Windows.Visibility]::Visible
 				} else {
@@ -4105,9 +4030,9 @@ Function CheckActiveAccounts {#Note: only works for accounts loaded by the scrip
 	#check if there's any open instances and check the game title window for which account is being used.
 	try {
 		$Script:ActiveIDs = $Null
-		$D2rRunning = $false
+		$Script:D2rRunning = $false
 		$Script:ActiveIDs = New-Object -TypeName System.Collections.ArrayList
-		$Script:ActiveIDs = (Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected$"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,2).trim() #find all diablo 2 game windows and pull the account ID from the title
+		$Script:ActiveIDs = @((Get-Process | Where-Object {$_.processname -eq "D2r" -and $_.MainWindowTitle -match "- Diablo II: Resurrected$"} | Select-Object MainWindowTitle).mainwindowtitle.substring(0,2).trim()) #find all diablo 2 game windows and pull the account ID from the title
 		$Script:D2rRunning = $true
 		Write-Verbose "There are D2r Running Instances."
 	}
@@ -4497,7 +4422,9 @@ Function ChooseAccount {
 							Write-Host "`n    Enter the ID# of an active D2r instance to force close,"
 							Write-Host "    '$X[38;2;255;165;000;22ma$X[0m' to force close all D2r instances or '$X[38;2;255;165;000;22mc$X[0m' to cancel: " -nonewline
 						do {
+							$counting ++
 							if ($CloseChoice -ne $Null -and $CloseChoice -notin $Script:ActiveIDs + "c" + "a"){
+								write-host $counting
 								Write-Host "     Invalid Input. Please enter one of the options above. "  -nonewline -foregroundcolor red
 							}
 							$CloseChoice = (ReadKeyTimeout "" $MenuRefreshRate "c").tostring()
@@ -4520,12 +4447,12 @@ Function ChooseAccount {
 								QuoteRoll
 							}
 						} Until ($Confirm -in "Y","N" -or $Close -eq "all")
-						if ($Script:D2rRunning -eq $True){
+						if ($Script:D2rRunning -eq $True -and $Confirm -eq "Y"){
 							stop-process -name d2r #Indescriminately KILL ALL D2r processes muahahaha.
 							Write-Host "  All D2r instances closed."
 							Start-Sleep -milliseconds 850
 						}
-						Else {
+						Elseif ($Confirm -ne "N") {
 							write-Host "  No D2r instances to close..." -ForegroundColor Yellow
 							Start-Sleep -milliseconds 850
 						}
@@ -4756,17 +4683,22 @@ Function ChooseAccount {
 								}
 								If ($Script:CurrentTZName -and !$Script:UpcomingTZName){
 									$overlay.SetTZTextCurrent($Script:CurrentTZName)
-									$overlay.SetTZTextNext("TBC - Next TZ Data available in $($Script:TZDataTimings[2]) minute$(if($Script:TZDataTimings[2] -gt 1){`"s`"}else{`"`"})...")
+									#$overlay.SetTZTextNext("TBC - Next TZ Data available in $($Script:TZDataTimings[2]) minute$(if($Script:TZDataTimings[2] -gt 1){`"s`"}else{`"`"})...")
+									#$test = $Script:TZDataTimings[2]
+									$Script:Overlay.SyncHash.TZNextDataTimestamp = $Script:TZDataTimings[0]
+									#$overlay.SetTZTextNext("TBC - Next TZ Data available at $test $($Script:TZDataTimings[2]) minute$(if($Script:TZDataTimings[2] -gt 1){`"s`"}else{`"`"})...")
 									#$overlay.SetTZTextNext("Next TZ Data not available yet...")
 									$Width = if (348 + 204 -gt $Width){348 + 204}else{$Width} #whatever value is bigger
 								}
 								Elseif ($Script:CurrentTZName -and $Script:UpcomingTZName){
 									$overlay.SetTZTextCurrent($Script:CurrentTZName)
 									$overlay.SetTZTextNext($Script:UpcomingTZName)
+									$Script:Overlay.SyncHash.TZNextDataTimestamp = $Null
 								}
 								Else {
 									$overlay.SetTZTextCurrent("")
 									$overlay.SetTZTextNext("")
+									$Script:Overlay.SyncHash.TZNextDataTimestamp = $Null
 								}
 								$overlay.SetWidth($Width)
 							}
@@ -5108,7 +5040,7 @@ Function Processing {
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
-			$arguments = (" -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
+			$arguments = ("-login " + $Script:acct + " " + $Script:PW + " -applaunch 2536520 -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		else {
 			if ($Script:Config.UseChinaRegion -eq $True){
@@ -5285,14 +5217,12 @@ Function Processing {
 			KillHandle | out-null # Quickly check that there's no open handles already for "DiabloII Check For Other Instances"
 			$arguments += " --instance$($Script:AccountChoice.ID)"
 			if ($Script:Config.DisableIconStacking -eq $True){
+				$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
 				if ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
-					$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
-					$arguments = "-applaunch 2536520 $arguments"
-					Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$SteamPath\Steam.exe" -arguments $arguments
+					CreateShortcut -shortcutPath $ShortcutPath -targetPath "$SteamPath\Steam.exe" -arguments $arguments
 				}
 				Else {
-					$ShortcutPath = "$Script:WorkingDirectory\D2r_Instance$($Script:AccountChoice.ID).lnk"
-					Create-Shortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
+					CreateShortcut -shortcutPath $ShortcutPath -targetPath "$Gamepath\D2R.exe" -arguments $arguments
 				}
 				Start-Process -FilePath $ShortcutPath
 				Start-Sleep -milliseconds 1100 #give D2r a bit of a chance to start up before trying to kill handle
@@ -5305,7 +5235,7 @@ Function Processing {
 				}
 				elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){ #D2r Steam ID is 2536520
 					if(!(get-process steam -erroraction silentlycontinue)){$SteamNotRunning = $True}
-					Start-Process -FilePath "$SteamPath\steam.exe" -ArgumentList "-applaunch 2536520 $arguments"
+					Start-Process -FilePath "$SteamPath\steam.exe" -ArgumentList "$arguments"
 					if ($SteamNotRunning){ #Lets give steam some bonus time to start running
 						Write-host "  Waiting for Steam to start..."
 						Start-Sleep -milliseconds 2500
@@ -5349,13 +5279,13 @@ Function Processing {
 				PressTheAnyKey
 			}
 			#Rename the Diablo Game window for easier identification of which account and region the game is.
-			$rename = ($Script:AccountID + " - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")" + " - Diablo II: Resurrected")
-			$Command = ('"'+ $WorkingDirectory + '\SetText\SetTextv2.exe" /PID ' + $process.ProcessID + ' "' + $rename + '"')
+			$handle = (Get-Process -Id $process.ProcessID).MainWindowHandle
+			$title = ($Script:AccountID + " - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")" + " - Diablo II: Resurrected")
 			try {
-				cmd.exe /c $Command
-				write-debug $Command #debug
+				LoadWindowClass
+				[Window]::SetWindowText($handle, $title) | Out-Null
 				Write-debug " Window Renamed." #debug
-				Start-Sleep -milliseconds 250
+				Start-Sleep -milliseconds 260
 			}
 			catch {
 				Write-Host " Couldn't rename window :(" -foregroundcolor red
@@ -5366,7 +5296,7 @@ Function Processing {
 					$GetLoadWindowClassFunc = $(Get-Command LoadWindowClass).Definition
 					$GetSetWindowLocationsFunc = $(Get-Command SetWindowLocations).Definition
 					$JobID = (Start-Job -ScriptBlock { # Run this in a background job so we don't have to wait for it to complete
-						start-sleep -milliseconds 2024 # We need to wait for about 2 seconds for game to load as if we move it too early, the game itself will reposition the window. Absolute minimum is 420 milliseconds (funnily enough). Delay may need to be a bit higher for people with wooden computers.
+						start-sleep -milliseconds 2026 # We need to wait for about 2 seconds for game to load as if we move it too early, the game itself will reposition the window. Absolute minimum is 420 milliseconds (funnily enough). Delay may need to be a bit higher for people with wooden computers.
 						Invoke-Expression "function LoadWindowClass {$using:GetLoadWindowClassFunc}"
 						Invoke-Expression "function SetWindowLocations {$using:GetSetWindowLocationsFunc}"
 						SetWindowLocations -x $Using:AccountChoice.WindowXCoordinates -y $Using:AccountChoice.WindowYCoordinates -Width $Using:AccountChoice.WindowWidth -height $Using:AccountChoice.WindowHeight -Id $Using:process.ProcessID
