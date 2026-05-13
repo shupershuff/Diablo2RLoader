@@ -15,6 +15,7 @@ Using this script means you DON'T have to do any of this stuff to multibox:<br>
 - You don't need to manually use ProcExp to kill the "Check for other instances" handle, or manually running a script for handle.exe to do the same thing.
 - You don't need to use Virtual Machines, multiple computers or multiple user accounts (Windows account switching).
 - You don't need to run any dodgy executables where you don't know what's actually running, this is all open source.
+ 	- Note that this script uses handle64.exe which is a [Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/handle) recommended tool.
 	- Never take the authors word for it for anything you download. That's why this script is full open source if you want to have a skim through to see what it's doing.
 
 Note that this script DOES NOT (and will never) alter the game, automate key presses, game joining or add any efficiencies with RAM/VRAM usage. It's simply used to launch the game, you still manually control your characters one at a time.<br>
