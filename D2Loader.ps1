@@ -5077,10 +5077,10 @@ Function Processing {
 		}
 		elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
 			if ($Script:MultipleSteamAccounts -eq $True){
-				$arguments = ("-login " + $Script:acct + " " + $Script:PW + " -applaunch 730 -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
+				$arguments = ("-login " + $Script:acct + " " + $Script:PW + " -applaunch 2536520 -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 			}
 			Else {
-				$arguments = ("-applaunch 730 -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
+				$arguments = ("-applaunch 2536520 -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 			}
 		}
 		else {
