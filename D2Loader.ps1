@@ -20,7 +20,7 @@ Servers:
 
 Changes since 1.17.1 (next version edits):
 Improved Force Close options, can now force close individual stubborn accounts.
-Added ability to launch a single Steam account.
+Added ability to launch multiple Steam accounts.
 Fixed issue for accounts using token auth asking for password.
 Fixed DClone alarms not working if there were spaces between entries in config.xml
 Cow voice alerts can be disabled (manually add a config for 'DisableMoo' in config.xml and set to true).
