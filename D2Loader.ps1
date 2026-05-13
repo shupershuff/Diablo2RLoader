@@ -46,7 +46,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.17.1.13"
+$CurrentVersion = "1.17.1.16"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -1301,9 +1301,7 @@ Function ImportCSV { #Import Account CSV
 				ForEach ($Account in $AccountOptionsCSV){
 					if ($Account.AuthenticationMethod -eq "Steam"){
 						if ($SteamUsed -eq $True){
-							FormatFunction -Text "`nYou have multiple accounts setup to open using Steam in accounts.csv." -IsError
-							FormatFunction -Text "Only one steam account is supported.`n" -IsError
-							PressTheAnyKeyToExit
+							$Script:MultipleSteamAccounts = $True
 						}
 						Else {
 							try {
@@ -1318,8 +1316,8 @@ Function ImportCSV { #Import Account CSV
 									PressTheAnyKey
 								}
 							}
+							$SteamUsed = $True
 						}
-						$SteamUsed = $True
 					}
 					if ($Account.accountlabel -eq ""){ # if user doesn't specify a friendly name, use id. Prevents display issues later on.
 						$Account.accountlabel = ("Account " + $Account.id)
@@ -1458,11 +1456,17 @@ Function ImportCSV { #Import Account CSV
 						$Script:TokensConfigured = $True
 					}
 					#Check CSV for Plain text Passwords, convert to encryptedstrings and replace values in CSV
-					if ($Entry.AuthenticationMethod -eq "Steam" -and ($Entry.PW -ne "" -or $Entry.Acct -ne "")){
-						$Entry.PW = ""
-						$Entry.Acct = ""
-						$UpdateEntry = $True
-						$PWsUpdated = $True
+					if ($Entry.AuthenticationMethod -eq "Steam"){
+						if ($Script:MultipleSteamAccounts -ne $True -and ($Entry.PW -ne "" -or $Entry.Acct -ne "")){
+							$Entry.PW = ""
+							$Entry.Acct = ""
+							$UpdateEntry = $True
+							$PWsUpdated = $True
+						}
+						if ($Script:MultipleSteamAccounts -eq $True -and $Entry.Acct -match "@"){
+							FormatFunction "The account " + $Entry.AccountLabel + "has an email address instead of a Steam Username.7`n" -IsWarning
+							$Entry.Acct = ""
+						}
 					}
 					if ($Entry.PW.length -ge 300 -and $Entry.Acct.length -ge 1 -and $Config.ConvertPlainTextSecrets -eq $True){#if nothing needs converting, make sure existing entries still make it into the updated CSV
 						$UpdateEntry = $True
@@ -1503,6 +1507,38 @@ Function ImportCSV { #Import Account CSV
 						Else { #if passwords aren't to be secured
 							while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
 								$Entry.PW = read-host " Enter the Battle.net password for"$Entry.AccountLabel
+							}
+							Write-Host (" Saved Password for " + $Entry.AccountLabel) -foregroundcolor green
+						}
+						Start-Sleep -milliseconds 100
+						$UpdateEntry = $True
+						$PWsUpdated = $true
+					}
+					if ($Entry.Acct.length -eq 0 -and $Entry.AuthenticationMethod -eq "Steam" -and $Script:MultipleSteamAccounts -eq $True){#if csv has account details and uses parameter Auth but email sign in field has been left blank
+						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have a username defined for Steam.`n") -foregroundcolor yellow
+						while ($Entry.Acct.length -eq 0 -or $Entry.Acct -match "@"){#prevent empty entries as this will cause errors.
+							$Entry.Acct = read-host " Enter the Steam username for"$Entry.AccountLabel
+							if ($Entry.Acct -match "@"){
+									FormatFunction "Please enter your Steam Username, NOT your Steam email address.`n" -IsError
+							}
+						}	
+						Write-Host (" Saved steam username " + $Entry.AccountLabel) -foregroundcolor green
+						Start-Sleep -milliseconds 100
+						$UpdateEntry = $True
+						$PWsUpdated = $True
+					}
+					if ($Entry.PW.length -eq 0 -and $Entry.AuthenticationMethod -eq "Steam" -and $Script:MultipleSteamAccounts -eq $True){#if csv has account details and uses parameter Auth but password field has been left blank
+						Write-Host ("`n The account " + $Entry.AccountLabel + " doesn't yet have the Steam password defined.`n") -foregroundcolor yellow
+						if ($Config.ConvertPlainTextSecrets -eq $True){
+							while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
+								$Entry.PW = read-host -AsSecureString " Enter the Steam password for"$Entry.AccountLabel
+							}
+							$Entry.PW = $Entry.PW | ConvertFrom-SecureString
+							Write-Host (" Secured Password for " + $Entry.AccountLabel) -foregroundcolor green
+						}
+						Else { #if passwords aren't to be secured
+							while ($Entry.PW.length -eq 0){#prevent empty entries as this will cause errors.
+								$Entry.PW = read-host " Enter the Steam password for"$Entry.AccountLabel
 							}
 							Write-Host (" Saved Password for " + $Entry.AccountLabel) -foregroundcolor green
 						}
@@ -5040,7 +5076,12 @@ Function Processing {
 			$arguments = (" -username " + $Script:acct + " -password " + $Script:PW + " -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
 		}
 		elseif ($Script:AccountChoice.AuthenticationMethod -eq "Steam"){
-			$arguments = ("-login " + $Script:acct + " " + $Script:PW + " -applaunch 2536520 -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
+			if ($Script:MultipleSteamAccounts -eq $True){
+				$arguments = ("-login " + $Script:acct + " " + $Script:PW + " -applaunch 730 -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
+			}
+			Else {
+				$arguments = ("-applaunch 730 -address " + $Script:Region + " " + $CustomLaunchArguments).tostring()
+			}
 		}
 		else {
 			if ($Script:Config.UseChinaRegion -eq $True){
@@ -5244,13 +5285,25 @@ Function Processing {
 				}
 			}
 			do {
-				$WaitCounter ++
+				if ($Script:MultipleSteamAccounts -ne $True){
+					$WaitCounter ++
+				}
 				$process = Get-CimInstance -ClassName Win32_Process | Where-Object {
 					$_.Name -eq "D2R.exe" -and $_.CommandLine -match "--instance$($Script:AccountChoice.ID)\b" #command requires elevation to show commandline details.
 				}
 				if ($Null -eq $Process){
-					Write-Host "  D2r isn't open yet for $($Script:AccountChoice.ID). Waiting another second..."
-					Start-Sleep -milliseconds 1000 #Give it another second before trying again
+					if ($Script:MultipleSteamAccounts -ne $True){
+						Write-Host "  D2r isn't open yet for $($Script:AccountChoice.ID). Waiting another second..."
+						Start-Sleep -milliseconds 1000 #Give it another second before trying again
+					}
+					Else {
+						if ($WriteOnce -ne $True){
+							Write-Host "  D2r isn't open yet for $($Script:AccountChoice.ID). Waiting for sign in process."
+							FormatFunction -indents 1 -text "If you're seeing a sign in screen, this means your Steam account account has MFA enabled. Scan the QR with your mobile app (SteamGuard) to sign in."
+							$WriteOnce = $True
+						}
+						Start-Sleep -milliseconds 1000 #Give it another second before trying again
+					}
 				}
 			} until ($Null -ne $Process -or $WaitCounter -gt 20)
 			if ($WaitCounter -gt 20){
@@ -5281,6 +5334,9 @@ Function Processing {
 			#Rename the Diablo Game window for easier identification of which account and region the game is.
 			$handle = (Get-Process -Id $process.ProcessID).MainWindowHandle
 			$title = ($Script:AccountID + " - " + $Script:AccountFriendlyName + " (" + $Script:Region + ")" + " - Diablo II: Resurrected")
+			if ($Script:MultipleSteamAccounts -eq $True){#Shutdown Steam if there are multiple Steam accounts.
+				Stop-Process -Name "Steam" -Force -ErrorAction SilentlyContinue
+			}
 			try {
 				LoadWindowClass
 				[Window]::SetWindowText($handle, $title) | Out-Null
