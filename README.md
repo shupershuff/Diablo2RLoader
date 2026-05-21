@@ -5,7 +5,7 @@ This is a free script I made for launching multiple Diablo 2 Resurrected instanc
 This will help you load up your account(s) quickly from one place without having multiple install directories of the game eating up excessive drive space.<br>
 This will also enable you easily switch realms for trades, DClones, rushes etc for one or more accounts from one simple menu.<br>
 
-<ins>Please note that this is not supported for Steam accounts (YET, it will be in the next update), only [Battle Net accounts](https://us.shop.battle.net/).</ins>
+<ins>Please note that this is now support Steam accounts but the experience is terrible if you have more than one. Expect limited or no improvements to this.</ins>
 
 Oh yeah and you can check DClone status, the Current TZ AND the next TZ from this launcher. Cool aye?<br>
 <br>
@@ -103,13 +103,13 @@ https://github.com/shupershuff/Diablo2RLoader/assets/63577525/56bd87d5-157f-4119
 You can optionally select which Terror Zones you want to be visually and audibly notified about.<br>
 <img width="729" height="270" alt="image" src="https://github.com/user-attachments/assets/eee3efee-c402-430d-8759-7d17570ac843" /><br>
 
-**COMING SOON - TZ Overlay**<br>
+**TZ Overlay**<br>
 Finding it tricky to see what area is currently terrorised when acts have been sharded?<br>
 Want to know next TZ without alt tabbing or having alarms?<br>
 You can optionally enable a Terror Zone overlay to display:<br>
 <img width="1111" height="194" alt="image" src="https://github.com/user-attachments/assets/fc24a9b7-5a60-4e79-b0b3-9445bc6fa86a" />
 
-**COMING SOON - Shortcut keys to switch Windows**<br>
+**Shortcut keys to switch Windows**<br>
 Some of you have 50 different apps open and keep getting confused where D2R is.<br>
 To help with this, you can configure a shortcut key combo to bring a D2R instance to the foreground as your active instance.<br>
 Your shortcut key combo is specified in config.xml. Use the Combo (eg Shift + Alt) with a number (eg 2) to open account 2, or use the combo with comma (<) or period (>) to switch to previous or next account.<br>
@@ -216,6 +216,7 @@ All other config options below this are optional:<br>
 - Set 'ShortcutCustomIconPath' to the location of a custom icon file if you want the desktop icon to be something else (eg the old D2LOD logo). Uses D2r logo by default.
 - Set 'DisableIconStacking' to True if you want to prevent your icons from stacking in the taskbar.
 - Set 'ConvertPlainTextSecrets' to False if you want your passwords and tokens to be ~~stolen~~ stored in plain text. This will not convert already encrypted passwords & tokens back to plain text if disabled.
+- Set 'WindowSwitcherComboKeys' to one or more of Alt, Ctrl and Shift. These should be comma separated of course. Blank by default (disabled).
 - Set 'RememberWindowLocations' to True if you want to each game instance to launch to a preferred window layout.
 - Set 'ForceWindowedMode' to True if you want to force windowed mode each time. This causes issues with Diablo remembering resolution settings, so I recommend leaving this as False and manually setting your game to windowed in your game settings. Disabled by default.
 - Set 'SettingSwitcherEnabled' to True if you want your Diablo accounts to load different settings. This essentially changes settings.json each time you launch a game. See the [Auto Setting Switcher](#5-auto-settings-switcher-optional-but-recommended) section below for more info. Disabled by default.
@@ -229,6 +230,8 @@ All other config options below this are optional:<br>
 - Set 'DCloneAlarmVoice' to the preferred Text to Speech Robot voice. Choices are 'Amazon' or 'Paladin'. Amazon by Default.
 - Set 'DCloneAlarmVolume' to a preferred volume (1-100) to prevent frights and save your ear drums. Default is 69. Nice.
 - Set 'TerrorZoneAlertAreas' to the ID's of the maps you want to be alerted on. For a list of which ID's relate to which maps, see [here](https://github.com/shupershuff/Diablo2RLoader/blob/main/levels.txt). There are also some basic preset options from within the options menu in the script.
+- Set 'TerrorZoneOverlay' to True to enable the TZ overlay.
+- Set 'DisableMoo' to True if you don't want to be surprised with silly moo audio notifications.
 - Set 'ForceAuthTokenForRegion' to enforce AuthToken based authentication for one or more regions. Useful if an Auth server goes down preventing parameter based connections (remember when Asia stopped working for several weeks?) Valid options are NA, EU and KR. Multiple values should be comma separated. Recommend leaving blank unless there are auth issues.
 
 Done editing? Make sure to save the file! CTRL + S for the win :)
