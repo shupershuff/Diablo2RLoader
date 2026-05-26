@@ -18,18 +18,10 @@ Servers:
  EU - eu.actual.battle.net
  Asia - kr.actual.battle.net
 
-Changes since 1.17.1 (next version edits):
-Improved Force Close options, can now force close individual stubborn accounts.
-Added ability to launch multiple Steam accounts.
-Fixed DClone alarms not working if there were spaces between entries in config.xml
-Cow voice alerts can be disabled (manually add a config for 'DisableMoo' in config.xml and set to true).
-Added a TZ overlay now that there's capability built to auto check TZs. Enable this by setting 'TerrorZoneOverlay' to true in config.xml
-Made it so if token is selected as the Auth method, passwords aren't required in accounts.csv.
-Made Act 3 Kurast Bazaar TZ alerts are less punishing to read/hear.
-Other minor Tweaks to TZ alert display.
-Added the ability to use shortcut keys to switch between D2r Windows. Set shortcut keys in config.xml. these shortcut keys can be used with 0-9 (eg Shift + Alt + 2 for account 2) or with '<' & '>' for previous/next account.
-Tidied up window renaming feature and removed the need for settextv2.exe - Thanks to Sir-Wilhelm
-Made adjustements to Options menu.
+Changes since 1.18.0 (next version edits):
+Fixed a bug with 1.18.0 where numbers couldn't be pressed post update without restarting launcher.
+Fixed a bug where launcher would try launch a batch of accounts after cancelling from region select screen.
+Improved DClone Status display so that ROTW modes are grouped together.
 
 1.18.0+ to do list:
 Remove diablo2.io dclone API as it's problematic and uses D2Emu data now anyway. Possibly replace with d2tz.info
@@ -43,7 +35,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.18.0"
+$CurrentVersion = "1.18.1"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -3230,8 +3222,8 @@ Function DClone {# Display DClone Status.
 			}
 		}
 		if ($True -ne $DisableOutput){
-			$DCloneLadderTable = $DCloneLadderTable | Sort-Object LadderServer
-			$DCloneNonLadderTable = $DCloneNonLadderTable | Sort-Object NonLadderServer
+			$DCloneLadderTable = $DCloneLadderTable | Sort-Object @{ Expression = {$_.LadderServer -notmatch'^SCL'}},@{Expression = {$_.LadderServer -notmatch 'ROTW'}},@{Expression = {$_.LadderServer}}
+			$DCloneNonLadderTable = $DCloneNonLadderTable | Sort-Object @{ Expression = {$_.NonLadderServer -notmatch'^SC'}},@{Expression = {$_.NonLadderServer -notmatch 'ROTW'}},@{Expression = {$_.NonLadderServer}}
 			$Count = 0
 			Do {
 				if ($Count -eq 0){
@@ -4996,6 +4988,9 @@ Function ChooseRegion {#AKA Realm. Not to be confused with the actual Diablo ser
 		$Script:RegionLabel = "CN"
 		$Script:LastRegion = $Script:Region
 	}
+	if ($Script:RegionOption -eq "c" -and $Script:OpenBatches -eq $True){
+		$Script:OpenBatches = $False
+	}
 }
 Function Processing {
 	if ($Script:RegionOption -ne "c" -and $Script:RegionOption -ne "Esc"){
@@ -5308,7 +5303,7 @@ Function Processing {
 				PressTheAnyKey
 				return
 			}
-			Start-Sleep -milliseconds 1000 #give D2r a bit of a chance to start up before trying to kill handle
+			Start-Sleep -milliseconds 1024 #give D2r a bit of a chance to start up before trying to kill handle
 			#Close the 'Check for other instances' handle
 			Write-Host " Attempting to close `"Check for other instances`" handle..."
 			$Output = KillHandle | out-string #run KillHandle function.
@@ -5409,7 +5404,7 @@ if ($Script:ParamsUsed -ne $True){ #Check if there's new versions and if so disp
 ImportXML #Get your config
 if ($Script:ParamsUsed -ne $True){#Get D2Emu connection details. Required for TZ/DClone data. Adds half a second to start up time.
 	GetEmuToken #Don't bother getting D2Emu connection details if script parameters are being used.
-	if ($Script:Config.WindowSwitcherComboKeys -ne ""){
+	if ($Script:Config.WindowSwitcherComboKeys -ne "" -and $Null -ne $Script:Config.WindowSwitcherComboKeys){
 		SwitchWindows
 	}
 }
