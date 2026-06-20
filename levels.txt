@@ -1,4 +1,4 @@
-Level ID - Level Name
+Level ID - Level Name. Level info found in extracted D2r data in ..\Diablo II Resurrected\Data\global\excel\levels.txt
 1 - Rogue Encampment
 2 - Blood Moor
 3 - Cold Plains
@@ -130,4 +130,9 @@ Level ID - Level Name
 129 - Worldstone Keep 2
 130 - Worldstone Keep 3
 131 - Throne of Destruction
-132 - Worldstone Keep")
+132 - Worldstone Chamber
+133 - Matron's Den
+134 - Forgotten Sands
+135 - Furnace of Pain
+136 - Uber Tristram
+137 - Colossal Summit
