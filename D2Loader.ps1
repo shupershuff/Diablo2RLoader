@@ -39,7 +39,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.18.1.1"
+$CurrentVersion = "1.18.1.2"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -5060,9 +5060,15 @@ Function Processing {
 			$Path = "HKCU:\SOFTWARE\Blizzard Entertainment\Battle.net\Launch Options\OSI"
 			if ($Script:Config.UseChinaRegion -ne $True){
 				Set-ItemProperty -Path $Path -Name "REGION" -Value $Script:Region.Substring(0, 2).ToUpper()
+				if ((Get-ItemProperty -Path $Path -Name "LOCALE").locale -eq "zhCN"){
+					Set-ItemProperty -Path $Path -Name "LOCALE" -Value "enUS"
+					Set-ItemProperty -Path $Path -Name "LOCALE_AUDIO" -Value "enUS"
+				}
 			}
 			Else {
 				Set-ItemProperty -Path $Path -Name "REGION" -Value "zhCN"
+				Set-ItemProperty -Path $Path -Name "LOCALE" -Value "zhCN"
+				Set-ItemProperty -Path $Path -Name "LOCALE_AUDIO" -Value "zhCN"
 			}
 			Set-ItemProperty -Path $Path -Name "WEB_TOKEN" -Value $ProtectedData -Type Binary
 		}
