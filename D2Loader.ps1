@@ -608,7 +608,7 @@ Function CheckForUpdates {
 			$ReleaseInfo = ($Releases | Sort-Object id -desc)[0] #find release with the highest ID.
 			$Script:LatestVersion = [version[]]$ReleaseInfo.Name.Trim('v')
 			if ($Script:LatestVersion -gt $Script:CurrentVersion){ #If a newer version exists, prompt user about update details and ask if they want to update.
-				#Clear-Host
+				Clear-Host
 				Write-Host "`n Update available! See Github for latest version and info" -foregroundcolor Yellow -nonewline
 				if ([version]$CurrentVersion -in (($Releases.name.Trim('v') | ForEach-Object { [version]$_ } | Sort-Object -desc)[2..$releases.count])){
 					Write-Host ".`n There have been several releases since your version." -foregroundcolor Yellow
@@ -1765,7 +1765,7 @@ Function QuoteRoll {#stupid thing to draw a random quote but also draw a random 
 	}
 }
 Function Inventory {#Info screen
-	#Clear-Host
+	Clear-Host
 	Write-Host "`n          Stay a while and listen! Here's your D2r Loader info.`n`n" -foregroundcolor yellow
 	Write-Host "  $X[38;2;255;255;255;4mNote:$X[0m D2r Playtime is based on the time the script has been running"
 	Write-Host "  whilst D2r is running. In other words, if you use this script when you're"
@@ -2168,7 +2168,7 @@ public static class HotKey {
 }
 Function Options {
 	ImportXML -NoOutput
-	#Clear-Host
+	Clear-Host
 	Write-Host "`n This screen allows you to change script config options."
 	Write-Host " Note that you can also change these settings (and more) in config.xml."
 	Write-Host " Options you can change/toggle below:`n"
@@ -4191,7 +4191,7 @@ Function DisplayActiveAccounts {
 	}
 }
 Function Menu {
-	#Clear-Host
+	Clear-Host
 	if ($Script:ScriptHasBeenRun -eq $true){
 		$Script:AccountUsername = $Null
 		if ($DebugMode -eq $true){
@@ -4439,7 +4439,7 @@ Function ChooseAccount {
 				$Script:AccountID = "r"
 			}
 			if ($Script:AccountID -eq "r"){#refresh
-				#Clear-Host
+				Clear-Host
 				if ($Script:ScriptHasBeenRun -eq $true){
 					if ($DebugMode -eq $true){
 						DisplayPreviousAccountOpened
@@ -4467,7 +4467,7 @@ Function ChooseAccount {
 							$CloseChoice = (ReadKeyTimeout "" $MenuRefreshRate "c").tostring()
 							if ($CloseChoice -eq "c"){
 								$Script:AccountID = "r"
-								#Clear-Host
+								Clear-Host
 								BannerLogo
 								QuoteRoll
 							}
@@ -4479,7 +4479,7 @@ Function ChooseAccount {
 							$Confirm = (ReadKeyTimeout "" $MenuRefreshRate "n" -AllowYesNoOnly $True).tostring()
 							if ($Confirm -eq "n"){
 								$Script:AccountID = "r"
-								#Clear-Host
+								Clear-Host
 								BannerLogo
 								QuoteRoll
 							}
@@ -5441,7 +5441,7 @@ if ($Script:ParamsUsed -ne $True){#Get D2Emu connection details. Required for TZ
 }
 ValidationAndSetup #I've made a few changes over different versions, this checks for any config updates that need to be made and helps prevent user error (Typo's)
 ImportCSV #Get accounts and account stats.
-#Clear-Host #Clear screen of all the initialisation crap.
+Clear-Host #Clear screen of all the initialisation crap.
 D2rLevels #Level ID's used for comparing TZ data against.
 QuoteList #List of D2 quotes to display.
 SetQualityRolls #Randomly roll quotes in D2 themed colours.
