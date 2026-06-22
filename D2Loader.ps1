@@ -39,7 +39,7 @@ To reduce lines, Tidy up all the import/export csv bits for stat updates into a 
 #>
 
 param($AccountUsername,$PW,$Region,$All,$Batch,$ManualSettingSwitcher,$Close) #used to capture parameters sent to the script, if anyone even wants to do that.
-$CurrentVersion = "1.18.1.2"
+$CurrentVersion = "1.18.1.3"
 ###########################################################################################################################################
 # Script itself
 ###########################################################################################################################################
@@ -2595,7 +2595,7 @@ Function Notifications {
 if ($Check -eq $True -and $Script:LastNotificationCheck -lt (Get-Date).addminutes(-30).ToString('yyyy.MM.dd HH:mm:ss')){#check for notifications once every 30mins
 		try {
 			$URI = "https://raw.githubusercontent.com/shupershuff/Diablo2RLoader/main/Notifications.txt"
-			$Script:Notifications = Invoke-RestMethod -Uri $URI
+			$Script:Notifications = Invoke-RestMethod -Uri $URI -TimeoutSec 5
 			if ($Notifications.notification -ne ""){
 				if ($Script:PrevNotification -ne $Notifications.notification){#if message has changed since last check
 					$Script:PrevNotification = $Notifications.notification
